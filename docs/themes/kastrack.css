@@ -1,65 +1,75 @@
 /* ============================================================
-   kselect theme: KAStrack
-   Corporate blue. Clean, professional, trust-inspiring.
-   Built for business dashboards and enterprise UIs.
+   reselect theme: KAStrack
+   Based directly on the KAStrack application UI (kastrack.com).
+   Muted forest green primary, golden yellow accent, clean
+   off-white surfaces — the exact palette of the app itself.
    ============================================================ */
 
 :root {
-  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-family: 'Arial', 'Helvetica Neue', system-ui, sans-serif;
   --ks-font-size: 0.9rem;
   --ks-line-height: 1.4;
 
+  /* Surfaces */
   --ks-color-bg: #ffffff;
-  --ks-color-border: #b0bec5;
-  --ks-color-border-focus: #1565c0;
-  --ks-color-text: #1a2332;
-  --ks-color-placeholder: #78909c;
-  --ks-color-disabled-bg: #f5f7fa;
-  --ks-color-disabled-text: #b0bec5;
-  --ks-color-disabled-border: #e8ecf0;
+  --ks-color-border: #c8d4c8;
+  --ks-color-border-focus: #4a7c59;
+  --ks-color-text: #2c2c2c;
+  --ks-color-placeholder: #8aaa8a;
+  --ks-color-disabled-bg: #f4f7f4;
+  --ks-color-disabled-text: #aabcaa;
+  --ks-color-disabled-border: #dce8dc;
 
-  --ks-color-option-hover: #e8f0fe;
-  --ks-color-option-selected: #1565c0;
+  /* Options */
+  --ks-color-option-hover: #edf4ef;
+  --ks-color-option-selected: #4a7c59;
   --ks-color-option-selected-text: #ffffff;
-  --ks-color-option-selected-bg: #e8f0fe;
-  --ks-color-option-selected-fg: #1565c0;
+  --ks-color-option-selected-bg: #dbeae0;
+  --ks-color-option-selected-fg: #3a6048;
 
-  --ks-color-group-header: #f5f7fa;
-  --ks-color-group-label: #546e7a;
+  /* Groups */
+  --ks-color-group-header: #e8eeea;
+  --ks-color-group-label: #5a7a62;
 
-  --ks-color-tag-bg: #e8f0fe;
-  --ks-color-tag-text: #1565c0;
-  --ks-color-tag-border: #90caf9;
-  --ks-color-tag-remove: #64b5f6;
-  --ks-color-tag-remove-hover: #1565c0;
+  /* Tags (multi) */
+  --ks-color-tag-bg: #eefaf0;
+  --ks-color-tag-text: #3a6048;
+  --ks-color-tag-border: #68996f;
+  --ks-color-tag-remove: #7aaa8a;
+  --ks-color-tag-remove-hover: #3a6048;
 
-  --ks-color-clear: #90a4ae;
-  --ks-color-clear-hover: #e53935;
-  --ks-color-arrow: #90a4ae;
-  --ks-color-arrow-open: #1565c0;
+  /* Controls */
+  --ks-color-clear: #aabcaa;
+  --ks-color-clear-hover: #c0392b;
+  --ks-color-arrow: #8aaa8a;
+  --ks-color-arrow-open: #4a7c59;
 
-  --ks-color-checkbox-border: #b0bec5;
-  --ks-color-checkbox-checked: #1565c0;
+  /* Checkbox */
+  --ks-color-checkbox-border: #c8d4c8;
+  --ks-color-checkbox-checked: #4a7c59;
 
-  --ks-color-search-bg: #f5f7fa;
+  /* Search */
+  --ks-color-search-bg: #f4f7f4;
 
-  --ks-radius-control: 6px;
-  --ks-radius-dropdown: 8px;
-  --ks-radius-tag: 4px;
+  /* Shape — matches the slightly rounded rect buttons in the app */
+  --ks-radius-control: 4px;
+  --ks-radius-dropdown: 4px;
+  --ks-radius-tag: 3px;
   --ks-radius-checkbox: 3px;
 
-  --ks-shadow-dropdown: 0 2px 8px rgba(0,0,0,.10), 0 8px 24px rgba(0,0,0,.08);
+  --ks-shadow-dropdown: 0 2px 8px rgba(74,124,89,.14), 0 6px 20px rgba(74,124,89,.08);
   --ks-transition: 0.15s ease;
+  --ks-z-index: 9999;
 }
 
 /* ── Page complement ── */
 :root {
-  --page-bg: #f0f4f8;
+  --page-bg: #f0f3f0;
   --card-bg: #ffffff;
-  --text-primary: #1a2332;
-  --text-secondary: #37474f;
-  --text-muted: #78909c;
-  --accent: #1565c0;
-  --accent-light: #e8f0fe;
-  --border: #e0e6ed;
+  --text-primary: #2c2c2c;
+  --text-secondary: #4a7c59;
+  --text-muted: #8aaa8a;
+  --accent: #4a7c59;
+  --accent-light: #dbeae0;
+  --border: #c8d4c8;
 }
