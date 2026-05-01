@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kselect.js — Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kselect.min.css?v=e">
+  <link rel="stylesheet" href="index.css?v=e">
+</head>
+<body>
+
+<header class="page-header">
+  <h1><span>k</span>select.js</h1>
+  <p>A modern, accessible select replacement — no dependencies required.</p>
+  <div id="docs-theme-wrapper">
+    <span><a class="header-docs-link" href="docs.html">Read the docs →</a></span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Install snippet -->
+  <div class="install-box" aria-label="Installation code">
+    <span class="comment">&lt;!-- 1. Include styles &amp; script --&gt;</span><br>
+    <span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="val">"stylesheet"</span> <span class="attr">href</span>=<span class="val">"kselect.css"</span><span class="tag">&gt;</span><br>
+    <span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"kselect.js"</span><span class="tag">&gt;&lt;/script&gt;</span><br><br>
+    <span class="comment">&lt;!-- 2. Initialize --&gt;</span><br>
+    <span class="tag">&lt;script&gt;</span><br>
+    &nbsp;&nbsp;Kselect.init(<span class="val">'select'</span>);&nbsp;&nbsp;<span class="comment">// all selects on page</span><br>
+    <span class="tag">&lt;/script&gt;</span>
+  </div>
+
+  <div class="demo-grid">
+
+    <!-- ── DEMO 1: Single searchable ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🔍</div>
+        <div>
+          <div class="demo-card-title">Single Select — Searchable</div>
+          <div class="demo-card-desc">A standard single-value select with live search filtering. Includes an optional clear button.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+
+        <select id="single-basic" data-placeholder="Choose a country…">
+          <option value="">Select a country</option>
+          <option value="us">🇺🇸 United States</option>
+          <option value="gb">🇬🇧 United Kingdom</option>
+          <option value="ca">🇨🇦 Canada</option>
+          <option value="au">🇦🇺 Australia</option>
+          <option value="de">🇩🇪 Germany</option>
+          <option value="fr">🇫🇷 France</option>
+          <option value="jp">🇯🇵 Japan</option>
+          <option value="in">🇮🇳 India</option>
+          <option value="br">🇧🇷 Brazil</option>
+          <option value="mx">🇲🇽 Mexico</option>
+          <option value="nl">🇳🇱 Netherlands</option>
+          <option value="se">🇸🇪 Sweden</option>
+          <option value="no">🇳🇴 Norway</option>
+          <option value="fi">🇫🇮 Finland</option>
+          <option value="nz">🇳🇿 New Zealand</option>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Value:</span>
+          <span class="output-value" id="single-basic-output">—</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="ks1.setValue('jp')">Set → Japan</button>
+          <button class="btn btn-secondary" onclick="ks1.setValue('de')">Set → Germany</button>
+          <button class="btn btn-danger" onclick="ks1.clear()">Clear</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks1 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#single-basic'</span>)[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO 2: Multi select ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">☑️</div>
+        <div>
+          <div class="demo-card-title">Multi Select with Checkboxes</div>
+          <div class="demo-card-desc">Multi-value select with checkbox indicators. Selected values appear as removable tags inline in the control.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+
+        <select id="multi-basic" multiple data-placeholder="Pick your favourite fruits…">
+          <option value="apple">🍎 Apple</option>
+          <option value="banana">🍌 Banana</option>
+          <option value="cherry">🍒 Cherry</option>
+          <option value="grape">🍇 Grape</option>
+          <option value="kiwi">🥝 Kiwi</option>
+          <option value="lemon">🍋 Lemon</option>
+          <option value="mango">🥭 Mango</option>
+          <option value="orange">🍊 Orange</option>
+          <option value="peach">🍑 Peach</option>
+          <option value="pear">🍐 Pear</option>
+          <option value="pineapple">🍍 Pineapple</option>
+          <option value="strawberry">🍓 Strawberry</option>
+          <option value="watermelon">🍉 Watermelon</option>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Values:</span>
+          <span class="output-value" id="multi-basic-output">—</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="ks2.setValue(['apple','mango','strawberry'])">Set 3 values</button>
+          <button class="btn btn-secondary" onclick="alert('getValue(): ' + JSON.stringify(ks2.getValue()))">Get values</button>
+          <button class="btn btn-danger" onclick="ks2.clear()">Clear all</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks2 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#multi-basic'</span>)[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: maxSelect ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🔢</div>
+        <div>
+          <div class="demo-card-title">Selection Limit — <code>maxSelect</code></div>
+          <div class="demo-card-desc">Cap the number of items a user can pick. When the limit is hit, remaining options dim out and an amber notice appears in the dropdown so the user knows why.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo — pick up to 3 toppings</div>
+
+        <select id="max-select-demo" multiple data-placeholder="Choose up to 3 toppings…">
+          <option value="cheese">🧀 Cheese</option>
+          <option value="pepperoni">🍕 Pepperoni</option>
+          <option value="mushrooms">🍄 Mushrooms</option>
+          <option value="olives">🫒 Olives</option>
+          <option value="onions">🧅 Onions</option>
+          <option value="peppers">🫑 Peppers</option>
+          <option value="anchovies">🐟 Anchovies</option>
+          <option value="basil">🌿 Basil</option>
+          <option value="chilli">🌶️ Chilli</option>
+          <option value="ham">🍖 Ham</option>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="max-select-output">—</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="ksMaxSelect.setValue(['cheese','pepperoni','mushrooms'])">Set 3 values</button>
+          <button class="btn btn-secondary" onclick="ksMaxSelect.setValue(['olives'])">Set 1 value</button>
+          <button class="btn btn-danger" onclick="ksMaxSelect.clear()">Clear</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ksMaxSelect = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#max-select-demo'</span>, {
+  <span class="key">maxSelect</span>: <span class="num">3</span>,
+  <span class="key">maxSelectText</span>: <span class="str">'Max {n} toppings'</span>,
+})[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO 3: Optgroups collapsible ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">📂</div>
+        <div>
+          <div class="demo-card-title">Optgroups — Collapsible</div>
+          <div class="demo-card-desc">Options organised into labelled groups. Click the group header to collapse/expand. Search automatically expands matching groups.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+
+        <select id="optgroup-select" multiple data-placeholder="Select programming languages…">
+          <optgroup label="Web">
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="js">JavaScript</option>
+            <option value="ts">TypeScript</option>
+            <option value="wasm">WebAssembly</option>
+          </optgroup>
+          <optgroup label="Backend">
+            <option value="python">Python</option>
+            <option value="ruby">Ruby</option>
+            <option value="go">Go</option>
+            <option value="rust">Rust</option>
+            <option value="java">Java</option>
+            <option value="csharp">C#</option>
+            <option value="php">PHP</option>
+          </optgroup>
+          <optgroup label="Mobile">
+            <option value="swift">Swift</option>
+            <option value="kotlin">Kotlin</option>
+            <option value="dart">Dart / Flutter</option>
+            <option value="objc">Objective-C</option>
+          </optgroup>
+          <optgroup label="Data & ML">
+            <option value="r">R</option>
+            <option value="julia">Julia</option>
+            <option value="scala">Scala</option>
+            <option value="matlab">MATLAB</option>
+          </optgroup>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="optgroup-output">—</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="ks3.setValue(['js','python','swift'])">Set 3 values</button>
+          <button class="btn btn-danger" onclick="ks3.clear()">Clear</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks3 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#optgroup-select'</span>, {
+  <span class="key">collapseGroups</span>: <span class="kw">false</span>,
+})[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO 4: Optgroups collapsed by default ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">📁</div>
+        <div>
+          <div class="demo-card-title">Optgroups — Collapsed by Default</div>
+          <div class="demo-card-desc">Same structure but groups start collapsed. Useful when you have many groups and want a compact initial view.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+
+        <select id="optgroup-collapsed">
+          <optgroup label="North America">
+            <option value="us">United States</option>
+            <option value="ca">Canada</option>
+            <option value="mx">Mexico</option>
+          </optgroup>
+          <optgroup label="Europe">
+            <option value="gb">United Kingdom</option>
+            <option value="de">Germany</option>
+            <option value="fr">France</option>
+            <option value="es">Spain</option>
+            <option value="it">Italy</option>
+          </optgroup>
+          <optgroup label="Asia Pacific">
+            <option value="jp">Japan</option>
+            <option value="cn">China</option>
+            <option value="in">India</option>
+            <option value="au">Australia</option>
+            <option value="sg">Singapore</option>
+          </optgroup>
+          <optgroup label="South America">
+            <option value="br">Brazil</option>
+            <option value="ar">Argentina</option>
+            <option value="cl">Chile</option>
+          </optgroup>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Value:</span>
+          <span class="output-value" id="optgroup-collapsed-output">—</span>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks4 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#optgroup-collapsed'</span>, {
+  <span class="key">collapseGroups</span>: <span class="kw">true</span>,
+})[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO 5: Disabled states ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🔒</div>
+        <div>
+          <div class="demo-card-title">Disabled States</div>
+          <div class="demo-card-desc">The whole control can be disabled, or individual options can be marked disabled.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="split">
+          <div>
+            <div class="section-label">Disabled control</div>
+            <select id="disabled-control" disabled data-placeholder="Cannot interact…">
+              <option value="a">Option A</option>
+              <option value="b">Option B</option>
+            </select>
+          </div>
+          <div>
+            <div class="section-label">Disabled options</div>
+            <select id="disabled-options" data-placeholder="Some options locked…">
+              <option value="free1">Free tier — Basic</option>
+              <option value="free2">Free tier — Standard</option>
+              <option value="pro1" disabled>Pro — Advanced (disabled)</option>
+              <option value="pro2" disabled>Pro — Enterprise (disabled)</option>
+              <option value="custom">Custom Plan</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:18px">
+          <button class="btn btn-primary" onclick="ks5.enable(); this.disabled=true; document.getElementById('btn-disable').disabled=false">Enable control</button>
+          <button class="btn btn-secondary" id="btn-disable" onclick="ks5.disable(); this.disabled=true; document.getElementById('btn-enable-2').disabled=false" style="display:none">Disable control</button>
+          <button class="btn btn-secondary" id="btn-enable-2" onclick="ks5.enable(); this.disabled=true;" style="display:none">Enable control</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="cm">// Disabled control (respects the disabled attribute on the &lt;select&gt;)</span>
+<span class="kw">const</span> ks5 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#disabled-control'</span>)[0];
+
+<span class="cm">// Individual disabled options (respects disabled on each &lt;option&gt;)</span>
+<span class="kw">const</span> ks6 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#disabled-options'</span>)[0];
+
+<span class="cm">// Enable / disable via the API</span>
+ks5.<span class="fn">disable</span>();
+ks5.<span class="fn">enable</span>();</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO 6: Dynamic sync ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🔄</div>
+        <div>
+          <div class="demo-card-title">Dynamic Sync</div>
+          <div class="demo-card-desc">The underlying <code>&lt;select&gt;</code> is updated programmatically. Dispatch <code>kselect:sync</code> to force the widget to reflect changes.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+
+        <select id="sync-demo" data-placeholder="Options will be added dynamically…">
+          <option value="opt1">Original option 1</option>
+          <option value="opt2">Original option 2</option>
+        </select>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addDynamicOptions()">Add options to &lt;select&gt;</button>
+          <button class="btn btn-secondary" onclick="triggerSync()">Dispatch kselect:sync</button>
+          <button class="btn btn-danger" onclick="resetSyncDemo()">Reset</button>
+        </div>
+
+        <div class="code-block">
+<span class="cm">// After modifying the select DOM:</span>
+<span class="kw">const</span> evt = <span class="kw">new</span> <span class="fn">Event</span>(<span class="str">'kselect:sync'</span>);
+selectEl.<span class="fn">dispatchEvent</span>(evt);
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks7 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#sync-demo'</span>)[0];
+
+<span class="cm">// Later, after adding/removing &lt;option&gt; elements:</span>
+<span class="kw">const</span> selectEl = document.<span class="fn">getElementById</span>(<span class="str">'sync-demo'</span>);
+selectEl.<span class="fn">dispatchEvent</span>(<span class="kw">new</span> <span class="fn">Event</span>(<span class="str">'kselect:sync'</span>));
+
+<span class="cm">// Or via the instance:</span>
+ks7.<span class="fn">refresh</span>();</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO 7: Theming ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🎨</div>
+        <div>
+          <div class="demo-card-title">Custom Themes via CSS Variables</div>
+          <div class="demo-card-desc">Override CSS custom properties on the wrapper element to create any look.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="split">
+          <div>
+            <div class="section-label">Dark theme (Catppuccin)</div>
+            <div class="theme-dark">
+              <select id="theme-dark" data-placeholder="Choose a style…">
+                <option value="catppuccin">Catppuccin Mocha</option>
+                <option value="dracula">Dracula</option>
+                <option value="nord">Nord</option>
+                <option value="gruvbox">Gruvbox</option>
+                <option value="solarized">Solarized Dark</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <div class="section-label">Green accent theme</div>
+            <div class="theme-green">
+              <select id="theme-green" multiple data-placeholder="Select frameworks…">
+                <option value="vue">Vue.js</option>
+                <option value="react">React</option>
+                <option value="svelte">Svelte</option>
+                <option value="solid">Solid.js</option>
+                <option value="qwik">Qwik</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block">
+<span class="cm">/* Override on the wrapper or a parent: */</span>
+<span class="fn">.my-theme</span> {
+  <span class="attr">--ks-color-border-focus</span>: <span class="str">#10b981</span>;
+  <span class="attr">--ks-color-option-selected</span>: <span class="str">#10b981</span>;
+  <span class="attr">--ks-color-tag-bg</span>: <span class="str">#ecfdf5</span>;
+  <span class="attr">--ks-color-tag-text</span>: <span class="str">#059669</span>;
+  <span class="cm">/* ... and more */</span>
+}
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="cm">// No special options needed — theming is purely via CSS variables</span>
+<span class="kw">const</span> ks8 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#theme-dark'</span>)[0];
+<span class="kw">const</span> ks9 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#theme-green'</span>)[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: Select all (global) ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">✅</div>
+        <div>
+          <div class="demo-card-title">Select All Checkbox</div>
+          <div class="demo-card-desc">A "Select all" row at the top of the dropdown. It reflects checked / indeterminate / unchecked state as items are toggled individually.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+
+        <select id="select-all-demo" multiple data-placeholder="Select team members…">
+          <option value="alice">Alice</option>
+          <option value="bob">Bob</option>
+          <option value="carol">Carol</option>
+          <option value="dave">Dave</option>
+          <option value="eve">Eve</option>
+          <option value="frank">Frank</option>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="select-all-output">—</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-danger" onclick="ksSelectAll.clear()">Clear all</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ksSelectAll = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#select-all-demo'</span>, {
+  <span class="key">selectAll</span>: <span class="kw">true</span>,
+})[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: Select all per optgroup ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">☑️</div>
+        <div>
+          <div class="demo-card-title">Select All per Optgroup</div>
+          <div class="demo-card-desc">Each optgroup gets its own "Select all" row. Both global and per-group select-all can be combined.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+
+        <select id="select-all-groups-demo" multiple data-placeholder="Select permissions…">
+          <optgroup label="Posts">
+            <option value="post-read">Read posts</option>
+            <option value="post-create">Create posts</option>
+            <option value="post-edit">Edit posts</option>
+            <option value="post-delete">Delete posts</option>
+          </optgroup>
+          <optgroup label="Users">
+            <option value="user-read">Read users</option>
+            <option value="user-create">Create users</option>
+            <option value="user-edit">Edit users</option>
+            <option value="user-delete">Delete users</option>
+          </optgroup>
+          <optgroup label="Settings">
+            <option value="settings-read">Read settings</option>
+            <option value="settings-edit">Edit settings</option>
+          </optgroup>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="select-all-groups-output">—</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-danger" onclick="ksSelectAllGroups.clear()">Clear all</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ksSelectAllGroups = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#select-all-groups-demo'</span>, {
+  <span class="key">selectAll</span>: <span class="kw">true</span>,
+  <span class="key">selectAllGroups</span>: <span class="kw">true</span>,
+})[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: Event listening ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">📡</div>
+        <div>
+          <div class="demo-card-title">Events</div>
+          <div class="demo-card-desc">Listen for native <code>change</code> and custom <code>kselect:change</code>, <code>kselect:open</code>, <code>kselect:close</code> events.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+        <select id="event-demo" multiple data-placeholder="Select options to see events…">
+          <option value="alpha">Alpha</option>
+          <option value="beta">Beta</option>
+          <option value="gamma">Gamma</option>
+          <option value="delta">Delta</option>
+          <option value="epsilon">Epsilon</option>
+        </select>
+
+        <div style="margin-top:16px">
+          <div class="section-label">Event log</div>
+          <div id="event-log" style="
+            font-family: 'DM Mono', monospace;
+            font-size: 0.78rem;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 14px;
+            height: 110px;
+            overflow-y: auto;
+            color: #374151;
+            line-height: 1.8;
+          ">Waiting for events…</div>
+        </div>
+
+        <div class="code-block">
+<span class="fn">selectEl</span>.<span class="fn">addEventListener</span>(<span class="str">'kselect:change'</span>, <span class="kw">e</span> => {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'new value:'</span>, ks.<span class="fn">getValue</span>());
+});
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks10 = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#event-demo'</span>)[0];
+<span class="kw">const</span> selectEl = document.<span class="fn">getElementById</span>(<span class="str">'event-demo'</span>);
+
+selectEl.<span class="fn">addEventListener</span>(<span class="str">'change'</span>, () => { <span class="cm">/* native change */</span> });
+selectEl.<span class="fn">addEventListener</span>(<span class="str">'kselect:change'</span>, () => {
+  <span class="fn">console</span>.<span class="fn">log</span>(ks10.<span class="fn">getValue</span>());
+});
+selectEl.<span class="fn">addEventListener</span>(<span class="str">'kselect:open'</span>,   () => { <span class="cm">/* dropdown opened */</span> });
+selectEl.<span class="fn">addEventListener</span>(<span class="str">'kselect:close'</span>,  () => { <span class="cm">/* dropdown closed */</span> });</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: native change event alert ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🔔</div>
+        <div>
+          <div class="demo-card-title">Native <code>change</code> event — alert test</div>
+          <div class="demo-card-desc">A plain <code>addEventListener('change', …)</code> on the underlying <code>&lt;select&gt;</code> — no kselect API involved. Select an item to see if the native event fires.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo — select an item to trigger an alert</div>
+        <select id="change-event-demo" multiple data-placeholder="Pick something…">
+          <option value="one">One</option>
+          <option value="two">Two</option>
+          <option value="three">Three</option>
+          <option value="four">Four</option>
+          <option value="five">Five</option>
+        </select>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ksChangeEvent = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#change-event-demo'</span>)[0];
+<span class="kw">const</span> changeEventEl = document.<span class="fn">getElementById</span>(<span class="str">'change-event-demo'</span>);
+
+changeEventEl.<span class="fn">addEventListener</span>(<span class="str">'change'</span>, <span class="kw">function</span> () {
+  <span class="kw">const</span> values = ksChangeEvent.<span class="fn">getValue</span>();
+  <span class="fn">alert</span>(<span class="str">'change fired! values: '</span> + values.<span class="fn">join</span>(<span class="str">', '</span>));
+});</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: nativeOnMobile ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">📱</div>
+        <div>
+          <div class="demo-card-title">Native picker on touch devices</div>
+          <div class="demo-card-desc">Set <code>nativeOnMobile: true</code> to fall back to the OS picker on phones and tablets. Open this page on a phone to see the difference — on desktop you still get the full custom widget.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+        <select id="native-mobile-demo" data-placeholder="Pick a fruit…">
+          <option value="apple">🍎 Apple</option>
+          <option value="banana">🍌 Banana</option>
+          <option value="cherry">🍒 Cherry</option>
+          <option value="grape">🍇 Grape</option>
+          <option value="kiwi">🥝 Kiwi</option>
+          <option value="lemon">🍋 Lemon</option>
+          <option value="mango">🥭 Mango</option>
+          <option value="orange">🍊 Orange</option>
+          <option value="peach">🍑 Peach</option>
+          <option value="strawberry">🍓 Strawberry</option>
+        </select>
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="native-mobile-output">—</span>
+        </div>
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#native-mobile-demo'</span>, {
+  <span class="key">nativeOnMobile</span>: <span class="kw">true</span>,
+})[0];
+
+<span class="cm">// All API methods still work on either device</span>
+ks.<span class="fn">getValue</span>();
+ks.<span class="fn">setValue</span>(<span class="str">'cherry'</span>);</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: nativeOnMobile (multi) ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">📱</div>
+        <div>
+          <div class="demo-card-title">Native picker on touch devices (multi)</div>
+          <div class="demo-card-desc"><code>nativeOnMobile: true</code> works for multi-selects too. On phones, users get the OS-native multi-select UI (a stacked list on iOS); on desktop, the full custom widget with checkboxes and tag pills.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+        <select id="native-mobile-multi-demo" multiple data-placeholder="Pick toppings…">
+          <option value="cheese">🧀 Cheese</option>
+          <option value="pepperoni">🍕 Pepperoni</option>
+          <option value="mushrooms">🍄 Mushrooms</option>
+          <option value="olives">🫒 Olives</option>
+          <option value="onions">🧅 Onions</option>
+          <option value="peppers">🫑 Peppers</option>
+          <option value="anchovies">🐟 Anchovies</option>
+          <option value="basil">🌿 Basil</option>
+          <option value="chilli">🌶️ Chilli</option>
+        </select>
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="native-mobile-multi-output">—</span>
+        </div>
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#native-mobile-multi-demo'</span>, {
+  <span class="key">nativeOnMobile</span>: <span class="kw">true</span>,
+})[0];
+
+<span class="cm">// getValue() returns an array for multi selects, in either mode</span>
+ks.<span class="fn">getValue</span>();          <span class="cm">// → ['cheese', 'olives']</span>
+ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span class="str">'mushrooms'</span>]);</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: allowHtml (enabled) ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">✨</div>
+        <div>
+          <div class="demo-card-title">HTML Option Labels — <code>allowHtml: true</code></div>
+          <div class="demo-card-desc">With <code>allowHtml</code> enabled (the default), HTML markup inside <code>&lt;option&gt;</code> tags is rendered live — bold text, colours, flags, icons, whatever you put in.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo</div>
+
+        <select id="allow-html-demo" multiple data-placeholder="Pick a style…">
+          <option value="bold">&lt;strong&gt;Bold text&lt;/strong&gt;</option>
+          <option value="italic">&lt;em&gt;Italic text&lt;/em&gt;</option>
+          <option value="strike">&lt;s&gt;Strikethrough&lt;/s&gt;</option>
+          <option value="code">&lt;code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;font-size:0.85em"&gt;Inline code&lt;/code&gt;</option>
+          <option value="colored">&lt;span style="color:#e11d48;font-weight:600"&gt;Coloured label&lt;/span&gt;</option>
+          <option value="flag">🇯🇵 Japan — with flag</option>
+          <option value="badge">Server &lt;span style="background:#dcfce7;color:#166534;font-size:0.75em;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px"&gt;online&lt;/span&gt;</option>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="allow-html-output">—</span>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="cm">&lt;!-- HTML is written directly inside &lt;option&gt; tags --&gt;</span>
+<span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"bold"</span><span class="tag">&gt;</span><span class="val">&lt;strong&gt;</span>Bold text<span class="val">&lt;/strong&gt;</span><span class="tag">&lt;/option&gt;</span>
+<span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"colored"</span><span class="tag">&gt;&lt;span</span> <span class="attr">style</span>=<span class="val">"color:#e11d48"</span><span class="tag">&gt;</span>Coloured<span class="tag">&lt;/span&gt;&lt;/option&gt;</span>
+
+<span class="kw">const</span> ksAllowHtml = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#allow-html-demo'</span>, {
+  <span class="key">allowHtml</span>: <span class="kw">true</span>, <span class="cm">// default — can be omitted</span>
+})[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: allowHtml (disabled) ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🔒</div>
+        <div>
+          <div class="demo-card-title">HTML Option Labels — <code>allowHtml: false</code></div>
+          <div class="demo-card-desc">With <code>allowHtml: false</code>, HTML tags are shown as literal text. Useful when option content comes from user input or untrusted sources.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo — same options, tags shown as text</div>
+
+        <select id="no-html-demo" multiple data-placeholder="Pick a style…">
+          <option value="bold">&lt;strong&gt;Bold text&lt;/strong&gt;</option>
+          <option value="italic">&lt;em&gt;Italic text&lt;/em&gt;</option>
+          <option value="strike">&lt;s&gt;Strikethrough&lt;/s&gt;</option>
+          <option value="code">&lt;code&gt;Inline code&lt;/code&gt;</option>
+          <option value="colored">&lt;span style="color:#e11d48;font-weight:600"&gt;Coloured label&lt;/span&gt;</option>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="no-html-output">—</span>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ksNoHtml = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#no-html-demo'</span>, {
+  <span class="key">allowHtml</span>: <span class="kw">false</span>,
+})[0];</pre>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /demo-grid -->
+
+  <p class="page-footer">
+    kselect.js — MIT License — Vanilla JS, zero dependencies
+  </p>
+
+</div><!-- /container -->
+
+<script src="kselect.min.js?v=e"></script>
+<script src="example.js?v=e"></script>
+<script src="index.js?v=e"></script>
+</body>
+</html>

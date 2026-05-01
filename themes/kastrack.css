@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: KAStrack
+   Corporate blue. Clean, professional, trust-inspiring.
+   Built for business dashboards and enterprise UIs.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #ffffff;
+  --ks-color-border: #b0bec5;
+  --ks-color-border-focus: #1565c0;
+  --ks-color-text: #1a2332;
+  --ks-color-placeholder: #78909c;
+  --ks-color-disabled-bg: #f5f7fa;
+  --ks-color-disabled-text: #b0bec5;
+  --ks-color-disabled-border: #e8ecf0;
+
+  --ks-color-option-hover: #e8f0fe;
+  --ks-color-option-selected: #1565c0;
+  --ks-color-option-selected-text: #ffffff;
+  --ks-color-option-selected-bg: #e8f0fe;
+  --ks-color-option-selected-fg: #1565c0;
+
+  --ks-color-group-header: #f5f7fa;
+  --ks-color-group-label: #546e7a;
+
+  --ks-color-tag-bg: #e8f0fe;
+  --ks-color-tag-text: #1565c0;
+  --ks-color-tag-border: #90caf9;
+  --ks-color-tag-remove: #64b5f6;
+  --ks-color-tag-remove-hover: #1565c0;
+
+  --ks-color-clear: #90a4ae;
+  --ks-color-clear-hover: #e53935;
+  --ks-color-arrow: #90a4ae;
+  --ks-color-arrow-open: #1565c0;
+
+  --ks-color-checkbox-border: #b0bec5;
+  --ks-color-checkbox-checked: #1565c0;
+
+  --ks-color-search-bg: #f5f7fa;
+
+  --ks-radius-control: 6px;
+  --ks-radius-dropdown: 8px;
+  --ks-radius-tag: 4px;
+  --ks-radius-checkbox: 3px;
+
+  --ks-shadow-dropdown: 0 2px 8px rgba(0,0,0,.10), 0 8px 24px rgba(0,0,0,.08);
+  --ks-transition: 0.15s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #f0f4f8;
+  --card-bg: #ffffff;
+  --text-primary: #1a2332;
+  --text-secondary: #37474f;
+  --text-muted: #78909c;
+  --accent: #1565c0;
+  --accent-light: #e8f0fe;
+  --border: #e0e6ed;
+}

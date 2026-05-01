@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Halloween
+   Pumpkin orange and spectral purple on pitch black.
+   Trick or treat. Mostly trick.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #0d0d0d;
+  --ks-color-border: #7c2d12;
+  --ks-color-border-focus: #f97316;
+  --ks-color-text: #fef3c7;
+  --ks-color-placeholder: #78350f;
+  --ks-color-disabled-bg: #080808;
+  --ks-color-disabled-text: #451a03;
+  --ks-color-disabled-border: #1c0a00;
+
+  --ks-color-option-hover: #1c0a00;
+  --ks-color-option-selected: #f97316;
+  --ks-color-option-selected-text: #0d0d0d;
+  --ks-color-option-selected-bg: #1c0a00;
+  --ks-color-option-selected-fg: #f97316;
+
+  --ks-color-group-header: #080808;
+  --ks-color-group-label: #7c2d12;
+
+  --ks-color-tag-bg: #1c0a00;
+  --ks-color-tag-text: #f97316;
+  --ks-color-tag-border: #7c2d12;
+  --ks-color-tag-remove: #78350f;
+  --ks-color-tag-remove-hover: #a855f7;
+
+  --ks-color-clear: #78350f;
+  --ks-color-clear-hover: #a855f7;
+  --ks-color-arrow: #78350f;
+  --ks-color-arrow-open: #f97316;
+
+  --ks-color-checkbox-border: #7c2d12;
+  --ks-color-checkbox-checked: #f97316;
+
+  --ks-color-search-bg: #080808;
+
+  --ks-radius-control: 4px;
+  --ks-radius-dropdown: 4px;
+  --ks-radius-tag: 3px;
+  --ks-radius-checkbox: 2px;
+
+  --ks-shadow-dropdown: 0 0 20px rgba(249,115,22,.2), 0 8px 32px rgba(0,0,0,.8);
+  --ks-transition: 0.15s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #080808;
+  --card-bg: #0d0d0d;
+  --text-primary: #fef3c7;
+  --text-secondary: #fde68a;
+  --text-muted: #78350f;
+  --accent: #f97316;
+  --accent-light: #1c0a00;
+  --border: #7c2d12;
+}

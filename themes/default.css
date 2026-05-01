@@ -1,0 +1,66 @@
+/* ============================================================
+   kselect theme: Default (Indigo)
+   The built-in theme. Clean whites, soft borders, indigo accent.
+   ============================================================ */
+
+/* The default theme simply removes any overrides so the base
+   kselect.css custom-property values take effect. */
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #ffffff;
+  --ks-color-border: #a0aec0;
+  --ks-color-border-focus: #6366f1;
+  --ks-color-text: #111827;
+  --ks-color-placeholder: #767676;
+  --ks-color-disabled-bg: #f3f4f6;
+  --ks-color-disabled-text: #9ca3af;
+  --ks-color-disabled-border: #e5e7eb;
+
+  --ks-color-option-hover: #f0f0ff;
+  --ks-color-option-selected: #6366f1;
+  --ks-color-option-selected-text: #ffffff;
+  --ks-color-option-selected-bg: #eef2ff;
+  --ks-color-option-selected-fg: #4f46e5;
+
+  --ks-color-group-header: #f9fafb;
+  --ks-color-group-label: #6b7280;
+
+  --ks-color-tag-bg: #eef2ff;
+  --ks-color-tag-text: #4f46e5;
+  --ks-color-tag-border: #c7d2fe;
+  --ks-color-tag-remove: #818cf8;
+  --ks-color-tag-remove-hover: #4f46e5;
+
+  --ks-color-clear: #9ca3af;
+  --ks-color-clear-hover: #ef4444;
+  --ks-color-arrow: #9ca3af;
+  --ks-color-arrow-open: #6366f1;
+
+  --ks-color-checkbox-border: #d1d5db;
+  --ks-color-checkbox-checked: #6366f1;
+
+  --ks-color-search-bg: #f9fafb;
+
+  --ks-radius-control: 8px;
+  --ks-radius-dropdown: 10px;
+  --ks-radius-tag: 5px;
+  --ks-radius-checkbox: 4px;
+
+  --ks-shadow-dropdown: 0 4px 6px -1px rgba(0,0,0,.1), 0 10px 30px -5px rgba(0,0,0,.12);
+  --ks-transition: 0.18s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --accent: #6366f1;
+  --accent-light: #eef2ff;
+  --border: #e5e7eb;
+}

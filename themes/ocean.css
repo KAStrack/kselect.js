@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Ocean
+   Deep navy, sea-glass teal, and foamy whites.
+   Calm, vast, and slightly mysterious.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #0d2137;
+  --ks-color-border: #1a3a5c;
+  --ks-color-border-focus: #38bdf8;
+  --ks-color-text: #e0f2fe;
+  --ks-color-placeholder: #375a7f;
+  --ks-color-disabled-bg: #091929;
+  --ks-color-disabled-text: #1a3a5c;
+  --ks-color-disabled-border: #112840;
+
+  --ks-color-option-hover: #1a3a5c;
+  --ks-color-option-selected: #38bdf8;
+  --ks-color-option-selected-text: #0d2137;
+  --ks-color-option-selected-bg: #1a3a5c;
+  --ks-color-option-selected-fg: #38bdf8;
+
+  --ks-color-group-header: #091929;
+  --ks-color-group-label: #4a7fa5;
+
+  --ks-color-tag-bg: #1a3a5c;
+  --ks-color-tag-text: #38bdf8;
+  --ks-color-tag-border: #1e4976;
+  --ks-color-tag-remove: #4a7fa5;
+  --ks-color-tag-remove-hover: #f87171;
+
+  --ks-color-clear: #375a7f;
+  --ks-color-clear-hover: #f87171;
+  --ks-color-arrow: #375a7f;
+  --ks-color-arrow-open: #38bdf8;
+
+  --ks-color-checkbox-border: #1a3a5c;
+  --ks-color-checkbox-checked: #38bdf8;
+
+  --ks-color-search-bg: #091929;
+
+  --ks-radius-control: 8px;
+  --ks-radius-dropdown: 10px;
+  --ks-radius-tag: 5px;
+  --ks-radius-checkbox: 4px;
+
+  --ks-shadow-dropdown: 0 4px 16px rgba(0,0,0,.5), 0 12px 40px rgba(0,0,0,.4);
+  --ks-transition: 0.2s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #091929;
+  --card-bg: #0d2137;
+  --text-primary: #e0f2fe;
+  --text-secondary: #bae6fd;
+  --text-muted: #4a7fa5;
+  --accent: #38bdf8;
+  --accent-light: #1a3a5c;
+  --border: #1a3a5c;
+}

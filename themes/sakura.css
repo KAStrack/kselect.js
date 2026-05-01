@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Sakura
+   Soft pinks and blossoming whites. Fleeting and beautiful.
+   Cherry blossom season in a dropdown.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #fff0f5;
+  --ks-color-border: #fba8c8;
+  --ks-color-border-focus: #e0306a;
+  --ks-color-text: #5c1a35;
+  --ks-color-placeholder: #f9a8c9;
+  --ks-color-disabled-bg: #fce4ec;
+  --ks-color-disabled-text: #f8bbd0;
+  --ks-color-disabled-border: #fce4ec;
+
+  --ks-color-option-hover: #fce4ec;
+  --ks-color-option-selected: #e0306a;
+  --ks-color-option-selected-text: #ffffff;
+  --ks-color-option-selected-bg: #fce4ec;
+  --ks-color-option-selected-fg: #c2185b;
+
+  --ks-color-group-header: #fce4ec;
+  --ks-color-group-label: #f06292;
+
+  --ks-color-tag-bg: #fce4ec;
+  --ks-color-tag-text: #c2185b;
+  --ks-color-tag-border: #f48fb1;
+  --ks-color-tag-remove: #f06292;
+  --ks-color-tag-remove-hover: #ad1457;
+
+  --ks-color-clear: #f9a8c9;
+  --ks-color-clear-hover: #ad1457;
+  --ks-color-arrow: #f9a8c9;
+  --ks-color-arrow-open: #e0306a;
+
+  --ks-color-checkbox-border: #fba8c8;
+  --ks-color-checkbox-checked: #e0306a;
+
+  --ks-color-search-bg: #fce4ec;
+
+  --ks-radius-control: 12px;
+  --ks-radius-dropdown: 14px;
+  --ks-radius-tag: 20px;
+  --ks-radius-checkbox: 50%;
+
+  --ks-shadow-dropdown: 0 4px 12px rgba(224,48,106,.12), 0 12px 28px rgba(224,48,106,.08);
+  --ks-transition: 0.2s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #fce4ec;
+  --card-bg: #fff0f5;
+  --text-primary: #5c1a35;
+  --text-secondary: #880e4f;
+  --text-muted: #f06292;
+  --accent: #e0306a;
+  --accent-light: #fce4ec;
+  --border: #f8bbd0;
+}

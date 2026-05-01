@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Mint
+   Fresh greens on crisp white. Light, airy, and clean.
+   Like opening a window on a spring morning.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #ffffff;
+  --ks-color-border: #a7f3d0;
+  --ks-color-border-focus: #059669;
+  --ks-color-text: #064e3b;
+  --ks-color-placeholder: #6ee7b7;
+  --ks-color-disabled-bg: #f0fdf4;
+  --ks-color-disabled-text: #a7f3d0;
+  --ks-color-disabled-border: #d1fae5;
+
+  --ks-color-option-hover: #ecfdf5;
+  --ks-color-option-selected: #059669;
+  --ks-color-option-selected-text: #ffffff;
+  --ks-color-option-selected-bg: #d1fae5;
+  --ks-color-option-selected-fg: #065f46;
+
+  --ks-color-group-header: #f0fdf4;
+  --ks-color-group-label: #34d399;
+
+  --ks-color-tag-bg: #d1fae5;
+  --ks-color-tag-text: #065f46;
+  --ks-color-tag-border: #6ee7b7;
+  --ks-color-tag-remove: #34d399;
+  --ks-color-tag-remove-hover: #059669;
+
+  --ks-color-clear: #6ee7b7;
+  --ks-color-clear-hover: #dc2626;
+  --ks-color-arrow: #6ee7b7;
+  --ks-color-arrow-open: #059669;
+
+  --ks-color-checkbox-border: #a7f3d0;
+  --ks-color-checkbox-checked: #059669;
+
+  --ks-color-search-bg: #f0fdf4;
+
+  --ks-radius-control: 10px;
+  --ks-radius-dropdown: 12px;
+  --ks-radius-tag: 20px;
+  --ks-radius-checkbox: 4px;
+
+  --ks-shadow-dropdown: 0 4px 12px rgba(5,150,105,.1), 0 12px 28px rgba(5,150,105,.08);
+  --ks-transition: 0.2s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #f0fdf4;
+  --card-bg: #ffffff;
+  --text-primary: #064e3b;
+  --text-secondary: #065f46;
+  --text-muted: #34d399;
+  --accent: #059669;
+  --accent-light: #d1fae5;
+  --border: #a7f3d0;
+}

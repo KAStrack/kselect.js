@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Terminal
+   Classic green phosphor text on pure black.
+   Unix terminal meets 1980s hacker chic.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Courier New', 'Lucida Console', monospace;
+  --ks-font-size: 0.88rem;
+  --ks-line-height: 1.6;
+
+  --ks-color-bg: #0a0a0a;
+  --ks-color-border: #00aa00;
+  --ks-color-border-focus: #00ff41;
+  --ks-color-text: #00ff41;
+  --ks-color-placeholder: #007722;
+  --ks-color-disabled-bg: #050505;
+  --ks-color-disabled-text: #004411;
+  --ks-color-disabled-border: #003300;
+
+  --ks-color-option-hover: #001a00;
+  --ks-color-option-selected: #00ff41;
+  --ks-color-option-selected-text: #000000;
+  --ks-color-option-selected-bg: #001a00;
+  --ks-color-option-selected-fg: #00ff41;
+
+  --ks-color-group-header: #050505;
+  --ks-color-group-label: #00aa00;
+
+  --ks-color-tag-bg: #001a00;
+  --ks-color-tag-text: #00ff41;
+  --ks-color-tag-border: #005500;
+  --ks-color-tag-remove: #00aa00;
+  --ks-color-tag-remove-hover: #ff0040;
+
+  --ks-color-clear: #007722;
+  --ks-color-clear-hover: #ff0040;
+  --ks-color-arrow: #007722;
+  --ks-color-arrow-open: #00ff41;
+
+  --ks-color-checkbox-border: #00aa00;
+  --ks-color-checkbox-checked: #00ff41;
+
+  --ks-color-search-bg: #050505;
+
+  --ks-radius-control: 0px;
+  --ks-radius-dropdown: 0px;
+  --ks-radius-tag: 0px;
+  --ks-radius-checkbox: 0px;
+
+  --ks-shadow-dropdown: 0 0 20px rgba(0,255,65,.15), 0 0 40px rgba(0,255,65,.05);
+  --ks-transition: 0.1s steps(2);
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #000000;
+  --card-bg: #0a0a0a;
+  --text-primary: #00ff41;
+  --text-secondary: #00cc33;
+  --text-muted: #007722;
+  --accent: #00ff41;
+  --accent-light: #001a00;
+  --border: #003300;
+}

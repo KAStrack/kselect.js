@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kselect.js — Documentation</title>
+  <!-- Apply saved theme before first paint to prevent flash -->
+  <script>try{var t=localStorage.getItem('kselect-docs-theme');if(t&&t!=='auto')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+  <nav class="sidebar" aria-label="Documentation navigation">
+    <div class="sidebar-logo">
+      <a href="#top">
+        <span class="logo-re">k</span><span class="logo-select">select</span><span class="logo-js">.js</span>
+      </a>
+      <div class="sidebar-version">v0.3.1 — MIT License</div>
+    </div>
+
+    <div class="nav-section-label">Getting started</div>
+    <a class="nav-link" href="#installation">Installation</a>
+    <a class="nav-link" href="#quick-start">Quick start</a>
+    <a class="nav-link" href="#basic-usage">Basic usage</a>
+
+    <div class="nav-section-label">Features</div>
+    <a class="nav-link" href="#single-select">Single select</a>
+    <a class="nav-link" href="#multi-select">Multi select</a>
+    <a class="nav-link" href="#optgroups">Optgroups</a>
+    <a class="nav-link" href="#select-all">Select all</a>
+    <a class="nav-link" href="#search">Search</a>
+    <a class="nav-link" href="#disabled-states">Disabled states</a>
+    <a class="nav-link" href="#dynamic-options">Dynamic options</a>
+    <a class="nav-link" href="#mobile">Mobile</a>
+
+    <div class="nav-section-label">Reference</div>
+    <a class="nav-link" href="#options-ref">Options</a>
+    <a class="nav-link" href="#instance-api">Instance API</a>
+    <a class="nav-link nav-link-sub" href="#api-getValue">getValue()</a>
+    <a class="nav-link nav-link-sub" href="#api-setValue">setValue()</a>
+    <a class="nav-link nav-link-sub" href="#api-clear">clear()</a>
+    <a class="nav-link nav-link-sub" href="#api-open-close">open() / close()</a>
+    <a class="nav-link nav-link-sub" href="#api-enable-disable">enable() / disable()</a>
+    <a class="nav-link nav-link-sub" href="#api-refresh">refresh()</a>
+    <a class="nav-link nav-link-sub" href="#api-destroy">destroy()</a>
+    <a class="nav-link" href="#events-ref">Events</a>
+    <a class="nav-link" href="#css-vars">CSS variables</a>
+    <a class="nav-link" href="#theming">Theming</a>
+    <a class="nav-link" href="#browser-support">Browser support</a>
+
+    <div class="sidebar-footer">
+      <div class="theme-toggle" role="group" aria-label="Color scheme">
+        <button class="theme-btn" id="btn-auto"  onclick="setTheme('auto')"  title="Use system preference">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><line x1="6" y1="0.5" x2="6" y2="2"/><line x1="6" y1="10" x2="6" y2="11.5"/><line x1="0.5" y1="6" x2="2" y2="6"/><line x1="10" y1="6" x2="11.5" y2="6"/><line x1="1.9" y1="1.9" x2="2.95" y2="2.95"/><line x1="9.05" y1="9.05" x2="10.1" y2="10.1"/><line x1="10.1" y1="1.9" x2="9.05" y2="2.95"/><line x1="2.95" y1="9.05" x2="1.9" y2="10.1"/></svg>
+          Auto
+        </button>
+        <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light mode">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><line x1="6" y1="0.5" x2="6" y2="2.5"/><line x1="6" y1="9.5" x2="6" y2="11.5"/><line x1="0.5" y1="6" x2="2.5" y2="6"/><line x1="9.5" y1="6" x2="11.5" y2="6"/></svg>
+          Light
+        </button>
+        <button class="theme-btn" id="btn-dark"  onclick="setTheme('dark')"  title="Dark mode">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M10 7.5A5 5 0 0 1 4.5 2a5 5 0 1 0 5.5 5.5z"/></svg>
+          Dark
+        </button>
+      </div>
+      <a href="index.html">← Live demo</a>
+    </div>
+  </nav>
+
+  <!-- ── Main ─────────────────────────────────────────────────────────────── -->
+  <main class="main" id="top">
+    <div class="content">
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-eyebrow">Documentation</div>
+        <h1><span>k</span>select.js</h1>
+        <p class="hero-desc">A modern, accessible select replacement — single file, no dependencies. Drop in two files and every <code>&lt;select&gt;</code> on your page gets live search, tag-style multi select, collapsible optgroups, and full keyboard navigation.</p>
+        <div class="hero-badges">
+          <span class="badge badge-indigo">Vanilla JS</span>
+          <span class="badge badge-indigo">Zero dependencies</span>
+          <span class="badge badge-green">WCAG 2.1 AA</span>
+          <span class="badge badge-green">Mobile ready</span>
+          <span class="badge badge-amber">~40 CSS variables</span>
+        </div>
+      </div>
+
+
+      <!-- ── Installation ───────────────────────────────────────────────────── -->
+      <section class="doc-section" id="installation">
+        <h2>Installation</h2>
+        <p>Download <code>kselect.js</code> and <code>kselect.css</code>, place them in your project, and add them to your page. There is no build step, no package manager, and no dependencies.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;link</span> <span class="t-attr">rel</span>=<span class="t-str">"stylesheet"</span> <span class="t-attr">href</span>=<span class="t-str">"kselect.css"</span><span class="t-tag">&gt;</span>
+<span class="t-tag">&lt;script</span> <span class="t-attr">src</span>=<span class="t-str">"kselect.js"</span><span class="t-tag">&gt;&lt;/script&gt;</span></pre>
+        </div>
+
+        <p>kselect also ships as a CommonJS module for use in Node.js-based build pipelines:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-kw">const</span> Kselect = <span class="t-fn">require</span>(<span class="t-str">'./kselect.js'</span>);</pre>
+        </div>
+      </section>
+
+
+      <!-- ── Quick start ────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="quick-start">
+        <h2>Quick start</h2>
+        <p>Point <code>Kselect.init</code> at a CSS selector. The widget replaces the native <code>&lt;select&gt;</code> in place — your HTML, form submission, and any existing event listeners remain completely unchanged.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">id</span>=<span class="t-str">"my-select"</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"js"</span><span class="t-tag">&gt;</span>JavaScript<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"py"</span><span class="t-tag">&gt;</span>Python<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"go"</span><span class="t-tag">&gt;</span>Go<span class="t-tag">&lt;/option&gt;</span>
+<span class="t-tag">&lt;/select&gt;</span>
+
+<span class="t-tag">&lt;script&gt;</span>
+  <span class="t-kw">const</span> [ks] = Kselect.<span class="t-fn">init</span>(<span class="t-str">'#my-select'</span>);
+<span class="t-tag">&lt;/script&gt;</span></pre>
+        </div>
+
+        <p>To initialise every <code>&lt;select&gt;</code> on the page at once:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>); <span class="t-cm">// all selects</span>
+Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); <span class="t-cm">// selects with a specific class</span></pre>
+        </div>
+
+        <div class="callout callout-note">
+          <span class="callout-icon">ℹ</span>
+          <p><code>Kselect.init</code> always returns an <strong>array</strong> of instances, even when only one element matched. Use array destructuring (<code>const [ks] = …</code>) or <code>[0]</code> to get a single instance.</p>
+        </div>
+      </section>
+
+
+      <!-- ── Basic usage ────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="basic-usage">
+        <h2>Basic usage</h2>
+
+        <h3>Passing options</h3>
+        <p>Options are passed as a plain object to the second argument of <code>Kselect.init</code>. All options are optional — the defaults work without any configuration.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#my-select'</span>, {
+  <span class="t-key">placeholder</span>:       <span class="t-str">'Choose an option…'</span>,
+  <span class="t-key">searchPlaceholder</span>: <span class="t-str">'Search…'</span>,
+  <span class="t-key">noResultsText</span>:     <span class="t-str">'No results found'</span>,
+  <span class="t-key">maxHeight</span>:         <span class="t-num">300</span>,
+  <span class="t-key">searchable</span>:        <span class="t-num">true</span>,
+  <span class="t-key">allowClear</span>:        <span class="t-num">true</span>,
+  <span class="t-key">closeOnSelect</span>:     <span class="t-num">true</span>,
+});</pre>
+        </div>
+
+        <h3>Data attributes</h3>
+        <p>Several options can also be set directly on the <code>&lt;select&gt;</code> element as <code>data-</code> attributes. The JavaScript option always takes precedence when both are present.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span>
+  <span class="t-attr">data-placeholder</span>=<span class="t-str">"Pick a country…"</span>
+  <span class="t-attr">data-search-placeholder</span>=<span class="t-str">"Filter countries…"</span>
+<span class="t-tag">&gt;</span>
+  …
+<span class="t-tag">&lt;/select&gt;</span></pre>
+        </div>
+
+        <h3>Retrieving an existing instance</h3>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-kw">const</span> selectEl = document.<span class="t-fn">getElementById</span>(<span class="t-str">'my-select'</span>);
+<span class="t-kw">const</span> ks = Kselect.<span class="t-fn">getInstance</span>(selectEl);</pre>
+        </div>
+      </section>
+
+
+      <!-- ── Single select ──────────────────────────────────────────────────── -->
+      <section class="doc-section" id="single-select">
+        <h2>Single select</h2>
+        <p>Single select mode is used automatically when the <code>&lt;select&gt;</code> element does not have the <code>multiple</code> attribute. The dropdown closes after an option is picked (configurable via <code>closeOnSelect</code>).</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">id</span>=<span class="t-str">"country"</span> <span class="t-attr">data-placeholder</span>=<span class="t-str">"Choose a country…"</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">""</span><span class="t-tag">&gt;&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"us"</span><span class="t-tag">&gt;</span>United States<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"gb"</span><span class="t-tag">&gt;</span>United Kingdom<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"ca"</span><span class="t-tag">&gt;</span>Canada<span class="t-tag">&lt;/option&gt;</span>
+<span class="t-tag">&lt;/select&gt;</span>
+
+<span class="t-tag">&lt;script&gt;</span>
+  <span class="t-kw">const</span> [ks] = Kselect.<span class="t-fn">init</span>(<span class="t-str">'#country'</span>);
+
+  <span class="t-cm">// Read the current value</span>
+  ks.<span class="t-fn">getValue</span>(); <span class="t-cm">// → 'us'  (string, or null if nothing selected)</span>
+<span class="t-tag">&lt;/script&gt;</span></pre>
+        </div>
+
+        <p>To keep the dropdown open after a selection (useful inside modals or filter panels):</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#country'</span>, { <span class="t-key">closeOnSelect</span>: <span class="t-num">false</span> });</pre>
+        </div>
+      </section>
+
+
+      <!-- ── Multi select ───────────────────────────────────────────────────── -->
+      <section class="doc-section" id="multi-select">
+        <h2>Multi select</h2>
+        <p>Add the <code>multiple</code> attribute to your <code>&lt;select&gt;</code> to enable multi select mode. Selected values appear as removable tag pills inside the control. The dropdown stays open after each pick so users can select several options in a row.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">id</span>=<span class="t-str">"fruits"</span> <span class="t-attr">multiple</span> <span class="t-attr">data-placeholder</span>=<span class="t-str">"Pick some fruits…"</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"apple"</span><span class="t-tag">&gt;</span>Apple<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"banana"</span><span class="t-tag">&gt;</span>Banana<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"cherry"</span><span class="t-tag">&gt;</span>Cherry<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"mango"</span><span class="t-tag">&gt;</span>Mango<span class="t-tag">&lt;/option&gt;</span>
+<span class="t-tag">&lt;/select&gt;</span>
+
+<span class="t-tag">&lt;script&gt;</span>
+  <span class="t-kw">const</span> [ks] = Kselect.<span class="t-fn">init</span>(<span class="t-str">'#fruits'</span>);
+
+  <span class="t-cm">// Read all selected values</span>
+  ks.<span class="t-fn">getValue</span>(); <span class="t-cm">// → ['apple', 'cherry']  (always an array in multi mode)</span>
+
+  <span class="t-cm">// Set multiple values at once</span>
+  ks.<span class="t-fn">setValue</span>([<span class="t-str">'banana'</span>, <span class="t-str">'mango'</span>]);
+<span class="t-tag">&lt;/script&gt;</span></pre>
+        </div>
+      </section>
+
+
+      <!-- ── Optgroups ──────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="optgroups">
+        <h2>Optgroups</h2>
+        <p>Standard <code>&lt;optgroup&gt;</code> elements are supported natively. Group headers are rendered with a collapse/expand toggle. When a user types in the search box, any collapsed groups that contain matching options are expanded automatically.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">id</span>=<span class="t-str">"languages"</span> <span class="t-attr">multiple</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;optgroup</span> <span class="t-attr">label</span>=<span class="t-str">"Web"</span><span class="t-tag">&gt;</span>
+    <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"js"</span><span class="t-tag">&gt;</span>JavaScript<span class="t-tag">&lt;/option&gt;</span>
+    <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"ts"</span><span class="t-tag">&gt;</span>TypeScript<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;/optgroup&gt;</span>
+  <span class="t-tag">&lt;optgroup</span> <span class="t-attr">label</span>=<span class="t-str">"Backend"</span><span class="t-tag">&gt;</span>
+    <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"go"</span><span class="t-tag">&gt;</span>Go<span class="t-tag">&lt;/option&gt;</span>
+    <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"rust"</span><span class="t-tag">&gt;</span>Rust<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;/optgroup&gt;</span>
+<span class="t-tag">&lt;/select&gt;</span>
+
+<span class="t-tag">&lt;script&gt;</span>
+  <span class="t-cm">// Groups start expanded (default)</span>
+  Kselect.<span class="t-fn">init</span>(<span class="t-str">'#languages'</span>);
+
+  <span class="t-cm">// Groups start collapsed</span>
+  Kselect.<span class="t-fn">init</span>(<span class="t-str">'#languages'</span>, { <span class="t-key">collapseGroups</span>: <span class="t-num">true</span> });
+<span class="t-tag">&lt;/script&gt;</span></pre>
+        </div>
+      </section>
+
+
+      <!-- ── Select all ─────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="select-all">
+        <h2>Select all</h2>
+        <p>Multi select mode supports two "select all" helpers. Both can be used independently or together.</p>
+
+        <h3>Global select all</h3>
+        <p>Adds a "Select all" row at the top of the dropdown with a tri-state checkbox (checked / indeterminate / unchecked).</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#my-select'</span>, {
+  <span class="t-key">selectAll</span>:     <span class="t-num">true</span>,
+  <span class="t-key">selectAllText</span>: <span class="t-str">'Select all'</span>, <span class="t-cm">// optional label</span>
+});</pre>
+        </div>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p>When <code>selectAll: true</code> is set, the search input moves from the control into the left side of the "Select all" row, forming a single compact bar. This keeps the dropdown header clean.</p>
+        </div>
+
+        <h3>Per-group select all</h3>
+        <p>Adds a select-all checkbox inside each optgroup header. Can be used alone or alongside the global <code>selectAll</code> option.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#permissions'</span>, {
+  <span class="t-key">selectAll</span>:          <span class="t-num">true</span>,
+  <span class="t-key">selectAllGroups</span>:    <span class="t-num">true</span>,
+  <span class="t-key">selectAllGroupText</span>: <span class="t-str">'Select all'</span>, <span class="t-cm">// accessible label for group checkboxes</span>
+});</pre>
+        </div>
+      </section>
+
+
+      <!-- ── Search ─────────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="search">
+        <h2>Search</h2>
+        <p>Live search filtering is on by default. As the user types, non-matching options are hidden and collapsed optgroups are automatically expanded if they contain a match.</p>
+
+        <p>To disable search entirely:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#my-select'</span>, {
+  <span class="t-key">searchable</span>:        <span class="t-num">false</span>,
+  <span class="t-key">noResultsText</span>:     <span class="t-str">'No results found'</span>, <span class="t-cm">// shown when search matches nothing</span>
+  <span class="t-key">searchPlaceholder</span>: <span class="t-str">'Type to filter…'</span>,
+});</pre>
+        </div>
+      </section>
+
+
+      <!-- ── Disabled states ────────────────────────────────────────────────── -->
+      <section class="doc-section" id="disabled-states">
+        <h2>Disabled states</h2>
+
+        <h3>Disable the whole control</h3>
+        <p>Add the <code>disabled</code> attribute to the <code>&lt;select&gt;</code>, or call the API methods at any time:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">id</span>=<span class="t-str">"my-select"</span> <span class="t-attr">disabled</span><span class="t-tag">&gt;</span>…<span class="t-tag">&lt;/select&gt;</span></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>ks.<span class="t-fn">disable</span>();
+ks.<span class="t-fn">enable</span>();</pre>
+        </div>
+
+        <h3>Disable individual options</h3>
+        <p>Disabled options are rendered in the list but cannot be selected or focused by keyboard.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">id</span>=<span class="t-str">"plan"</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"free"</span><span class="t-tag">&gt;</span>Free<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"pro"</span> <span class="t-attr">disabled</span><span class="t-tag">&gt;</span>Pro (unavailable)<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"enterprise"</span><span class="t-tag">&gt;</span>Enterprise<span class="t-tag">&lt;/option&gt;</span>
+<span class="t-tag">&lt;/select&gt;</span></pre>
+        </div>
+      </section>
+
+
+      <!-- ── Dynamic options ────────────────────────────────────────────────── -->
+      <section class="doc-section" id="dynamic-options">
+        <h2>Dynamic options</h2>
+        <p>If you add, remove, or replace options on the underlying <code>&lt;select&gt;</code> after the widget has been initialised, tell kselect to rebuild by calling <code>refresh()</code> or dispatching <code>kselect:sync</code>:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-kw">const</span> [ks] = Kselect.<span class="t-fn">init</span>(<span class="t-str">'#my-select'</span>);
+<span class="t-kw">const</span> selectEl = document.<span class="t-fn">getElementById</span>(<span class="t-str">'my-select'</span>);
+
+<span class="t-cm">// Later, after an AJAX response adds new options:</span>
+<span class="t-kw">const</span> opt = document.<span class="t-fn">createElement</span>(<span class="t-str">'option'</span>);
+opt.value = <span class="t-str">'rust'</span>;
+opt.text  = <span class="t-str">'Rust'</span>;
+selectEl.<span class="t-fn">appendChild</span>(opt);
+
+<span class="t-cm">// Option 1: call refresh() on the instance</span>
+ks.<span class="t-fn">refresh</span>();
+
+<span class="t-cm">// Option 2: dispatch the sync event</span>
+selectEl.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span class="t-fn">Event</span>(<span class="t-str">'kselect:sync'</span>));</pre>
+        </div>
+
+        <p>To replace all options at once (e.g. from a server response):</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>selectEl.innerHTML = <span class="t-str">`
+  &lt;option value="a"&gt;Alpha&lt;/option&gt;
+  &lt;option value="b"&gt;Beta&lt;/option&gt;
+`</span>;
+ks.<span class="t-fn">refresh</span>(); <span class="t-cm">// rebuild from new DOM state</span></pre>
+        </div>
+      </section>
+
+
+      <!-- ── Mobile ─────────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="mobile">
+        <h2>Mobile</h2>
+        <p>kselect works on phones and tablets with no configuration. Two behaviours are built in:</p>
+        <ul>
+          <li><strong>No keyboard pop-up on open.</strong> Tapping to open the dropdown does not auto-focus the search input, so the OS keyboard does not appear. Users can tap the search input explicitly if they want to filter.</li>
+          <li><strong>Viewport-aware positioning.</strong> If the keyboard does appear, the widget reads <code>window.visualViewport</code> and keeps the dropdown anchored to the visible area rather than drifting under the keyboard.</li>
+        </ul>
+
+        <h3>Native picker on mobile</h3>
+        <p>For forms where the native OS picker is preferred on touch devices, set <code>nativeOnMobile: true</code>. kselect detects coarse pointers via <code>matchMedia('(pointer: coarse)')</code> and leaves the native <code>&lt;select&gt;</code> in place.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#my-select'</span>, {
+  <span class="t-key">nativeOnMobile</span>: <span class="t-num">true</span>,
+});
+
+<span class="t-cm">// The full API still works in native mode:</span>
+ks.<span class="t-fn">getValue</span>(); <span class="t-cm">// reads from the native &lt;select&gt;</span>
+ks.<span class="t-fn">setValue</span>(<span class="t-str">'go'</span>);  <span class="t-cm">// writes to the native &lt;select&gt;</span>
+ks.<span class="t-fn">disable</span>();       <span class="t-cm">// disables the native &lt;select&gt;</span></pre>
+        </div>
+
+        <div class="callout callout-warn">
+          <span class="callout-icon">⚠</span>
+          <p>In native mode: search filtering, tag pills, checkbox indicators, optgroup collapse, and select-all rows are not available — those are features of the custom widget. The <code>ks-native</code> CSS class is added to the native <code>&lt;select&gt;</code> so you can apply consistent border/padding styling.</p>
+        </div>
+
+        <div class="callout callout-note">
+          <span class="callout-icon">ℹ</span>
+          <p>Touchscreen laptops (with both a trackpad and a finger) report a <em>fine</em> primary pointer, so they get the full custom widget. Only pure-touch devices fall through to the native picker.</p>
+        </div>
+      </section>
+
+
+      <!-- ── Events ─────────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="events-ref">
+        <h2>Events</h2>
+        <p>All events are fired on the original <code>&lt;select&gt;</code> element. Listen with <code>addEventListener</code> as you would for any native element event.</p>
+
+        <div class="event-row">
+          <div class="event-card">
+            <div class="event-name">change</div>
+            <p>Native DOM event. Fires when the selection changes. Works with standard form libraries and frameworks.</p>
+          </div>
+          <div class="event-card">
+            <div class="event-name">kselect:change</div>
+            <p>Custom event. Fires at the same time as <code>change</code>. Useful when you want to distinguish kselect changes from other sources.</p>
+          </div>
+          <div class="event-card">
+            <div class="event-name">kselect:open</div>
+            <p>Fires when the dropdown opens.</p>
+          </div>
+          <div class="event-card">
+            <div class="event-name">kselect:close</div>
+            <p>Fires when the dropdown closes.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p><strong>kselect:sync</strong> is a special <em>inbound</em> event — dispatch it on the <code>&lt;select&gt;</code> to tell the widget to re-read the DOM after you've made external changes to the options.</p>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-kw">const</span> [ks] = Kselect.<span class="t-fn">init</span>(<span class="t-str">'#my-select'</span>);
+<span class="t-kw">const</span> el = document.<span class="t-fn">getElementById</span>(<span class="t-str">'my-select'</span>);
+
+el.<span class="t-fn">addEventListener</span>(<span class="t-event">'kselect:change'</span>, () => {
+  console.<span class="t-fn">log</span>(<span class="t-str">'Selected:'</span>, ks.<span class="t-fn">getValue</span>());
+});
+
+el.<span class="t-fn">addEventListener</span>(<span class="t-event">'kselect:open'</span>, () => {
+  console.<span class="t-fn">log</span>(<span class="t-str">'Dropdown opened'</span>);
+});
+
+<span class="t-cm">// Trigger a rebuild after external DOM changes:</span>
+el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span class="t-fn">Event</span>(<span class="t-str">'kselect:sync'</span>));</pre>
+        </div>
+      </section>
+
+
+      <!-- ── Options reference ──────────────────────────────────────────────── -->
+      <section class="doc-section" id="options-ref">
+        <h2>Options reference</h2>
+        <p>All options are passed as the second argument to <code>Kselect.init(selector, options)</code>.</p>
+
+        <table class="ref-table">
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Type</th>
+              <th>Default</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>placeholder</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Select an option…'</span></td>
+              <td>Text shown when nothing is selected. Also readable from <code>data-placeholder</code> on the <code>&lt;select&gt;</code>.</td>
+            </tr>
+            <tr>
+              <td><code>searchPlaceholder</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Search…'</span></td>
+              <td>Placeholder text inside the search input. Also readable from <code>data-search-placeholder</code>.</td>
+            </tr>
+            <tr>
+              <td><code>noResultsText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'No results found'</span></td>
+              <td>Message shown in the dropdown when a search query matches no options.</td>
+            </tr>
+            <tr>
+              <td><code>maxHeight</code></td>
+              <td><span class="type-pill num">number</span></td>
+              <td><span class="default-val">300</span></td>
+              <td>Maximum height of the dropdown in pixels before it starts scrolling.</td>
+            </tr>
+            <tr>
+              <td><code>searchable</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">true</span></td>
+              <td>Show or hide the search input inside the dropdown.</td>
+            </tr>
+            <tr>
+              <td><code>allowClear</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">true</span></td>
+              <td>Show a clear (×) button that deselects everything when clicked.</td>
+            </tr>
+            <tr>
+              <td><code>closeOnSelect</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">true</span></td>
+              <td>Close the dropdown after selecting an option. Applies to single select mode only — multi select always stays open.</td>
+            </tr>
+            <tr>
+              <td><code>collapseGroups</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">false</span></td>
+              <td>Start all <code>&lt;optgroup&gt;</code> sections in a collapsed state. Users can expand them by clicking the header.</td>
+            </tr>
+            <tr>
+              <td><code>selectAll</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">false</span></td>
+              <td>Show a global "Select all" row at the top of the dropdown (multi select only). Displays a tri-state checkbox reflecting checked / indeterminate / unchecked state.</td>
+            </tr>
+            <tr>
+              <td><code>selectAllText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Select all'</span></td>
+              <td>Label for the global select-all row.</td>
+            </tr>
+            <tr>
+              <td><code>selectAllGroups</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">false</span></td>
+              <td>Show a select-all checkbox inside each optgroup header (multi select only). Can be used with or without the global <code>selectAll</code> option.</td>
+            </tr>
+            <tr>
+              <td><code>selectAllGroupText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Select all'</span></td>
+              <td>Accessible label (aria-label) for the per-group select-all checkbox buttons.</td>
+            </tr>
+            <tr>
+              <td><code>nativeOnMobile</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">false</span></td>
+              <td>On coarse-pointer devices (phones, tablets), leave the native <code>&lt;select&gt;</code> visible instead of building the custom widget. The full instance API continues to work.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+
+      <!-- ── Instance API ───────────────────────────────────────────────────── -->
+      <section class="doc-section" id="instance-api">
+        <h2>Instance API</h2>
+        <p>Every method is available on the instance returned by <code>Kselect.init</code>. The static helper <code>Kselect.getInstance(el)</code> retrieves an existing instance from a DOM element.</p>
+
+        <!-- getValue -->
+        <div class="method-card" id="api-getValue">
+          <div class="method-header">
+            <span class="method-name">getValue</span>
+            <span class="method-sig">()</span>
+            <span class="method-returns">→ <span>string | string[] | null</span></span>
+          </div>
+          <div class="method-body">
+            <p>Returns the current selection. In single mode, returns a <strong>string</strong> (the selected value) or <strong>null</strong> if nothing is selected. In multi mode, always returns an <strong>array</strong> of strings (empty array if nothing is selected).</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>ks.<span class="t-fn">getValue</span>(); <span class="t-cm">// single → 'go'  or null</span>
+ks.<span class="t-fn">getValue</span>(); <span class="t-cm">// multi  → ['js', 'py']  or []</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- setValue -->
+        <div class="method-card" id="api-setValue">
+          <div class="method-header">
+            <span class="method-name">setValue</span>
+            <span class="method-sig">(value)</span>
+            <span class="method-returns">→ <span>void</span></span>
+          </div>
+          <div class="method-body">
+            <p>Programmatically sets the current selection. Fires <code>change</code> and <code>kselect:change</code> exactly once — or not at all if the new selection is identical to the old one.</p>
+            <p>Pass a string for single mode, or an array for multi mode. Passing <code>null</code>, <code>undefined</code>, or an empty array is treated as a call to <code>clear()</code>.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>ks.<span class="t-fn">setValue</span>(<span class="t-str">'go'</span>);                   <span class="t-cm">// single</span>
+ks.<span class="t-fn">setValue</span>([<span class="t-str">'js'</span>, <span class="t-str">'py'</span>, <span class="t-str">'go'</span>]);    <span class="t-cm">// multi</span>
+ks.<span class="t-fn">setValue</span>(<span class="t-num">null</span>);                   <span class="t-cm">// clears selection</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- clear -->
+        <div class="method-card" id="api-clear">
+          <div class="method-header">
+            <span class="method-name">clear</span>
+            <span class="method-sig">()</span>
+            <span class="method-returns">→ <span>void</span></span>
+          </div>
+          <div class="method-body">
+            <p>Clears all selected values and shows the placeholder. Fires <code>change</code> and <code>kselect:change</code> only if something was actually selected beforehand.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>ks.<span class="t-fn">clear</span>();</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- open / close -->
+        <div class="method-card" id="api-open-close">
+          <div class="method-header">
+            <span class="method-name">open</span>
+            <span class="method-sig">( [options] )</span>
+            <span class="method-returns">→ <span>void</span></span>
+          </div>
+          <div class="method-body">
+            <p>Opens the dropdown programmatically. Accepts an optional options object.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>ks.<span class="t-fn">open</span>();
+ks.<span class="t-fn">open</span>({ <span class="t-key">skipSearchFocus</span>: <span class="t-num">true</span> }); <span class="t-cm">// open without focusing the search input</span>
+ks.<span class="t-fn">close</span>();</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- enable / disable -->
+        <div class="method-card" id="api-enable-disable">
+          <div class="method-header">
+            <span class="method-name">enable</span>
+            <span class="method-sig">() &nbsp;/&nbsp;</span>
+            <span class="method-name">disable</span>
+            <span class="method-sig">()</span>
+            <span class="method-returns">→ <span>void</span></span>
+          </div>
+          <div class="method-body">
+            <p>Enable or disable the control. Mirrors the <code>disabled</code> property on the underlying <code>&lt;select&gt;</code>. A disabled control cannot be opened and is skipped in the tab order.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>ks.<span class="t-fn">disable</span>();
+ks.<span class="t-fn">enable</span>();</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- refresh -->
+        <div class="method-card" id="api-refresh">
+          <div class="method-header">
+            <span class="method-name">refresh</span>
+            <span class="method-sig">()</span>
+            <span class="method-returns">→ <span>void</span></span>
+          </div>
+          <div class="method-body">
+            <p>Rebuilds the dropdown option list from the current state of the underlying <code>&lt;select&gt;</code>. Use this after adding, removing, or replacing <code>&lt;option&gt;</code> or <code>&lt;optgroup&gt;</code> elements programmatically. Equivalent to dispatching <code>kselect:sync</code>.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre><span class="t-cm">// Add option to native select, then sync the widget</span>
+<span class="t-kw">const</span> opt = document.<span class="t-fn">createElement</span>(<span class="t-str">'option'</span>);
+opt.value = <span class="t-str">'rust'</span>; opt.text = <span class="t-str">'Rust'</span>;
+selectEl.<span class="t-fn">appendChild</span>(opt);
+ks.<span class="t-fn">refresh</span>();</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- destroy -->
+        <div class="method-card" id="api-destroy">
+          <div class="method-header">
+            <span class="method-name">destroy</span>
+            <span class="method-sig">()</span>
+            <span class="method-returns">→ <span>void</span></span>
+          </div>
+          <div class="method-body">
+            <p>Removes the kselect widget from the DOM, restores the original <code>&lt;select&gt;</code> to its original visible state (preserving any inline <code>display</code> style it had), and removes all event listeners.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>ks.<span class="t-fn">destroy</span>();
+<span class="t-cm">// The original &lt;select&gt; is now visible again.</span></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ── CSS variables ──────────────────────────────────────────────────── -->
+      <section class="doc-section" id="css-vars">
+        <h2>CSS variables</h2>
+        <p>Every visual property in kselect is expressed as a CSS custom property. Override any of them on <code>:root</code>, on a parent container, or directly on the <code>.ks-wrapper</code> to restyle the widget without touching the stylesheet.</p>
+
+        <h3>Typography</h3>
+        <table class="ref-table css-var-table">
+          <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--ks-font-family</code></td><td><span class="default-val">'Inter', system-ui, sans-serif</span></td><td>Font family used throughout the widget</td></tr>
+            <tr><td><code>--ks-font-size</code></td><td><span class="default-val">0.9rem</span></td><td>Base font size</td></tr>
+            <tr><td><code>--ks-line-height</code></td><td><span class="default-val">1.4</span></td><td>Base line height</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Colors — surfaces &amp; text</h3>
+        <table class="ref-table css-var-table">
+          <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--ks-color-bg</code></td><td><span class="default-val">#ffffff</span></td><td>Control &amp; dropdown background</td></tr>
+            <tr><td><code>--ks-color-border</code></td><td><span class="default-val">#a0aec0</span></td><td>Default border (3.0:1 on white — meets WCAG 1.4.11)</td></tr>
+            <tr><td><code>--ks-color-border-focus</code></td><td><span class="default-val">#6366f1</span></td><td>Border &amp; ring color when open or focused</td></tr>
+            <tr><td><code>--ks-color-text</code></td><td><span class="default-val">#111827</span></td><td>Primary text color</td></tr>
+            <tr><td><code>--ks-color-placeholder</code></td><td><span class="default-val">#767676</span></td><td>Placeholder text (4.54:1 on white — meets WCAG 1.4.3)</td></tr>
+            <tr><td><code>--ks-color-disabled-bg</code></td><td><span class="default-val">#f3f4f6</span></td><td>Background when the control is disabled</td></tr>
+            <tr><td><code>--ks-color-disabled-text</code></td><td><span class="default-val">#9ca3af</span></td><td>Text color when disabled</td></tr>
+            <tr><td><code>--ks-color-disabled-border</code></td><td><span class="default-val">#e5e7eb</span></td><td>Border color when disabled</td></tr>
+            <tr><td><code>--ks-color-search-bg</code></td><td><span class="default-val">#f9fafb</span></td><td>Search input background</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Colors — options</h3>
+        <table class="ref-table css-var-table">
+          <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--ks-color-option-hover</code></td><td><span class="default-val">#f0f0ff</span></td><td>Option row hover background</td></tr>
+            <tr><td><code>--ks-color-option-selected</code></td><td><span class="default-val">#6366f1</span></td><td>Selected option background in single mode</td></tr>
+            <tr><td><code>--ks-color-option-selected-text</code></td><td><span class="default-val">#ffffff</span></td><td>Selected option text color in single mode</td></tr>
+            <tr><td><code>--ks-color-option-selected-bg</code></td><td><span class="default-val">#eef2ff</span></td><td>Selected option background in multi mode (light tint)</td></tr>
+            <tr><td><code>--ks-color-option-selected-fg</code></td><td><span class="default-val">#4f46e5</span></td><td>Selected option text &amp; checkbox tick in multi mode</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Colors — groups, tags &amp; controls</h3>
+        <table class="ref-table css-var-table">
+          <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--ks-color-group-header</code></td><td><span class="default-val">#f9fafb</span></td><td>Optgroup header background</td></tr>
+            <tr><td><code>--ks-color-group-label</code></td><td><span class="default-val">#6b7280</span></td><td>Optgroup label text color</td></tr>
+            <tr><td><code>--ks-color-tag-bg</code></td><td><span class="default-val">#eef2ff</span></td><td>Tag (multi select pill) background</td></tr>
+            <tr><td><code>--ks-color-tag-text</code></td><td><span class="default-val">#4f46e5</span></td><td>Tag text color</td></tr>
+            <tr><td><code>--ks-color-tag-border</code></td><td><span class="default-val">#c7d2fe</span></td><td>Tag border color</td></tr>
+            <tr><td><code>--ks-color-tag-remove</code></td><td><span class="default-val">#818cf8</span></td><td>Tag remove button color</td></tr>
+            <tr><td><code>--ks-color-tag-remove-hover</code></td><td><span class="default-val">#4f46e5</span></td><td>Tag remove button hover color</td></tr>
+            <tr><td><code>--ks-color-clear</code></td><td><span class="default-val">#9ca3af</span></td><td>Clear (×) button color</td></tr>
+            <tr><td><code>--ks-color-clear-hover</code></td><td><span class="default-val">#ef4444</span></td><td>Clear button hover color</td></tr>
+            <tr><td><code>--ks-color-arrow</code></td><td><span class="default-val">#9ca3af</span></td><td>Dropdown arrow color</td></tr>
+            <tr><td><code>--ks-color-arrow-open</code></td><td><span class="default-val">#6366f1</span></td><td>Dropdown arrow color when open</td></tr>
+            <tr><td><code>--ks-color-checkbox-border</code></td><td><span class="default-val">#d1d5db</span></td><td>Checkbox border color</td></tr>
+            <tr><td><code>--ks-color-checkbox-checked</code></td><td><span class="default-val">#6366f1</span></td><td>Checkbox background when checked</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Shape, shadow &amp; animation</h3>
+        <table class="ref-table css-var-table">
+          <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>--ks-radius-control</code></td><td><span class="default-val">8px</span></td><td>Border radius of the closed control</td></tr>
+            <tr><td><code>--ks-radius-dropdown</code></td><td><span class="default-val">10px</span></td><td>Border radius of the dropdown</td></tr>
+            <tr><td><code>--ks-radius-tag</code></td><td><span class="default-val">5px</span></td><td>Border radius of multi-select tag pills</td></tr>
+            <tr><td><code>--ks-radius-checkbox</code></td><td><span class="default-val">4px</span></td><td>Border radius of checkboxes</td></tr>
+            <tr><td><code>--ks-shadow-dropdown</code></td><td><span class="default-val">(layered shadow)</span></td><td>Box shadow of the dropdown</td></tr>
+            <tr><td><code>--ks-transition</code></td><td><span class="default-val">0.18s ease</span></td><td>Duration and easing for all transitions</td></tr>
+            <tr><td><code>--ks-z-index</code></td><td><span class="default-val">9999</span></td><td>Z-index of the floating dropdown</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+
+      <!-- ── Theming ────────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="theming">
+        <h2>Theming</h2>
+        <p>Because kselect uses CSS custom properties for everything, a theme is just a block of variable overrides — no forking the stylesheet required.</p>
+
+        <h3>Scoped theme on a wrapper element</h3>
+        <p>Apply a theme to a specific select by setting variables on a parent container:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">css</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-sel">.my-green-theme</span> {
+  <span class="t-prop">--ks-color-border-focus</span>:       <span class="t-val">#10b981</span>;
+  <span class="t-prop">--ks-color-option-selected</span>:    <span class="t-val">#10b981</span>;
+  <span class="t-prop">--ks-color-option-selected-bg</span>: <span class="t-val">#ecfdf5</span>;
+  <span class="t-prop">--ks-color-option-selected-fg</span>: <span class="t-val">#059669</span>;
+  <span class="t-prop">--ks-color-tag-bg</span>:             <span class="t-val">#ecfdf5</span>;
+  <span class="t-prop">--ks-color-tag-text</span>:           <span class="t-val">#059669</span>;
+  <span class="t-prop">--ks-color-tag-border</span>:         <span class="t-val">#a7f3d0</span>;
+  <span class="t-prop">--ks-color-checkbox-checked</span>:   <span class="t-val">#10b981</span>;
+  <span class="t-prop">--ks-color-arrow-open</span>:         <span class="t-val">#10b981</span>;
+}</pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;div</span> <span class="t-attr">class</span>=<span class="t-str">"my-green-theme"</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;select</span> <span class="t-attr">id</span>=<span class="t-str">"tags"</span> <span class="t-attr">multiple</span><span class="t-tag">&gt;</span>…<span class="t-tag">&lt;/select&gt;</span>
+<span class="t-tag">&lt;/div&gt;</span></pre>
+        </div>
+
+        <h3>Global theme via :root</h3>
+        <p>To apply a theme to every kselect widget on the page, override variables on <code>:root</code>:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">css</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-sel">:root</span> {
+  <span class="t-prop">--ks-color-border-focus</span>:    <span class="t-val">#0ea5e9</span>;
+  <span class="t-prop">--ks-color-option-selected</span>: <span class="t-val">#0ea5e9</span>;
+  <span class="t-prop">--ks-radius-control</span>:        <span class="t-val">4px</span>;
+  <span class="t-prop">--ks-radius-dropdown</span>:       <span class="t-val">4px</span>;
+}</pre>
+        </div>
+
+        <h3>Dark theme example</h3>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">css</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-sel">.theme-dark</span> {
+  <span class="t-prop">--ks-color-bg</span>:                  <span class="t-val">#1e1e2e</span>;
+  <span class="t-prop">--ks-color-border</span>:              <span class="t-val">#313244</span>;
+  <span class="t-prop">--ks-color-border-focus</span>:        <span class="t-val">#cba6f7</span>;
+  <span class="t-prop">--ks-color-text</span>:                <span class="t-val">#cdd6f4</span>;
+  <span class="t-prop">--ks-color-placeholder</span>:         <span class="t-val">#6c7086</span>;
+  <span class="t-prop">--ks-color-option-hover</span>:        <span class="t-val">#313244</span>;
+  <span class="t-prop">--ks-color-option-selected</span>:     <span class="t-val">#cba6f7</span>;
+  <span class="t-prop">--ks-color-option-selected-text</span>:<span class="t-val">#1e1e2e</span>;
+  <span class="t-prop">--ks-color-tag-bg</span>:              <span class="t-val">#313244</span>;
+  <span class="t-prop">--ks-color-tag-text</span>:            <span class="t-val">#cba6f7</span>;
+  <span class="t-prop">--ks-color-tag-border</span>:          <span class="t-val">#45475a</span>;
+  <span class="t-prop">--ks-shadow-dropdown</span>:           <span class="t-val">0 4px 20px rgba(0,0,0,.5)</span>;
+}</pre>
+        </div>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p>The example page ships with 20 ready-made themes in the <code>themes/</code> folder. Each is a standalone CSS file with <code>:root</code> overrides you can drop straight into your project.</p>
+        </div>
+      </section>
+
+
+      <!-- ── Browser support ────────────────────────────────────────────────── -->
+      <section class="doc-section" id="browser-support">
+        <h2>Browser support</h2>
+        <p>kselect uses standard DOM APIs and CSS custom properties. It works in all modern browsers:</p>
+        <ul>
+          <li>Chrome / Edge 80+</li>
+          <li>Firefox 75+</li>
+          <li>Safari 13+</li>
+          <li>Mobile Safari (iOS 13+)</li>
+          <li>Chrome for Android</li>
+        </ul>
+        <p>Internet Explorer is not supported.</p>
+
+        <div class="callout callout-note" style="margin-top: 24px;">
+          <span class="callout-icon">ℹ</span>
+          <p>kselect is fully compliant with <strong>WCAG 2.1 AA</strong>. It uses <code>role="combobox"</code>, <code>aria-expanded</code>, <code>aria-selected</code>, <code>aria-activedescendant</code>, <code>aria-live</code> announcements for search results, and native <code>&lt;button&gt;</code> elements for group headers.</p>
+        </div>
+      </section>
+
+    </div><!-- /content -->
+  </main>
+
+</div><!-- /layout -->
+
+<script>
+  // ── Theme toggle ─────────────────────────────────────────────────────────
+  var THEME_KEY = 'kselect-docs-theme';
+
+  function setTheme(mode) {
+    var html = document.documentElement;
+    if (mode === 'auto') {
+      html.removeAttribute('data-theme');
+    } else {
+      html.setAttribute('data-theme', mode);
+    }
+    try { localStorage.setItem(THEME_KEY, mode); } catch(e) {}
+    updateToggleState(mode);
+  }
+
+  function updateToggleState(mode) {
+    ['auto', 'light', 'dark'].forEach(function(m) {
+      var btn = document.getElementById('btn-' + m);
+      if (btn) btn.classList.toggle('active', m === mode);
+    });
+  }
+
+  // Apply saved preference before first paint (also runs inline above, this is
+  // the runtime sync in case the inline script wasn't present)
+  (function () {
+    var saved;
+    try { saved = localStorage.getItem(THEME_KEY); } catch(e) {}
+    var mode = saved || 'auto';
+    if (mode !== 'auto') document.documentElement.setAttribute('data-theme', mode);
+    updateToggleState(mode);
+  })();
+
+  // ── Copy button ──────────────────────────────────────────────────────────
+  function copyCode(btn) {
+    var pre = btn.closest('.code-block').querySelector('pre');
+    var text = pre.innerText || pre.textContent;
+    navigator.clipboard.writeText(text).then(function () {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(function () {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // ── Active nav link on scroll ────────────────────────────────────────────
+  (function () {
+    var navLinks = Array.from(document.querySelectorAll('.nav-link[href^="#"]'));
+    var sections = navLinks.map(function (a) {
+      return document.querySelector(a.getAttribute('href'));
+    }).filter(Boolean);
+
+    var current = '';
+
+    function onScroll() {
+      var scrollY = window.scrollY + 80;
+      var found = '';
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].offsetTop <= scrollY) {
+          found = sections[i].id;
+        }
+      }
+      if (found !== current) {
+        current = found;
+        navLinks.forEach(function (a) {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+        });
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

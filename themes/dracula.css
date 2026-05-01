@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Dracula
+   Dark background, vivid pastels, purple accent.
+   The classic dark theme that refuses to die.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #282a36;
+  --ks-color-border: #44475a;
+  --ks-color-border-focus: #bd93f9;
+  --ks-color-text: #f8f8f2;
+  --ks-color-placeholder: #6272a4;
+  --ks-color-disabled-bg: #21222c;
+  --ks-color-disabled-text: #44475a;
+  --ks-color-disabled-border: #383a4a;
+
+  --ks-color-option-hover: #44475a;
+  --ks-color-option-selected: #bd93f9;
+  --ks-color-option-selected-text: #282a36;
+  --ks-color-option-selected-bg: #383a4a;
+  --ks-color-option-selected-fg: #bd93f9;
+
+  --ks-color-group-header: #21222c;
+  --ks-color-group-label: #6272a4;
+
+  --ks-color-tag-bg: #383a4a;
+  --ks-color-tag-text: #bd93f9;
+  --ks-color-tag-border: #44475a;
+  --ks-color-tag-remove: #6272a4;
+  --ks-color-tag-remove-hover: #ff5555;
+
+  --ks-color-clear: #6272a4;
+  --ks-color-clear-hover: #ff5555;
+  --ks-color-arrow: #6272a4;
+  --ks-color-arrow-open: #bd93f9;
+
+  --ks-color-checkbox-border: #44475a;
+  --ks-color-checkbox-checked: #bd93f9;
+
+  --ks-color-search-bg: #21222c;
+
+  --ks-radius-control: 8px;
+  --ks-radius-dropdown: 10px;
+  --ks-radius-tag: 5px;
+  --ks-radius-checkbox: 4px;
+
+  --ks-shadow-dropdown: 0 4px 12px rgba(0,0,0,.45), 0 12px 32px rgba(0,0,0,.35);
+  --ks-transition: 0.18s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #21222c;
+  --card-bg: #282a36;
+  --text-primary: #f8f8f2;
+  --text-secondary: #e0e0d8;
+  --text-muted: #6272a4;
+  --accent: #bd93f9;
+  --accent-light: #383a4a;
+  --border: #44475a;
+}

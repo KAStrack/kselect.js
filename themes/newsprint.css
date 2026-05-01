@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Newsprint
+   Aged paper, ink black, and column-rule grey.
+   Everything important happened in print.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Georgia', 'Times New Roman', serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.5;
+
+  --ks-color-bg: #f5f0e8;
+  --ks-color-border: #b8a898;
+  --ks-color-border-focus: #2c1810;
+  --ks-color-text: #1a0f0a;
+  --ks-color-placeholder: #9c8878;
+  --ks-color-disabled-bg: #ede8e0;
+  --ks-color-disabled-text: #b8a898;
+  --ks-color-disabled-border: #d4c8b8;
+
+  --ks-color-option-hover: #ede8e0;
+  --ks-color-option-selected: #2c1810;
+  --ks-color-option-selected-text: #f5f0e8;
+  --ks-color-option-selected-bg: #e8e0d4;
+  --ks-color-option-selected-fg: #2c1810;
+
+  --ks-color-group-header: #ede8e0;
+  --ks-color-group-label: #6b5848;
+
+  --ks-color-tag-bg: #e8e0d4;
+  --ks-color-tag-text: #2c1810;
+  --ks-color-tag-border: #b8a898;
+  --ks-color-tag-remove: #9c8878;
+  --ks-color-tag-remove-hover: #8b1a1a;
+
+  --ks-color-clear: #9c8878;
+  --ks-color-clear-hover: #8b1a1a;
+  --ks-color-arrow: #9c8878;
+  --ks-color-arrow-open: #2c1810;
+
+  --ks-color-checkbox-border: #b8a898;
+  --ks-color-checkbox-checked: #2c1810;
+
+  --ks-color-search-bg: #ede8e0;
+
+  --ks-radius-control: 2px;
+  --ks-radius-dropdown: 2px;
+  --ks-radius-tag: 2px;
+  --ks-radius-checkbox: 2px;
+
+  --ks-shadow-dropdown: 0 2px 4px rgba(44,24,16,.15), 0 4px 12px rgba(44,24,16,.1);
+  --ks-transition: 0.15s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #ede8e0;
+  --card-bg: #f5f0e8;
+  --text-primary: #1a0f0a;
+  --text-secondary: #2c1810;
+  --text-muted: #9c8878;
+  --accent: #2c1810;
+  --accent-light: #e8e0d4;
+  --border: #b8a898;
+}

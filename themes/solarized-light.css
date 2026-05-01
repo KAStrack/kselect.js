@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Solarized Light
+   Warm ivory base with carefully-calibrated contrast ratios.
+   Ethan Schoonover's gift to people who work in sunlit rooms.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #fdf6e3;
+  --ks-color-border: #93a1a1;
+  --ks-color-border-focus: #268bd2;
+  --ks-color-text: #657b83;
+  --ks-color-placeholder: #93a1a1;
+  --ks-color-disabled-bg: #eee8d5;
+  --ks-color-disabled-text: #93a1a1;
+  --ks-color-disabled-border: #d0cabb;
+
+  --ks-color-option-hover: #eee8d5;
+  --ks-color-option-selected: #268bd2;
+  --ks-color-option-selected-text: #fdf6e3;
+  --ks-color-option-selected-bg: #e8f4fd;
+  --ks-color-option-selected-fg: #268bd2;
+
+  --ks-color-group-header: #eee8d5;
+  --ks-color-group-label: #93a1a1;
+
+  --ks-color-tag-bg: #e8f4fd;
+  --ks-color-tag-text: #268bd2;
+  --ks-color-tag-border: #a8d4ef;
+  --ks-color-tag-remove: #93a1a1;
+  --ks-color-tag-remove-hover: #dc322f;
+
+  --ks-color-clear: #93a1a1;
+  --ks-color-clear-hover: #dc322f;
+  --ks-color-arrow: #93a1a1;
+  --ks-color-arrow-open: #268bd2;
+
+  --ks-color-checkbox-border: #93a1a1;
+  --ks-color-checkbox-checked: #268bd2;
+
+  --ks-color-search-bg: #eee8d5;
+
+  --ks-radius-control: 6px;
+  --ks-radius-dropdown: 8px;
+  --ks-radius-tag: 4px;
+  --ks-radius-checkbox: 3px;
+
+  --ks-shadow-dropdown: 0 2px 8px rgba(101,123,131,.15), 0 8px 24px rgba(101,123,131,.1);
+  --ks-transition: 0.18s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #eee8d5;
+  --card-bg: #fdf6e3;
+  --text-primary: #586e75;
+  --text-secondary: #657b83;
+  --text-muted: #93a1a1;
+  --accent: #268bd2;
+  --accent-light: #e8f4fd;
+  --border: #d0cabb;
+}

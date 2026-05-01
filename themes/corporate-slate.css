@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Corporate Slate
+   Cool greys and a restrained teal accent.
+   Boardroom-ready. Won't get you fired.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.875rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #ffffff;
+  --ks-color-border: #cbd5e1;
+  --ks-color-border-focus: #0f766e;
+  --ks-color-text: #0f172a;
+  --ks-color-placeholder: #94a3b8;
+  --ks-color-disabled-bg: #f8fafc;
+  --ks-color-disabled-text: #cbd5e1;
+  --ks-color-disabled-border: #e2e8f0;
+
+  --ks-color-option-hover: #f1f5f9;
+  --ks-color-option-selected: #0f766e;
+  --ks-color-option-selected-text: #ffffff;
+  --ks-color-option-selected-bg: #f0fdfa;
+  --ks-color-option-selected-fg: #0f766e;
+
+  --ks-color-group-header: #f8fafc;
+  --ks-color-group-label: #64748b;
+
+  --ks-color-tag-bg: #f0fdfa;
+  --ks-color-tag-text: #0f766e;
+  --ks-color-tag-border: #99f6e4;
+  --ks-color-tag-remove: #5eead4;
+  --ks-color-tag-remove-hover: #0f766e;
+
+  --ks-color-clear: #94a3b8;
+  --ks-color-clear-hover: #dc2626;
+  --ks-color-arrow: #94a3b8;
+  --ks-color-arrow-open: #0f766e;
+
+  --ks-color-checkbox-border: #cbd5e1;
+  --ks-color-checkbox-checked: #0f766e;
+
+  --ks-color-search-bg: #f8fafc;
+
+  --ks-radius-control: 4px;
+  --ks-radius-dropdown: 6px;
+  --ks-radius-tag: 3px;
+  --ks-radius-checkbox: 3px;
+
+  --ks-shadow-dropdown: 0 1px 4px rgba(0,0,0,.08), 0 6px 20px rgba(0,0,0,.06);
+  --ks-transition: 0.15s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #f1f5f9;
+  --card-bg: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent: #0f766e;
+  --accent-light: #f0fdfa;
+  --border: #e2e8f0;
+}

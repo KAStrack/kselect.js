@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Candy Shop
+   Hot pink, bubblegum, and cotton-candy sky.
+   Dial it up to eleven. No apologies.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #ffffff;
+  --ks-color-border: #f9a8d4;
+  --ks-color-border-focus: #ec4899;
+  --ks-color-text: #500724;
+  --ks-color-placeholder: #f9a8d4;
+  --ks-color-disabled-bg: #fdf2f8;
+  --ks-color-disabled-text: #fbcfe8;
+  --ks-color-disabled-border: #fce7f3;
+
+  --ks-color-option-hover: #fdf2f8;
+  --ks-color-option-selected: #ec4899;
+  --ks-color-option-selected-text: #ffffff;
+  --ks-color-option-selected-bg: #fce7f3;
+  --ks-color-option-selected-fg: #be185d;
+
+  --ks-color-group-header: #fdf2f8;
+  --ks-color-group-label: #f472b6;
+
+  --ks-color-tag-bg: #fce7f3;
+  --ks-color-tag-text: #be185d;
+  --ks-color-tag-border: #fbcfe8;
+  --ks-color-tag-remove: #f472b6;
+  --ks-color-tag-remove-hover: #9d174d;
+
+  --ks-color-clear: #f9a8d4;
+  --ks-color-clear-hover: #9d174d;
+  --ks-color-arrow: #f9a8d4;
+  --ks-color-arrow-open: #ec4899;
+
+  --ks-color-checkbox-border: #f9a8d4;
+  --ks-color-checkbox-checked: #ec4899;
+
+  --ks-color-search-bg: #fdf2f8;
+
+  --ks-radius-control: 20px;
+  --ks-radius-dropdown: 16px;
+  --ks-radius-tag: 20px;
+  --ks-radius-checkbox: 50%;
+
+  --ks-shadow-dropdown: 0 4px 16px rgba(236,72,153,.2), 0 12px 32px rgba(236,72,153,.1);
+  --ks-transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #fdf2f8;
+  --card-bg: #ffffff;
+  --text-primary: #500724;
+  --text-secondary: #831843;
+  --text-muted: #f472b6;
+  --accent: #ec4899;
+  --accent-light: #fce7f3;
+  --border: #fbcfe8;
+}

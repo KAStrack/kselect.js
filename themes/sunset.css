@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Sunset
+   Warm amber, burnt orange, and dusky rose.
+   That perfect hour when everything turns golden.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #ffffff;
+  --ks-color-border: #fcd34d;
+  --ks-color-border-focus: #ea580c;
+  --ks-color-text: #431407;
+  --ks-color-placeholder: #fb923c;
+  --ks-color-disabled-bg: #fff7ed;
+  --ks-color-disabled-text: #fed7aa;
+  --ks-color-disabled-border: #fde68a;
+
+  --ks-color-option-hover: #fff7ed;
+  --ks-color-option-selected: #ea580c;
+  --ks-color-option-selected-text: #ffffff;
+  --ks-color-option-selected-bg: #ffedd5;
+  --ks-color-option-selected-fg: #c2410c;
+
+  --ks-color-group-header: #fff7ed;
+  --ks-color-group-label: #fb923c;
+
+  --ks-color-tag-bg: #ffedd5;
+  --ks-color-tag-text: #c2410c;
+  --ks-color-tag-border: #fdba74;
+  --ks-color-tag-remove: #fb923c;
+  --ks-color-tag-remove-hover: #dc2626;
+
+  --ks-color-clear: #fb923c;
+  --ks-color-clear-hover: #dc2626;
+  --ks-color-arrow: #fb923c;
+  --ks-color-arrow-open: #ea580c;
+
+  --ks-color-checkbox-border: #fcd34d;
+  --ks-color-checkbox-checked: #ea580c;
+
+  --ks-color-search-bg: #fff7ed;
+
+  --ks-radius-control: 10px;
+  --ks-radius-dropdown: 12px;
+  --ks-radius-tag: 20px;
+  --ks-radius-checkbox: 4px;
+
+  --ks-shadow-dropdown: 0 4px 12px rgba(234,88,12,.12), 0 12px 28px rgba(234,88,12,.08);
+  --ks-transition: 0.18s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #fff7ed;
+  --card-bg: #ffffff;
+  --text-primary: #431407;
+  --text-secondary: #7c2d12;
+  --text-muted: #fb923c;
+  --accent: #ea580c;
+  --accent-light: #ffedd5;
+  --border: #fde68a;
+}

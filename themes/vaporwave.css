@@ -1,0 +1,66 @@
+/* ============================================================
+   kselect theme: Vaporwave
+   Pastel purple skies over a neon grid horizon.
+   A E S T H E T I C. Completely unhinged. Pure chaos.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Impact', 'Haettenschweiler', fantasy;
+  --ks-font-size: 0.92rem;
+  --ks-line-height: 1.5;
+  --ks-letter-spacing: 0.05em;
+
+  --ks-color-bg: #1a0533;
+  --ks-color-border: #ff71ce;
+  --ks-color-border-focus: #01cdfe;
+  --ks-color-text: #fffb96;
+  --ks-color-placeholder: #b967ff;
+  --ks-color-disabled-bg: #110022;
+  --ks-color-disabled-text: #6600aa;
+  --ks-color-disabled-border: #440088;
+
+  --ks-color-option-hover: #2a0a4a;
+  --ks-color-option-selected: #ff71ce;
+  --ks-color-option-selected-text: #1a0533;
+  --ks-color-option-selected-bg: #2a0a4a;
+  --ks-color-option-selected-fg: #01cdfe;
+
+  --ks-color-group-header: #110022;
+  --ks-color-group-label: #b967ff;
+
+  --ks-color-tag-bg: #2a0a4a;
+  --ks-color-tag-text: #01cdfe;
+  --ks-color-tag-border: #ff71ce;
+  --ks-color-tag-remove: #b967ff;
+  --ks-color-tag-remove-hover: #ff71ce;
+
+  --ks-color-clear: #b967ff;
+  --ks-color-clear-hover: #ff71ce;
+  --ks-color-arrow: #b967ff;
+  --ks-color-arrow-open: #01cdfe;
+
+  --ks-color-checkbox-border: #ff71ce;
+  --ks-color-checkbox-checked: #01cdfe;
+
+  --ks-color-search-bg: #110022;
+
+  --ks-radius-control: 0px;
+  --ks-radius-dropdown: 0px;
+  --ks-radius-tag: 0px;
+  --ks-radius-checkbox: 0px;
+
+  --ks-shadow-dropdown: 4px 4px 0 #ff71ce, 8px 8px 0 #01cdfe;
+  --ks-transition: 0s steps(1);
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #0d0020;
+  --card-bg: #1a0533;
+  --text-primary: #fffb96;
+  --text-secondary: #ff71ce;
+  --text-muted: #b967ff;
+  --accent: #01cdfe;
+  --accent-light: #2a0a4a;
+  --border: #440088;
+}

@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Forest
+   Deep greens and earthy browns. Like a walk through old growth.
+   Serious, grounded, organic.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #1a2e1a;
+  --ks-color-border: #2d4a2d;
+  --ks-color-border-focus: #4ade80;
+  --ks-color-text: #d4edda;
+  --ks-color-placeholder: #4a7a4a;
+  --ks-color-disabled-bg: #142014;
+  --ks-color-disabled-text: #2d4a2d;
+  --ks-color-disabled-border: #1e351e;
+
+  --ks-color-option-hover: #243824;
+  --ks-color-option-selected: #4ade80;
+  --ks-color-option-selected-text: #1a2e1a;
+  --ks-color-option-selected-bg: #243824;
+  --ks-color-option-selected-fg: #4ade80;
+
+  --ks-color-group-header: #142014;
+  --ks-color-group-label: #4a7a4a;
+
+  --ks-color-tag-bg: #243824;
+  --ks-color-tag-text: #4ade80;
+  --ks-color-tag-border: #2d4a2d;
+  --ks-color-tag-remove: #4a7a4a;
+  --ks-color-tag-remove-hover: #f87171;
+
+  --ks-color-clear: #4a7a4a;
+  --ks-color-clear-hover: #f87171;
+  --ks-color-arrow: #4a7a4a;
+  --ks-color-arrow-open: #4ade80;
+
+  --ks-color-checkbox-border: #2d4a2d;
+  --ks-color-checkbox-checked: #4ade80;
+
+  --ks-color-search-bg: #142014;
+
+  --ks-radius-control: 6px;
+  --ks-radius-dropdown: 8px;
+  --ks-radius-tag: 4px;
+  --ks-radius-checkbox: 3px;
+
+  --ks-shadow-dropdown: 0 4px 12px rgba(0,0,0,.5), 0 12px 32px rgba(0,0,0,.4);
+  --ks-transition: 0.18s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #142014;
+  --card-bg: #1a2e1a;
+  --text-primary: #d4edda;
+  --text-secondary: #a8d5b5;
+  --text-muted: #4a7a4a;
+  --accent: #4ade80;
+  --accent-light: #243824;
+  --border: #2d4a2d;
+}

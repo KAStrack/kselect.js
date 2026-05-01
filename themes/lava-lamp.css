@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Lava Lamp
+   Deep burgundy, molten amber, and slow-moving warmth.
+   Groovy. Far out. Completely mid-century.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #1a0a00;
+  --ks-color-border: #7c2800;
+  --ks-color-border-focus: #ff6b00;
+  --ks-color-text: #ffe0c0;
+  --ks-color-placeholder: #7c3800;
+  --ks-color-disabled-bg: #120700;
+  --ks-color-disabled-text: #4a1800;
+  --ks-color-disabled-border: #2a1000;
+
+  --ks-color-option-hover: #2a1000;
+  --ks-color-option-selected: #ff6b00;
+  --ks-color-option-selected-text: #1a0a00;
+  --ks-color-option-selected-bg: #2a1000;
+  --ks-color-option-selected-fg: #ff6b00;
+
+  --ks-color-group-header: #120700;
+  --ks-color-group-label: #7c3800;
+
+  --ks-color-tag-bg: #2a1000;
+  --ks-color-tag-text: #ff6b00;
+  --ks-color-tag-border: #7c2800;
+  --ks-color-tag-remove: #7c3800;
+  --ks-color-tag-remove-hover: #ff2200;
+
+  --ks-color-clear: #7c3800;
+  --ks-color-clear-hover: #ff2200;
+  --ks-color-arrow: #7c3800;
+  --ks-color-arrow-open: #ff6b00;
+
+  --ks-color-checkbox-border: #7c2800;
+  --ks-color-checkbox-checked: #ff6b00;
+
+  --ks-color-search-bg: #120700;
+
+  --ks-radius-control: 24px;
+  --ks-radius-dropdown: 16px;
+  --ks-radius-tag: 20px;
+  --ks-radius-checkbox: 4px;
+
+  --ks-shadow-dropdown: 0 0 20px rgba(255,107,0,.2), 0 8px 32px rgba(0,0,0,.7);
+  --ks-transition: 0.25s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #120700;
+  --card-bg: #1a0a00;
+  --text-primary: #ffe0c0;
+  --text-secondary: #ffb880;
+  --text-muted: #7c3800;
+  --accent: #ff6b00;
+  --accent-light: #2a1000;
+  --border: #7c2800;
+}

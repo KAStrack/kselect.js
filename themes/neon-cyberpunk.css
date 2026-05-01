@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Neon Cyberpunk
+   Electric cyan and hot magenta on near-black.
+   The future is loud and it does not care about your eyes.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.88rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #0a0a12;
+  --ks-color-border: #00f5ff44;
+  --ks-color-border-focus: #00f5ff;
+  --ks-color-text: #e0e0ff;
+  --ks-color-placeholder: #4040aa;
+  --ks-color-disabled-bg: #06060e;
+  --ks-color-disabled-text: #1a1a40;
+  --ks-color-disabled-border: #0e0e20;
+
+  --ks-color-option-hover: #0e0e20;
+  --ks-color-option-selected: #00f5ff;
+  --ks-color-option-selected-text: #0a0a12;
+  --ks-color-option-selected-bg: #001a1f;
+  --ks-color-option-selected-fg: #00f5ff;
+
+  --ks-color-group-header: #06060e;
+  --ks-color-group-label: #4040aa;
+
+  --ks-color-tag-bg: #001a1f;
+  --ks-color-tag-text: #00f5ff;
+  --ks-color-tag-border: #00f5ff44;
+  --ks-color-tag-remove: #4040aa;
+  --ks-color-tag-remove-hover: #ff00aa;
+
+  --ks-color-clear: #4040aa;
+  --ks-color-clear-hover: #ff00aa;
+  --ks-color-arrow: #4040aa;
+  --ks-color-arrow-open: #00f5ff;
+
+  --ks-color-checkbox-border: #00f5ff44;
+  --ks-color-checkbox-checked: #00f5ff;
+
+  --ks-color-search-bg: #06060e;
+
+  --ks-radius-control: 2px;
+  --ks-radius-dropdown: 2px;
+  --ks-radius-tag: 2px;
+  --ks-radius-checkbox: 2px;
+
+  --ks-shadow-dropdown: 0 0 0 1px #00f5ff22, 0 0 20px #00f5ff33, 0 8px 32px rgba(0,0,0,.8);
+  --ks-transition: 0.12s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #06060e;
+  --card-bg: #0a0a12;
+  --text-primary: #e0e0ff;
+  --text-secondary: #a0a0dd;
+  --text-muted: #4040aa;
+  --accent: #00f5ff;
+  --accent-light: #001a1f;
+  --border: #00f5ff22;
+}

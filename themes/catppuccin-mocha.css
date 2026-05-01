@@ -1,0 +1,65 @@
+/* ============================================================
+   kselect theme: Catppuccin Mocha
+   Soothing pastel palette on a deep mocha base.
+   The internet's favourite dark theme, now in a dropdown.
+   ============================================================ */
+
+:root {
+  --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ks-font-size: 0.9rem;
+  --ks-line-height: 1.4;
+
+  --ks-color-bg: #1e1e2e;
+  --ks-color-border: #45475a;
+  --ks-color-border-focus: #cba6f7;
+  --ks-color-text: #cdd6f4;
+  --ks-color-placeholder: #6c7086;
+  --ks-color-disabled-bg: #181825;
+  --ks-color-disabled-text: #45475a;
+  --ks-color-disabled-border: #313244;
+
+  --ks-color-option-hover: #313244;
+  --ks-color-option-selected: #cba6f7;
+  --ks-color-option-selected-text: #1e1e2e;
+  --ks-color-option-selected-bg: #313244;
+  --ks-color-option-selected-fg: #cba6f7;
+
+  --ks-color-group-header: #181825;
+  --ks-color-group-label: #7f849c;
+
+  --ks-color-tag-bg: #313244;
+  --ks-color-tag-text: #cba6f7;
+  --ks-color-tag-border: #45475a;
+  --ks-color-tag-remove: #7f849c;
+  --ks-color-tag-remove-hover: #f38ba8;
+
+  --ks-color-clear: #6c7086;
+  --ks-color-clear-hover: #f38ba8;
+  --ks-color-arrow: #6c7086;
+  --ks-color-arrow-open: #cba6f7;
+
+  --ks-color-checkbox-border: #45475a;
+  --ks-color-checkbox-checked: #cba6f7;
+
+  --ks-color-search-bg: #181825;
+
+  --ks-radius-control: 8px;
+  --ks-radius-dropdown: 10px;
+  --ks-radius-tag: 5px;
+  --ks-radius-checkbox: 4px;
+
+  --ks-shadow-dropdown: 0 4px 12px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.3);
+  --ks-transition: 0.18s ease;
+}
+
+/* ── Page complement ── */
+:root {
+  --page-bg: #181825;
+  --card-bg: #1e1e2e;
+  --text-primary: #cdd6f4;
+  --text-secondary: #bac2de;
+  --text-muted: #7f849c;
+  --accent: #cba6f7;
+  --accent-light: #313244;
+  --border: #45475a;
+}
