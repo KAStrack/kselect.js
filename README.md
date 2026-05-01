@@ -1,6 +1,8 @@
 # kselect.js
 
-A modern, accessible select replacement — single file, no dependencies.
+A modern, accessible select replacement - single file, no dependencies.
+
+Demo at https://kastrack.github.io/kselect.js/
 
 kselect.js progressively enhances native `<select>` elements with live search, multi-select tags, collapsible optgroups, selection limits, HTML option labels, and a mobile bottom-sheet modal. It writes all changes back to the original `<select>`, so it works seamlessly with any form or framework.
 
@@ -8,23 +10,23 @@ kselect.js progressively enhances native `<select>` elements with live search, m
 
 ## Features
 
-- **Searchable** — live filtering as you type; optgroups auto-expand on match
-- **Single & multi select** — both modes supported, auto-detected from the `<select>` element
-- **Tag-style multi select** — selected values appear as removable inline pills
-- **Checkbox list** — dropdown items show checkboxes in multi-select mode
-- **Collapsible optgroups** — click a group header to collapse or expand it
-- **Select all** — global and per-group "select all" controls in multi-select mode
-- **Selection limit** — cap how many items can be selected with `maxSelect`
-- **HTML option labels** — render rich markup inside option labels with `allowHtml`
-- **Mobile bottom-sheet** — on phones, opens a full-screen bottom-sheet modal instead of a dropdown
-- **Native picker fallback** — optionally use the OS picker on touch devices with `nativeOnMobile`
-- **Syncs the native `<select>`** — all selections are reflected back to the real element
-- **Native `change` event** — fires on the original `<select>` so existing listeners and frameworks work without changes
-- **Custom events** — `kselect:change`, `kselect:open`, `kselect:close`
-- **Keyboard accessible** — Arrow keys, Enter, Escape, and Tab navigation fully supported
-- **Screen reader friendly** — WCAG 2.1 AA compliant with full ARIA attributes
-- **Themeable** — ~40 CSS custom properties; 20 ready-made themes included
-- **Lightweight** — single `.js` + single `.css`, minified versions included, zero dependencies
+- **Searchable** - live filtering as you type; optgroups auto-expand on match
+- **Single & multi select** - both modes supported, auto-detected from the `<select>` element
+- **Tag-style multi select** - selected values appear as removable inline pills
+- **Checkbox list** - dropdown items show checkboxes in multi-select mode
+- **Collapsible optgroups** - click a group header to collapse or expand it
+- **Select all** - global and per-group "select all" controls in multi-select mode
+- **Selection limit** - cap how many items can be selected with `maxSelect`
+- **HTML option labels** - render rich markup inside option labels with `allowHtml`
+- **Mobile bottom-sheet** - on phones, opens a full-screen bottom-sheet modal instead of a dropdown
+- **Native picker fallback** - optionally use the OS picker on touch devices with `nativeOnMobile`
+- **Syncs the native `<select>`** - all selections are reflected back to the real element
+- **Native `change` event** - fires on the original `<select>` so existing listeners and frameworks work without changes
+- **Custom events** - `kselect:change`, `kselect:open`, `kselect:close`
+- **Keyboard accessible** - Arrow keys, Enter, Escape, and Tab navigation fully supported
+- **Screen reader friendly** - WCAG 2.1 AA compliant with full ARIA attributes
+- **Themeable** - ~40 CSS custom properties; 20 ready-made themes included
+- **Lightweight** - single `.js` + single `.css`, minified versions included, zero dependencies
 
 ---
 
@@ -147,7 +149,7 @@ Options can also be set via `data-` attributes on the `<select>` element:
 
 | Method | Description |
 |---|---|
-| `getValue()` | Returns the current value — string (single) or string array (multi) |
+| `getValue()` | Returns the current value - string (single) or string array (multi) |
 | `setValue(v)` | Set selection by value string or array; fires `change` |
 | `clear()` | Deselect all; fires `change` |
 | `open()` | Open the dropdown |
@@ -219,14 +221,14 @@ When the limit is reached, unselected options dim, an amber badge appears in the
 
 ## HTML Option Labels
 
-With `allowHtml: true` (the default), escape your HTML as entities in the option text — kselect decodes and renders it:
+With `allowHtml: true` (the default), escape your HTML as entities in the option text - kselect decodes and renders it:
 
 ```html
 <option value="bold">&lt;strong&gt;Bold&lt;/strong&gt;</option>
 <option value="status">Server &lt;span style="color:green"&gt;● online&lt;/span&gt;</option>
 ```
 
-Set `allowHtml: false` to display tag characters literally — useful when content comes from untrusted sources.
+Set `allowHtml: false` to display tag characters literally - useful when content comes from untrusted sources.
 
 ---
 
@@ -259,7 +261,7 @@ Override CSS custom properties on `.ks-wrapper`, a parent element, or `:root`:
 
 ## Accessibility
 
-WCAG 2.1 AA compliant — `role="combobox"`, full ARIA labelling, `aria-live` announcements, `:focus-visible` outlines on all interactive elements, and contrast-checked default colours.
+WCAG 2.1 AA compliant - `role="combobox"`, full ARIA labelling, `aria-live` announcements, `:focus-visible` outlines on all interactive elements, and contrast-checked default colours.
 
 ---
 
@@ -277,4 +279,4 @@ Issues and pull requests are welcome. Please open an issue before starting signi
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT - see [LICENSE](LICENSE) for details.

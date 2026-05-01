@@ -1,0 +1,42 @@
+{
+  "name": "kselect.js",
+  "version": "1.0.0",
+  "description": "A modern, accessible select replacement — single file, no dependencies.",
+  "keywords": [
+    "select",
+    "dropdown",
+    "multiselect",
+    "accessible",
+    "vanilla-js",
+    "no-dependencies",
+    "combobox",
+    "form",
+    "ui"
+  ],
+  "homepage": "https://kastrack.github.io/kselect.js/",
+  "bugs": {
+    "url": "https://github.com/KAStrack/kselect.js/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KAStrack/kselect.js.git"
+  },
+  "license": "MIT",
+  "main": "kselect.js",
+  "files": [
+    "docs/kselect.js",
+    "docs/kselect.min.js",
+    "docs/kselect.min.js.map",
+    "docs/kselect.css",
+    "docs/kselect.min.css",
+    "LICENSE",
+    "README.md"
+  ],
+  "browserslist": [
+    "Chrome >= 80",
+    "Edge >= 80",
+    "Firefox >= 75",
+    "Safari >= 13",
+    "iOS >= 13"
+  ]
+}
