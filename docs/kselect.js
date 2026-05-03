@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.0.0
+ * Version 1.1.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -76,6 +76,8 @@
       maxSelect: null,            // maximum number of items that can be selected (multi only; null = unlimited)
       maxSelectText: 'Max {n} items', // label shown in the control when the limit is reached
       allowHtml: true,            // render HTML markup inside <option> labels; false = show tags as literal text
+      summarizeSelected: 'auto',  // multi only: 'auto' = collapse to "n selected" when tags would wrap; 'off' = always show all tags; number = collapse when count exceeds it
+      summarizeSelectedText: '{n} selected', // template for the summary; {n} is replaced with the selected count
     }, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
@@ -783,6 +785,17 @@
       if (self._open) self._positionDropdown();
     }, 50);
     window.addEventListener('resize', this._repositionDebounced);
+
+    // Auto-summarize re-check: when the wrapper width changes, the threshold
+    // for "tags wrap to a second line" moves. Re-render so the summary swap
+    // tracks the new layout. Only relevant in 'auto' mode — fixed-number and
+    // 'off' modes don't depend on width.
+    this._summaryResizeHandler = debounce(function () {
+      if (self.isMultiple && self.options.summarizeSelected === 'auto') {
+        self._updateControl();
+      }
+    }, 100);
+    window.addEventListener('resize', this._summaryResizeHandler);
 
     // Scroll: reposition on every frame so the dropdown stays locked to the
     // control while the page moves. We use rAF to stay in sync with the
@@ -1496,12 +1509,46 @@
         tag.appendChild(removeBtn);
         self._selection.appendChild(tag);
       });
+      this._maybeSummarize(selected.length);
     } else {
       const single = document.createElement('span');
       single.className = 'ks-single-value';
       self._setLabel(single, selected[0]);
       this._selection.appendChild(single);
     }
+  };
+
+  // After tag rendering, decide whether to swap the tag list out for a
+  // "{n} selected" summary. The decision depends on the summarizeSelected
+  // option:
+  //   'off'    → never summarize (keep all tags)
+  //   number n → summarize when count > n
+  //   'auto'   → summarize when the rendered tags wrapped to a second line
+  //              (detected by comparing offsetTop of the first vs last tag)
+  // 'auto' has to run after the tags are in the DOM because it relies on
+  // measured layout — there's no way to know up-front whether N tags of
+  // varying widths will fit in the wrapper's current width.
+  Kselect.prototype._maybeSummarize = function (count) {
+    if (!this.isMultiple || count === 0) return;
+    const opt = this.options.summarizeSelected;
+    if (opt === 'off') return;
+
+    let shouldSummarize;
+    if (typeof opt === 'number') {
+      shouldSummarize = count > opt;
+    } else {
+      const tags = this._selection.children;
+      if (tags.length < 2) return;
+      shouldSummarize = tags[0].offsetTop !== tags[tags.length - 1].offsetTop;
+    }
+
+    if (!shouldSummarize) return;
+
+    this._selection.innerHTML = '';
+    const summary = document.createElement('span');
+    summary.className = 'ks-summary';
+    summary.textContent = this.options.summarizeSelectedText.replace('{n}', count);
+    this._selection.appendChild(summary);
   };
 
   Kselect.prototype._syncFromSelect = function () {
@@ -1687,6 +1734,7 @@
     }
     document.removeEventListener('click', this._outsideClick);
     window.removeEventListener('resize', this._repositionDebounced);
+    window.removeEventListener('resize', this._summaryResizeHandler);
     window.removeEventListener('scroll', this._repositionOnScroll, true);
     if (window.visualViewport && this._repositionOnVVChange) {
       window.visualViewport.removeEventListener('resize', this._repositionOnVVChange);

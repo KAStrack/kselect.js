@@ -53,12 +53,14 @@ function resetSyncDemo() {
 const ksSelectAll = Kselect.init('#select-all-demo', { selectAll: true })[0];
 const ksSelectAllGroups = Kselect.init('#select-all-groups-demo', { selectAll: true, selectAllGroups: true })[0];
 const ksMaxSelect = Kselect.init('#max-select-demo', { maxSelect: 3, maxSelectText: 'Max {n} toppings' })[0];
+const ksSummarize = Kselect.init('#summarize-demo', { summarizeSelected: 1, summarizeSelectedText: '{n} Channels Applied' })[0];
 const ksNativeMobile = Kselect.init('#native-mobile-demo', { nativeOnMobile: true })[0];
 const ksNativeMobileMulti = Kselect.init('#native-mobile-multi-demo', { nativeOnMobile: true })[0];
 
 bindOutput('select-all-demo',        'select-all-output',        ksSelectAll);
 bindOutput('select-all-groups-demo', 'select-all-groups-output', ksSelectAllGroups);
 bindOutput('max-select-demo',        'max-select-output',        ksMaxSelect);
+bindOutput('summarize-demo',         'summarize-output',         ksSummarize);
 bindOutput('native-mobile-demo',     'native-mobile-output',     ksNativeMobile);
 bindOutput('native-mobile-multi-demo', 'native-mobile-multi-output', ksNativeMobileMulti);
 

@@ -7,8 +7,8 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="kselect.min.css?v=e">
-  <link rel="stylesheet" href="index.css?v=e">
+  <link rel="stylesheet" href="kselect.min.css?v=i">
+  <link rel="stylesheet" href="index.css?v=i">
 </head>
 <body>
 
@@ -187,6 +187,52 @@
           <pre><span class="kw">const</span> ksMaxSelect = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#max-select-demo'</span>, {
   <span class="key">maxSelect</span>: <span class="num">3</span>,
   <span class="key">maxSelectText</span>: <span class="str">'Max {n} toppings'</span>,
+})[0];</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEMO: summarizeSelected ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">📦</div>
+        <div>
+          <div class="demo-card-title">Collapse selected to a summary — <code>summarizeSelected</code></div>
+          <div class="demo-card-desc">Show a summary like "{n} selected" instead of a row of tags. Set to <code>'auto'</code> (the default) to collapse only when the tags would wrap, <code>'off'</code> to always show every tag, or a number to collapse once the count exceeds it. The label template is configurable via <code>summarizeSelectedText</code>. This demo uses a threshold of <code>1</code> with a custom label — pick one item to see the tag, two or more to see "{n} Channels Applied".</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo — pick notification channels</div>
+
+        <select id="summarize-demo" multiple data-placeholder="Pick channels…">
+          <option value="email">📧 Email</option>
+          <option value="sms">💬 SMS</option>
+          <option value="push">🔔 Push notification</option>
+          <option value="slack">💼 Slack</option>
+          <option value="teams">👥 Microsoft Teams</option>
+          <option value="webhook">🪝 Webhook</option>
+        </select>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="summarize-output">—</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="ksSummarize.setValue(['email'])">Set 1 value</button>
+          <button class="btn btn-secondary" onclick="ksSummarize.setValue(['email','slack','push'])">Set 3 values</button>
+          <button class="btn btn-danger" onclick="ksSummarize.clear()">Clear</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ksSummarize = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#summarize-demo'</span>, {
+  <span class="key">summarizeSelected</span>: <span class="num">1</span>,
+  <span class="key">summarizeSelectedText</span>: <span class="str">'{n} Channels Applied'</span>,
 })[0];</pre>
         </div>
       </div>
@@ -851,8 +897,8 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
 
 </div><!-- /container -->
 
-<script src="kselect.min.js?v=e"></script>
-<script src="example.js?v=e"></script>
-<script src="index.js?v=e"></script>
+<script src="kselect.min.js?v=i"></script>
+<script src="example.js?v=i"></script>
+<script src="index.js?v=i"></script>
 </body>
 </html>

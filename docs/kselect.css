@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.0.0
+ * Version 1.1.0
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -142,6 +142,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+}
+
+/* Multi-select summary ("{n} selected") shown when summarizeSelected
+   collapses the tag list. Styled like a tag pill, with two offset
+   "ghost" pills behind it (via box-shadow) to signal a stack of items. */
+.ks-summary {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--ks-color-tag-bg);
+  color: var(--ks-color-tag-text);
+  border: 1px solid var(--ks-color-tag-border);
+  border-radius: var(--ks-radius-tag);
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: calc(100% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Stacked-pill effect: one duplicate pill offset down-right (filled rect
+     + 1px-larger border rect) so the summary reads as "more than one item". */
+  box-shadow:
+    3px 3px 0 0 var(--ks-color-tag-bg),
+    3px 3px 0 1px var(--ks-color-tag-border);
+  /* Right margin keeps the stack shadow clear of the dropdown arrow / clear button */
+  margin-right: 5px;
 }
 
 /* ─── Placeholder ────────────────────────────────────────────────────────── */
