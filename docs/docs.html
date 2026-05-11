@@ -33,6 +33,7 @@
     <a class="nav-link" href="#single-select">Single select</a>
     <a class="nav-link" href="#multi-select">Multi select</a>
     <a class="nav-link" href="#optgroups">Optgroups</a>
+    <a class="nav-link" href="#per-row-styling">Per-row styling</a>
     <a class="nav-link" href="#select-all">Select all</a>
     <a class="nav-link" href="#search">Search</a>
     <a class="nav-link" href="#disabled-states">Disabled states</a>
@@ -270,6 +271,53 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
   <span class="t-cm">// Groups start collapsed</span>
   Kselect.<span class="t-fn">init</span>(<span class="t-str">'#languages'</span>, { <span class="t-key">collapseGroups</span>: <span class="t-num">true</span> });
 <span class="t-tag">&lt;/script&gt;</span></pre>
+        </div>
+      </section>
+
+
+      <!-- ── Per-row styling ────────────────────────────────────────────────── -->
+      <section class="doc-section" id="per-row-styling">
+        <h2>Per-row styling</h2>
+        <p>Any <code>class</code> or <code>style</code> attribute you set on an <code>&lt;option&gt;</code> or <code>&lt;optgroup&gt;</code> is carried onto the rendered chrome — option rows, group wrappers/headers/lists, and selected-state tags (multi mode) or the single-value span (single mode). This is the recommended way to attach per-row visual hooks without writing post-render mutation code.</p>
+
+        <p>Use <code>style</code> for values that vary per row and come from your data (DB-derived colours, count badges); a CSS custom property (<code>--chip-color: …</code>) is the idiomatic carrier. Use <code>class</code> for <em>enumerable</em> categorisations known when the CSS is written (<code>is-premium</code>, <code>is-deprecated</code>).</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">multiple</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;optgroup</span> <span class="t-attr">label</span>=<span class="t-str">"Rock"</span> <span class="t-attr">style</span>=<span class="t-str">"--group-color: #b53f5c"</span><span class="t-tag">&gt;</span>
+    <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"rock"</span> <span class="t-attr">style</span>=<span class="t-str">"--chip-color: #b53f5c"</span><span class="t-tag">&gt;</span>Rock<span class="t-tag">&lt;/option&gt;</span>
+    <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"punk"</span> <span class="t-attr">style</span>=<span class="t-str">"--chip-color: #d44a2a"</span> <span class="t-attr">class</span>=<span class="t-str">"is-recommended"</span><span class="t-tag">&gt;</span>Punk Rock<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;/optgroup&gt;</span>
+<span class="t-tag">&lt;/select&gt;</span></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">css</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>.ks-tag,
+.ks-option {
+  --chip-color: currentColor;
+}
+.ks-tag {
+  background:   color-mix(in srgb, var(--chip-color) 18%, transparent);
+  color:        var(--chip-color);
+  border-color: color-mix(in srgb, var(--chip-color) 50%, transparent);
+}
+.ks-option       { border-left: 3px solid var(--chip-color); }
+.ks-group-header { color: var(--group-color); }
+
+.ks-option.is-recommended { font-weight: 700; }
+.ks-option.is-deprecated  { opacity: 0.5; text-decoration: line-through; }</pre>
+        </div>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p>Framework classes (<code>ks-option</code>, <code>ks-tag</code>, <code>ks-group-header</code>, …) are preserved — your classes are appended to them, not substituted. State classes like <code>ks-option-selected</code> still work as before.</p>
+        </div>
+
+        <div class="callout callout-warn">
+          <span class="callout-icon">⚠️</span>
+          <p>The carry-through does not run in <code>nativeOnMobile: true</code> mode when the device matches <code>(pointer: coarse)</code>: the OS owns the native picker, and per-option styling is not reliable across mobile browsers.</p>
         </div>
       </section>
 

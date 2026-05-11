@@ -7,8 +7,8 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="kselect.min.css?v=n">
-  <link rel="stylesheet" href="index.css?v=n">
+  <link rel="stylesheet" href="kselect.min.css?v=o">
+  <link rel="stylesheet" href="index.css?v=o">
 </head>
 <body>
 
@@ -884,6 +884,107 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
       </div>
     </div>
 
+    <!-- ── DEMO: Per-row class & style propagation ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🎨</div>
+        <div>
+          <div class="demo-card-title">Per-row styling — <code>class</code> &amp; <code>style</code> on <code>&lt;option&gt;</code></div>
+          <div class="demo-card-desc">Set <code>class</code> or <code>style</code> on the source <code>&lt;option&gt;</code> / <code>&lt;optgroup&gt;</code> and kselect carries the attributes through to the rendered tag, option row, and group header. Use <code>style="--chip-color: …"</code> for data-derived colours and <code>class</code> for enumerable states.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label">Demo — pick some genres</div>
+
+        <style>
+          .per-row-styling-demo .ks-tag,
+          .per-row-styling-demo .ks-option {
+            --chip-color: currentColor;
+          }
+          .per-row-styling-demo .ks-tag {
+            background:    color-mix(in srgb, var(--chip-color) 16%, transparent);
+            color:         var(--chip-color);
+            border-color:  color-mix(in srgb, var(--chip-color) 45%, transparent);
+          }
+          .per-row-styling-demo .ks-option {
+            border-left: 3px solid var(--chip-color);
+            padding-left: 9px;
+          }
+          .per-row-styling-demo .ks-group-header .ks-group-label {
+            color: var(--group-color);
+            font-weight: 600;
+          }
+          .per-row-styling-demo .ks-option.is-recommended .ks-option-text::after {
+            content: '★';
+            margin-left: 6px;
+            color: #f59e0b;
+          }
+          .per-row-styling-demo .ks-option.is-deprecated {
+            opacity: 0.55;
+            text-decoration: line-through;
+          }
+        </style>
+
+        <div class="per-row-styling-demo">
+          <select id="per-row-styling-demo" multiple data-placeholder="Choose genres…">
+            <optgroup label="Rock" style="--group-color: #b53f5c">
+              <option value="rock"   style="--chip-color: #b53f5c">Rock</option>
+              <option value="punk"   style="--chip-color: #d44a2a" class="is-recommended">Punk Rock</option>
+              <option value="metal"  style="--chip-color: #7c2d3a">Metal</option>
+              <option value="grunge" style="--chip-color: #8a2f44" class="is-deprecated">Grunge</option>
+            </optgroup>
+            <optgroup label="Jazz" style="--group-color: #5a4cb5">
+              <option value="jazz"   style="--chip-color: #5a4cb5">Jazz</option>
+              <option value="bebop"  style="--chip-color: #7866d9" class="is-recommended">Bebop</option>
+              <option value="fusion" style="--chip-color: #4a3f9c">Fusion</option>
+            </optgroup>
+            <optgroup label="Electronic" style="--group-color: #0e7c66">
+              <option value="techno"  style="--chip-color: #0e7c66">Techno</option>
+              <option value="ambient" style="--chip-color: #2a9d8f">Ambient</option>
+              <option value="dnb"     style="--chip-color: #06756b">Drum &amp; Bass</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="per-row-styling-output">—</span>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="ksPerRowStyling.setValue(['rock','bebop','techno'])">Set 3 values</button>
+          <button class="btn btn-danger" onclick="ksPerRowStyling.clear()">Clear</button>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="cm">&lt;!-- Source markup: per-row chip colour via custom property; --&gt;</span>
+<span class="cm">&lt;!-- enumerable states via class. --&gt;</span>
+<span class="tag">&lt;select</span> <span class="attr">multiple</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;optgroup</span> <span class="attr">label</span>=<span class="val">"Rock"</span> <span class="attr">style</span>=<span class="val">"--group-color: #b53f5c"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"rock"</span> <span class="attr">style</span>=<span class="val">"--chip-color: #b53f5c"</span><span class="tag">&gt;</span>Rock<span class="tag">&lt;/option&gt;</span>
+    <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"punk"</span> <span class="attr">style</span>=<span class="val">"--chip-color: #d44a2a"</span> <span class="attr">class</span>=<span class="val">"is-recommended"</span><span class="tag">&gt;</span>Punk Rock<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;/optgroup&gt;</span>
+<span class="tag">&lt;/select&gt;</span>
+
+<span class="cm">/* Project CSS reads the carried custom property. */</span>
+<span class="key">.ks-tag</span> {
+  <span class="key">background</span>: <span class="fn">color-mix</span>(<span class="kw">in srgb</span>, <span class="fn">var</span>(--chip-color) <span class="num">16%</span>, <span class="kw">transparent</span>);
+  <span class="key">color</span>: <span class="fn">var</span>(--chip-color);
+}
+<span class="key">.ks-option</span> { <span class="key">border-left</span>: <span class="num">3px</span> <span class="kw">solid</span> <span class="fn">var</span>(--chip-color); }
+<span class="key">.ks-group-header</span> { <span class="key">color</span>: <span class="fn">var</span>(--group-color); }
+<span class="key">.ks-option.is-recommended</span> { <span class="key">font-weight</span>: <span class="num">700</span>; }
+
+<span class="kw">const</span> ks = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#my-select'</span>)[<span class="num">0</span>]; <span class="cm">// nothing extra needed</span></pre>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /demo-grid -->
 
   <div class="sponsored-by-kastrack">
@@ -897,8 +998,8 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
 
 </div><!-- /container -->
 
-<script src="kselect.min.js?v=n"></script>
-<script src="example.js?v=n"></script>
-<script src="index.js?v=n"></script>
+<script src="kselect.min.js?v=o"></script>
+<script src="example.js?v=o"></script>
+<script src="index.js?v=o"></script>
 </body>
 </html>

@@ -110,3 +110,6 @@ const ksNoHtml    = Kselect.init('#no-html-demo',    { allowHtml: false })[0];
 
 bindOutput('allow-html-demo', 'allow-html-output', ksAllowHtml);
 bindOutput('no-html-demo',    'no-html-output',    ksNoHtml);
+
+const ksPerRowStyling = Kselect.init('#per-row-styling-demo')[0];
+bindOutput('per-row-styling-demo', 'per-row-styling-output', ksPerRowStyling);

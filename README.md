@@ -229,6 +229,46 @@ ks.refresh();
 
 ---
 
+## Per-row styling via `class` and `style`
+
+Set `class` or `style` on any `<option>` or `<optgroup>` and kselect carries the attributes onto the rendered chrome — option rows, group wrappers/headers/lists, and selected-state tags (or the single-value span in single mode). This is the recommended way to attach per-row styling hooks without writing post-render mutation code.
+
+Use `style` for values that vary per row and come from your data (DB-derived colours, count badges, dates) — `style="--chip-color: …"` is the idiomatic carrier, with project CSS reading `var(--chip-color)`. Use `class` for *enumerable* states known when the CSS is written (`is-premium`, `is-deprecated`).
+
+```html
+<select multiple>
+  <optgroup label="Rock" style="--group-color: #b53f5c">
+    <option value="rock" style="--chip-color: #b53f5c">Rock</option>
+    <option value="punk" style="--chip-color: #d44a2a" class="is-recommended">Punk Rock</option>
+  </optgroup>
+  <optgroup label="Jazz" style="--group-color: #5a4cb5">
+    <option value="jazz" style="--chip-color: #5a4cb5">Jazz</option>
+  </optgroup>
+</select>
+```
+
+```css
+.ks-tag,
+.ks-option {
+  --chip-color: currentColor;
+}
+.ks-tag {
+  background:   color-mix(in srgb, var(--chip-color) 18%, transparent);
+  color:        var(--chip-color);
+  border-color: color-mix(in srgb, var(--chip-color) 50%, transparent);
+}
+.ks-option { border-left: 3px solid var(--chip-color); }
+
+.ks-group-header { color: var(--group-color); }
+
+.ks-option.is-recommended { font-weight: 700; }
+.ks-option.is-deprecated  { opacity: 0.5; text-decoration: line-through; }
+```
+
+Framework classes (`ks-option`, `ks-tag`, `ks-group-header`, …) are preserved — your classes are appended, not substituted. The carry-through does not apply in `nativeOnMobile: true` mode (the OS owns the native picker).
+
+---
+
 ## Optgroups
 
 kselect renders `<optgroup>` elements with collapsible headers. Groups auto-expand when a search query matches options within them.

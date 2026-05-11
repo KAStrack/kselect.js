@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.1.0
+ * Version 1.2.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -580,6 +580,7 @@
 
     const li = document.createElement('li');
     li.className = 'ks-group' + (isCollapsed ? ' ks-group-collapsed' : '');
+    this._carryAttrs(li, optgroup);
     li.setAttribute('data-group-id', groupId);
 
     // Use a <button> for the group header so it's natively keyboard-operable
@@ -587,6 +588,7 @@
     const header = document.createElement('button');
     header.type = 'button';
     header.className = 'ks-group-header';
+    this._carryAttrs(header, optgroup);
     header.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
     header.setAttribute('aria-controls', 'ks-group-list-' + groupId);
 
@@ -624,6 +626,7 @@
 
     const groupList = document.createElement('ul');
     groupList.className = 'ks-group-options';
+    this._carryAttrs(groupList, optgroup);
     groupList.setAttribute('id', 'ks-group-list-' + groupId);
     groupList.setAttribute('role', 'presentation');
     if (isCollapsed) groupList.style.display = 'none';
@@ -655,6 +658,28 @@
     });
   };
 
+  // Carries the source <option>/<optgroup>'s class and inline style onto a
+  // rendered chrome element (option <li>, group <li>/header/list, or .ks-tag).
+  // Lets consumers attach per-row styling hooks to the source select markup —
+  // e.g. `style="--chip-color: #b53f5c"` for data-derived colours, or
+  // `class="is-recommended"` for enumerable states — and have them surface
+  // on the widget without writing post-render mutation code.
+  // Classes are appended (never replacing the framework's own classes); styles
+  // are concatenated with a semicolon so any inline style the framework set
+  // itself is preserved.
+  Kselect.prototype._carryAttrs = function (target, source) {
+    if (!source) return;
+    if (source.className) {
+      target.className += ' ' + source.className;
+    }
+    const style = source.getAttribute('style');
+    if (style) {
+      target.style.cssText = target.style.cssText
+        ? target.style.cssText + ';' + style
+        : style;
+    }
+  };
+
   // Populates a label element with the option's display content.
   // The browser decodes HTML entities in <option> text, so option.text gives
   // the decoded string (e.g. "<strong>Bold</strong>"). Setting that as innerHTML
@@ -674,6 +699,7 @@
     li.className = 'ks-option' +
       (option.disabled ? ' ks-option-disabled' : '') +
       (option.selected ? ' ks-option-selected' : '');
+    this._carryAttrs(li, option);
     li.setAttribute('role', 'option');
     // Use a monotonic counter rather than the value to guarantee unique DOM
     // ids — values with the same alphanumeric-only sanitisation, or genuinely
@@ -1117,6 +1143,7 @@
     selected.forEach(function (o) {
       const tag = document.createElement('span');
       tag.className = 'ks-tag';
+      self._carryAttrs(tag, o);
       const labelSpan = document.createElement('span');
       labelSpan.className = 'ks-tag-label';
       self._setLabel(labelSpan, o);
@@ -1539,6 +1566,7 @@
       selected.forEach(function (o) {
         const tag = document.createElement('span');
         tag.className = 'ks-tag';
+        self._carryAttrs(tag, o);
         const labelSpan = document.createElement('span');
         labelSpan.className = 'ks-tag-label';
         self._setLabel(labelSpan, o);
@@ -1559,6 +1587,7 @@
     } else {
       const single = document.createElement('span');
       single.className = 'ks-single-value';
+      this._carryAttrs(single, selected[0]);
       self._setLabel(single, selected[0]);
       this._selection.appendChild(single);
     }
