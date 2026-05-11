@@ -442,21 +442,20 @@
 }
 
 .ks-option:hover,
-.ks-option.ks-option-focused {
+.ks-option.ks-option-focused,
+.ks-option.ks-option-selected {
   background: var(--ks-color-option-hover);
 }
 
-/* Single selected */
-.ks-single .ks-option.ks-option-selected {
-  background: var(--ks-color-option-selected);
-  color: var(--ks-color-option-selected-text);
+/* Selected: the row stays highlighted with the same shade as hover (so it's
+   obvious which option(s) are selected even when nothing is being hovered),
+   plus a weight bump and — in multi mode — an indigo text tint. */
+.ks-option.ks-option-selected {
   font-weight: 500;
 }
 
-/* Multi selected */
 .ks-multiple .ks-option.ks-option-selected {
   color: var(--ks-color-option-selected-fg);
-  font-weight: 500;
 }
 
 .ks-option-disabled {
