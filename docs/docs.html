@@ -641,9 +641,9 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
             </tr>
             <tr>
               <td><code>summarizeSelected</code></td>
-              <td><span class="type-pill">'auto' | 'off' | number</span></td>
+              <td><span class="type-pill">'auto' | 'off' | false | number</span></td>
               <td><span class="default-val">'auto'</span></td>
-              <td>Multi-select only. Controls when to collapse the row of tags into a "{n} selected" summary. <code>'auto'</code> collapses as soon as the tags would wrap to a second line. <code>'off'</code> always shows every tag. A number <code>n</code> collapses when the selected count exceeds <code>n</code>.</td>
+              <td>Multi-select only. Controls when to collapse the row of tags into a "{n} selected" summary. <code>'auto'</code> collapses as soon as the tags would wrap to a second line. <code>'off'</code> (or <code>false</code>) always shows every tag. A number <code>n</code> collapses when the selected count exceeds <code>n</code>.</td>
             </tr>
             <tr>
               <td><code>summarizeSelectedText</code></td>

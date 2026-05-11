@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - `class` and `style` attributes on the source `<option>` and `<optgroup>` are now propagated onto the rendered chrome — option `<li>`s, group `<li>`/header/options-list, and selected-state tags (multi) / single-value span (single). Lets consumers attach per-row styling hooks (e.g. `style="--chip-color: #b53f5c"` for DB-derived colours, or `class="is-recommended"` for enumerable states) directly on the source select markup and have them surface on the widget. Classes are appended to the framework's own classes (`ks-option`, `ks-tag`, etc.) rather than replacing them, so existing styling continues to work unchanged.
+- `summarizeSelected: false` is now accepted as an alias for `'off'` — useful for callers that prefer a boolean disable.
 
 ### Changed
 

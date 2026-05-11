@@ -76,7 +76,7 @@
       maxSelect: null,            // maximum number of items that can be selected (multi only; null = unlimited)
       maxSelectText: 'Max {n} items', // label shown in the control when the limit is reached
       allowHtml: true,            // render HTML markup inside <option> labels; false = show tags as literal text
-      summarizeSelected: 'auto',  // multi only: 'auto' = collapse to "n selected" when tags would wrap; 'off' = always show all tags; number = collapse when count exceeds it
+      summarizeSelected: 'auto',  // multi only: 'auto' = collapse to "n selected" when tags would wrap; 'off' or false = always show all tags; number = collapse when count exceeds it
       summarizeSelectedText: '{n} selected', // template for the summary; {n} is replaced with the selected count
       autoSync: true,             // watch the underlying <select> for external mutations and stay in sync without manual refresh()/kselect:sync calls
     }, userOptions || {});
@@ -1596,9 +1596,9 @@
   // After tag rendering, decide whether to swap the tag list out for a
   // "{n} selected" summary. The decision depends on the summarizeSelected
   // option:
-  //   'off'    → never summarize (keep all tags)
-  //   number n → summarize when count > n
-  //   'auto'   → summarize when the rendered tags wrapped to a second line
+  //   'off' or false → never summarize (keep all tags)
+  //   number n       → summarize when count > n
+  //   'auto'         → summarize when the rendered tags wrapped to a second line
   //              (detected by comparing offsetTop of the first vs last tag)
   // 'auto' has to run after the tags are in the DOM because it relies on
   // measured layout — there's no way to know up-front whether N tags of
@@ -1606,7 +1606,7 @@
   Kselect.prototype._maybeSummarize = function (count) {
     if (!this.isMultiple || count === 0) return;
     const opt = this.options.summarizeSelected;
-    if (opt === 'off') return;
+    if (opt === 'off' || opt === false) return;
 
     let shouldSummarize;
     if (typeof opt === 'number') {

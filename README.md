@@ -142,7 +142,7 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `maxSelect` | number\|null | `null` | Maximum items selectable (multi only; `null` = unlimited) |
 | `maxSelectText` | string | `'Max {n} items'` | Notice text when the selection limit is reached; `{n}` = the limit |
 | `allowHtml` | boolean | `true` | Render HTML markup in option labels (see below) |
-| `summarizeSelected` | `'auto'`\|`'off'`\|number | `'auto'` | Multi only. `'auto'` = collapse to a "{n} selected" summary when tags would wrap to a second line; `'off'` = always show all tags; number `n` = collapse when count exceeds `n` |
+| `summarizeSelected` | `'auto'`\|`'off'`\|`false`\|number | `'auto'` | Multi only. `'auto'` = collapse to a "{n} selected" summary when tags would wrap to a second line; `'off'` or `false` = always show all tags; number `n` = collapse when count exceeds `n` |
 | `summarizeSelectedText` | string | `'{n} selected'` | Template for the collapsed-summary text; `{n}` = the count of selected items |
 | `autoSync` | boolean | `true` | Watch the underlying `<select>` for external mutations and re-render automatically. Set `false` to manage syncing yourself via `refresh()` / `kselect:sync` |
 
