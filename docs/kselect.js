@@ -456,20 +456,32 @@
     // the dropdown is position:fixed to the viewport and the viewport doesn't
     // move, the dropdown stays exactly where it is. Only the page content scrolls.
     this._wrapperPrevHeight = 0;
+    this._wrapperPrevWidth = 0;
     if (typeof ResizeObserver !== 'undefined') {
       const self = this;
       this._wrapperResizeObserver = new ResizeObserver(function (entries) {
         if (!self._open) return;
-        const newHeight = entries[0].contentRect.height;
-        const delta = newHeight - self._wrapperPrevHeight;
-        if (delta === 0) return;
+        const rect = entries[0].contentRect;
+        const newHeight = rect.height;
+        const newWidth = rect.width;
+        const heightDelta = newHeight - self._wrapperPrevHeight;
+        const widthDelta = newWidth - self._wrapperPrevWidth;
         self._wrapperPrevHeight = newHeight;
-        const isDropup = self._wrapper.classList.contains('ks-dropup');
-        // Drop-down: wrapper bottom moved down (grew) or up (shrank).
-        //   Scroll down by delta keeps wrapper bottom at the same viewport Y.
-        // Drop-up: wrapper top moved up (grew) or down (shrank).
-        //   Scroll up by delta keeps wrapper top at the same viewport Y.
-        window.scrollBy(0, isDropup ? -delta : delta);
+        self._wrapperPrevWidth = newWidth;
+        if (heightDelta !== 0) {
+          const isDropup = self._wrapper.classList.contains('ks-dropup');
+          // Drop-down: wrapper bottom moved down (grew) or up (shrank).
+          //   Scroll down by delta keeps wrapper bottom at the same viewport Y.
+          // Drop-up: wrapper top moved up (grew) or down (shrank).
+          //   Scroll up by delta keeps wrapper top at the same viewport Y.
+          window.scrollBy(0, isDropup ? -heightDelta : heightDelta);
+        }
+        // Width changes (e.g. selecting a tag pushes the wrapper wider in a
+        // flex/grid layout) — the dropdown must follow so its left/right
+        // edges stay flush with the control.
+        if (widthDelta !== 0) {
+          self._positionDropdown();
+        }
       });
     } else {
       this._wrapperResizeObserver = null;
@@ -1116,7 +1128,9 @@
       // when tags wrap to a new line (or a line collapses). Snapshot the
       // current height so the first callback has a valid baseline to diff against.
       if (this._wrapperResizeObserver) {
-        this._wrapperPrevHeight = this._wrapper.getBoundingClientRect().height;
+        const wrapRect = this._wrapper.getBoundingClientRect();
+        this._wrapperPrevHeight = wrapRect.height;
+        this._wrapperPrevWidth = wrapRect.width;
         this._wrapperResizeObserver.observe(this._wrapper);
       }
 
