@@ -142,6 +142,9 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `maxSelect` | number\|null | `null` | Maximum items selectable (multi only; `null` = unlimited) |
 | `maxSelectText` | string | `'Max {n} items'` | Notice text when the selection limit is reached; `{n}` = the limit |
 | `allowHtml` | boolean | `true` | Render HTML markup in option labels (see below) |
+| `summarizeSelected` | `'auto'`\|`'off'`\|number | `'auto'` | Multi only. `'auto'` = collapse to a "{n} selected" summary when tags would wrap to a second line; `'off'` = always show all tags; number `n` = collapse when count exceeds `n` |
+| `summarizeSelectedText` | string | `'{n} selected'` | Template for the collapsed-summary text; `{n}` = the count of selected items |
+| `autoSync` | boolean | `true` | Watch the underlying `<select>` for external mutations and re-render automatically. Set `false` to manage syncing yourself via `refresh()` / `kselect:sync` |
 
 ---
 
@@ -179,10 +182,49 @@ const selectEl = document.getElementById('my-select');
 selectEl.addEventListener('change', () => {
   console.log('Value:', ks.getValue());
 });
+```
 
-// Force a rebuild after external DOM changes
-selectEl.innerHTML = newOptionsHtml;
-selectEl.dispatchEvent(new Event('kselect:sync'));
+Every event kselect dispatches itself carries an `event.kselect === true` flag, so listeners can tell its events apart from external mutations of the same `<select>`:
+
+```js
+selectEl.addEventListener('change', (e) => {
+  if (e.kselect) return; // ignore kselect's own changes
+  // …handle external change
+});
+```
+
+### Auto-sync with the underlying `<select>`
+
+With the default `autoSync: true`, kselect watches the underlying `<select>` for external mutations (options added/removed, attribute or label edits, programmatic `value` assignment) and re-renders automatically — you do not need to call `refresh()` or dispatch `kselect:sync` after typical updates:
+
+```js
+// Add an option after init — kselect picks it up on its own
+const opt = document.createElement('option');
+opt.text = 'Rust';
+selectEl.appendChild(opt);
+
+// Set the value programmatically — kselect picks it up too, provided the change
+// is dispatched as a native event
+selectEl.value = 'ts';
+selectEl.dispatchEvent(new Event('change'));
+```
+
+`refresh()` and `kselect:sync` are still available for `autoSync: false` setups and for forcing an immediate resync.
+
+### jQuery `.trigger("change")` caveat
+
+jQuery's `.trigger("change")` does **not** dispatch a real DOM event — it walks jQuery's own handler queue and stops there. Native `addEventListener('change', …)` listeners (including kselect's auto-sync hook) are never called. Combined with jQuery's `.val(…)` and `.prop('selected', …)` — which mutate the `selected` IDL property, not the attribute, so a `MutationObserver` does not see them either — this means kselect can miss programmatic updates made entirely through jQuery.
+
+If you are driving the `<select>` from jQuery, either dispatch a native event after the mutation, or call `refresh()` directly:
+
+```js
+$('#my-select').val('ts');
+document.getElementById('my-select')
+        .dispatchEvent(new Event('change'));   // native — kselect picks it up
+
+// or
+$('#my-select').val('ts');
+ks.refresh();
 ```
 
 ---

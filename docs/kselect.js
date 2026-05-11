@@ -78,6 +78,7 @@
       allowHtml: true,            // render HTML markup inside <option> labels; false = show tags as literal text
       summarizeSelected: 'auto',  // multi only: 'auto' = collapse to "n selected" when tags would wrap; 'off' = always show all tags; number = collapse when count exceeds it
       summarizeSelectedText: '{n} selected', // template for the summary; {n} is replaced with the selected count
+      autoSync: true,             // watch the underlying <select> for external mutations and stay in sync without manual refresh()/kselect:sync calls
     }, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
@@ -839,7 +840,38 @@
     this.select.addEventListener('kselect:sync', function () {
       self._syncFromSelect();
       self._buildOptionsList();
+      if (self._searchQuery) self._filterOptions(self._searchQuery);
     });
+
+    // ── Auto-sync with the underlying <select> ──
+    // Two paths cover the ways external code can mutate the select:
+    //   1. DOM mutation — options added/removed/reordered, attribute changes,
+    //      label text edits. MutationObserver catches these.
+    //   2. `change` event — host code sets `select.value = …` or
+    //      `option.selected = true` (property assignment doesn't fire
+    //      MutationObserver) and dispatches change. We listen for that, but
+    //      skip our own events (tagged with `event.kselect`).
+    // kselect's internal selection uses property assignment (no MutationObserver
+    // fire) and dispatches `change` with `event.kselect = true` (filtered below),
+    // so this never triggers a self-induced refresh loop.
+    if (this.options.autoSync) {
+      if (typeof MutationObserver !== 'undefined') {
+        this._selectObserver = new MutationObserver(function () {
+          self.refresh();
+        });
+        this._selectObserver.observe(this.select, {
+          childList: true,      // option add/remove
+          subtree: true,        // optgroup children, option text
+          attributes: true,     // disabled, value, label, selected attribute
+          characterData: true,  // option label text edits
+        });
+      }
+      this._externalChangeListener = function (e) {
+        if (e.kselect) return; // our own event — already in sync
+        self._syncFromSelect();
+      };
+      this.select.addEventListener('change', this._externalChangeListener);
+    }
   };
 
   Kselect.prototype._handleKeydown = function (e) {
@@ -1759,6 +1791,14 @@
       this._wrapperResizeObserver.disconnect();
       this._wrapperResizeObserver = null;
     }
+    if (this._selectObserver) {
+      this._selectObserver.disconnect();
+      this._selectObserver = null;
+    }
+    if (this._externalChangeListener) {
+      this.select.removeEventListener('change', this._externalChangeListener);
+      this._externalChangeListener = null;
+    }
     this._wrapper.parentNode && this._wrapper.parentNode.removeChild(this._wrapper);
     this._dropdown.parentNode && this._dropdown.parentNode.removeChild(this._dropdown);
     if (this._mobileOverlay && this._mobileOverlay.parentNode) {
@@ -1775,6 +1815,11 @@
     if (this._nativeMode) return; // nothing to rebuild — native picker reads <select> live
     this._buildOptionsList();
     this._syncFromSelect();
+    // _buildOptionsList recreates every <li>, wiping the ks-hidden classes that
+    // represent the active search filter. If a query is in flight (typically
+    // because refresh() was called mid-search by a host framework reacting to
+    // change events), re-apply it so the user's filter survives the rebuild.
+    if (this._searchQuery) this._filterOptions(this._searchQuery);
   };
 
   // ─── Internal helpers ────────────────────────────────────────────────────────
@@ -1787,6 +1832,11 @@
       event = document.createEvent('Event');
       event.initEvent(eventName, true, true);
     }
+    // Tag the event so listeners can distinguish kselect-originated changes
+    // from external mutations (e.g. host code editing the <select> and firing
+    // its own change event). Reachable as `e.kselect` in vanilla listeners and
+    // `e.originalEvent.kselect` from jQuery.
+    event.kselect = true;
     this.select.dispatchEvent(event);
   };
 

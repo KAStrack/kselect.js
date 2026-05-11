@@ -12,9 +12,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Summarize Selected feature - shows "{n} selected" instead of the individual selections, and can be configured. Default is set to `auto` (which shows "{n} selected" if the selected items list would wrap to a second line.
 
+### Added
+
+- `autoSync` option (default `true`) — the widget now watches the underlying `<select>` for external mutations (options added/removed, attribute changes, label edits, programmatic `value` assignment followed by a `change` event) and stays in sync automatically. Manual `refresh()` and `kselect:sync` calls are no longer required for these cases. Set `autoSync: false` to opt out.
+- All events dispatched by kselect (`change`, `kselect:change`, `kselect:open`, `kselect:close`) now carry an `event.kselect === true` flag so listeners can distinguish kselect-originated events from external mutations of the underlying `<select>`.
+
 ### Fixed
 
 - Dropdown now resizes to match the control when the wrapper's width changes while open (e.g. selected-tag pills pushing the control wider in a flex/grid layout).
+- Active search filter is preserved across `refresh()` and `kselect:sync` so the visible-option list no longer resets when a host framework triggers a rebuild mid-search.
 
 
 ---

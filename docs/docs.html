@@ -362,7 +362,26 @@ ks.<span class="t-fn">enable</span>();</pre>
       <!-- ── Dynamic options ────────────────────────────────────────────────── -->
       <section class="doc-section" id="dynamic-options">
         <h2>Dynamic options</h2>
-        <p>If you add, remove, or replace options on the underlying <code>&lt;select&gt;</code> after the widget has been initialised, tell kselect to rebuild by calling <code>refresh()</code> or dispatching <code>kselect:sync</code>:</p>
+        <p>With the default <code>autoSync: true</code>, kselect watches the underlying <code>&lt;select&gt;</code> for external mutations (options added or removed, attribute and label edits, programmatic <code>value</code> assignment followed by a native <code>change</code> event) and re-renders on its own — no manual sync call needed:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-kw">const</span> [ks] = Kselect.<span class="t-fn">init</span>(<span class="t-str">'#my-select'</span>);
+<span class="t-kw">const</span> selectEl = document.<span class="t-fn">getElementById</span>(<span class="t-str">'my-select'</span>);
+
+<span class="t-cm">// Append an option — kselect picks it up automatically</span>
+<span class="t-kw">const</span> opt = document.<span class="t-fn">createElement</span>(<span class="t-str">'option'</span>);
+opt.value = <span class="t-str">'rust'</span>;
+opt.text  = <span class="t-str">'Rust'</span>;
+selectEl.<span class="t-fn">appendChild</span>(opt);</pre>
+        </div>
+
+        <div class="callout callout-warn">
+          <span class="callout-icon">⚠️</span>
+          <p><strong>jQuery <code>.trigger("change")</code> caveat.</strong> jQuery's <code>.trigger()</code> does <em>not</em> dispatch a real DOM event — it only walks jQuery's own handler queue, so <code>addEventListener</code> listeners (including the one auto-sync relies on) are never called. Combined with <code>.val(…)</code> / <code>.prop('selected', …)</code>, which mutate the <code>selected</code> IDL property (not the attribute), neither of auto-sync's paths can see the change. If you drive the <code>&lt;select&gt;</code> from jQuery, either dispatch a native event with <code>el.dispatchEvent(new Event('change'))</code> after the mutation, or call <code>ks.refresh()</code> yourself.</p>
+        </div>
+
+        <p>You can still trigger a manual rebuild any time with <code>refresh()</code> or by dispatching <code>kselect:sync</code> — useful with <code>autoSync: false</code>, or when you want to force an immediate resync:</p>
 
         <div class="code-block">
           <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -583,6 +602,12 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><span class="type-pill">string</span></td>
               <td><span class="default-val">'{n} selected'</span></td>
               <td>Template for the summary text shown when <code>summarizeSelected</code> collapses the tags. <code>{n}</code> is replaced with the count of selected items.</td>
+            </tr>
+            <tr>
+              <td><code>autoSync</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">true</span></td>
+              <td>Watch the underlying <code>&lt;select&gt;</code> for external mutations and re-render automatically. Set to <code>false</code> to opt out and manage syncing manually via <code>refresh()</code> / <code>kselect:sync</code>. See the <a href="#dynamic-options">Dynamic options</a> section for the jQuery <code>.trigger("change")</code> caveat.</td>
             </tr>
           </tbody>
         </table>
