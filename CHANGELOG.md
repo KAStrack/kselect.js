@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Global "Select all" and per-optgroup "Select all" now operate only on the currently visible (filter-matching) options when a search query is active. Previously they would silently toggle hidden options too. The checked / indeterminate visual state of each select-all row also tracks the visible scope while a filter is in effect.
+- Search now matches only against option text. Previously a query that matched an optgroup's label would reveal *all* of that group's options regardless of their own text. Optgroups still appear in results — but only when at least one of their child options matches.
 
 ---
 

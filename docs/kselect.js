@@ -1675,8 +1675,7 @@
     // matching against arbitrary inline styles.
     Array.prototype.forEach.call(this._optionsList.querySelectorAll('.ks-option:not(.ks-select-all)'), function (li) {
       const text = (li.querySelector('.ks-option-text') || li).textContent.toLowerCase();
-      const groupAttr = li.getAttribute('data-group') || '';
-      const match = !q || text.indexOf(q) !== -1 || groupAttr.toLowerCase().indexOf(q) !== -1;
+      const match = !q || text.indexOf(q) !== -1;
       li.classList.toggle('ks-hidden', !match);
       if (match) visibleCount++;
     });
