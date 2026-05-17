@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.2.0
+ * Version 1.2.1
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -738,6 +738,10 @@
     this._itemMap = this._itemMap || {};
     if (!this._itemMap[option.value]) this._itemMap[option.value] = [];
     this._itemMap[option.value].push(li);
+    // Back-reference from the rendered <li> to its source <option>. Lets
+    // visibility checks (used by select-all when filtering) match exactly,
+    // which matters when two options share a value but differ in text.
+    li._kselectOption = option;
   };
 
   // ─── Event Binding ───────────────────────────────────────────────────────────
@@ -1331,7 +1335,28 @@
     const opts = optgroup
       ? Array.prototype.filter.call(optgroup.children, function (o) { return o.tagName === 'OPTION' && !o.disabled; })
       : Array.prototype.filter.call(this.select.options, function (o) { return !o.disabled; });
+    // While a search filter is active, restrict the scope to options whose
+    // rendered <li> is currently visible. Otherwise select-all would silently
+    // toggle hidden items the user can't see.
+    if (this._searchQuery) {
+      const self = this;
+      return opts.filter(function (o) { return self._isOptionVisible(o); });
+    }
     return opts;
+  };
+
+  // Returns true if `option` has at least one rendered <li> that isn't hidden
+  // by the active filter. Uses the li→option back-reference so duplicate-value
+  // options whose text differs are evaluated individually.
+  Kselect.prototype._isOptionVisible = function (option) {
+    const lis = this._itemMap && this._itemMap[option.value];
+    if (!lis) return false;
+    for (let i = 0; i < lis.length; i++) {
+      if (lis[i]._kselectOption === option && !lis[i].classList.contains('ks-hidden')) {
+        return true;
+      }
+    }
+    return false;
   };
 
   Kselect.prototype._toggleSelectAll = function () {
@@ -1679,6 +1704,10 @@
     }
 
     this._noResults.style.display = visibleCount === 0 ? '' : 'none';
+
+    // Select-all rows toggle against the visible scope while filtering, so
+    // their checked/indeterminate visual needs to follow the filter too.
+    this._updateSelectAllState();
 
     // Announce result count / no-results to screen readers via the live region
     if (q) {
