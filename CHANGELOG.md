@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [1.2.1] — 2026-05-16
+## [1.3.0] — 2026-05-16
+
+### Changed
+
+- **`allowHtml` now defaults to `false`** (previously `true`). Tag characters in option text are shown literally by default, which is safer when option content may come from user input or other untrusted sources. **Migration:** if you were relying on the previous default to render markup, pass `allowHtml: true` explicitly when initialising — only do so when the option text is trusted.
 
 ### Fixed
 

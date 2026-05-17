@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.2.1
+ * Version 1.3.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -75,7 +75,7 @@
       mobileModal: true,          // on coarse-pointer devices, open a full-screen modal instead of a dropdown
       maxSelect: null,            // maximum number of items that can be selected (multi only; null = unlimited)
       maxSelectText: 'Max {n} items', // label shown in the control when the limit is reached
-      allowHtml: true,            // render HTML markup inside <option> labels; false = show tags as literal text
+      allowHtml: false,           // render HTML markup inside <option> labels; false = show tags as literal text
       summarizeSelected: 'auto',  // multi only: 'auto' = collapse to "n selected" when tags would wrap; 'off' or false = always show all tags; number = collapse when count exceeds it
       summarizeSelectedText: '{n} selected', // template for the summary; {n} is replaced with the selected count
       autoSync: true,             // watch the underlying <select> for external mutations and stay in sync without manual refresh()/kselect:sync calls

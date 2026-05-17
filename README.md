@@ -17,7 +17,7 @@ kselect.js progressively enhances native `<select>` elements with live search, m
 - **Collapsible optgroups** - click a group header to collapse or expand it
 - **Select all** - global and per-group "select all" controls in multi-select mode
 - **Selection limit** - cap how many items can be selected with `maxSelect`
-- **HTML option labels** - render rich markup inside option labels with `allowHtml`
+- **HTML option labels** - opt in with `allowHtml: true` to render rich markup inside option labels
 - **Mobile bottom-sheet** - on phones, opens a full-screen bottom-sheet modal instead of a dropdown
 - **Native picker fallback** - optionally use the OS picker on touch devices with `nativeOnMobile`
 - **Syncs the native `<select>`** - all selections are reflected back to the real element
@@ -111,7 +111,7 @@ Kselect.init('#my-select', {
   mobileModal:       true,
   maxSelect:         null,
   maxSelectText:     'Max {n} items',
-  allowHtml:         true,
+  allowHtml:         false,
 });
 ```
 
@@ -141,7 +141,7 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `mobileModal` | boolean | `true` | Show a bottom-sheet modal on phones instead of a dropdown |
 | `maxSelect` | number\|null | `null` | Maximum items selectable (multi only; `null` = unlimited) |
 | `maxSelectText` | string | `'Max {n} items'` | Notice text when the selection limit is reached; `{n}` = the limit |
-| `allowHtml` | boolean | `true` | Render HTML markup in option labels (see below) |
+| `allowHtml` | boolean | `false` | Render HTML markup in option labels (see below). Off by default — opt in only when option text is trusted |
 | `summarizeSelected` | `'auto'`\|`'off'`\|`false`\|number | `'auto'` | Multi only. `'auto'` = collapse to a "{n} selected" summary when tags would wrap to a second line; `'off'` or `false` = always show all tags; number `n` = collapse when count exceeds `n` |
 | `summarizeSelectedText` | string | `'{n} selected'` | Template for the collapsed-summary text; `{n}` = the count of selected items |
 | `autoSync` | boolean | `true` | Watch the underlying `<select>` for external mutations and re-render automatically. Set `false` to manage syncing yourself via `refresh()` / `kselect:sync` |
@@ -303,14 +303,16 @@ When the limit is reached, unselected options dim, an amber badge appears in the
 
 ## HTML Option Labels
 
-With `allowHtml: true` (the default), escape your HTML as entities in the option text - kselect decodes and renders it:
+By default, `allowHtml: false` — tag characters are shown literally so untrusted or arbitrary option text can't inject markup.
+
+Set `allowHtml: true` to render markup. Escape your HTML as entities in the option text — kselect decodes and renders it:
 
 ```html
 <option value="bold">&lt;strong&gt;Bold&lt;/strong&gt;</option>
 <option value="status">Server &lt;span style="color:green"&gt;● online&lt;/span&gt;</option>
 ```
 
-Set `allowHtml: false` to display tag characters literally - useful when content comes from untrusted sources.
+Only enable when the option text is trusted (authored by you, not derived from user input).
 
 ---
 

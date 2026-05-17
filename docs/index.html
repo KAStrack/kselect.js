@@ -808,7 +808,7 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
         <div class="demo-icon">✨</div>
         <div>
           <div class="demo-card-title">HTML Option Labels — <code>allowHtml: true</code></div>
-          <div class="demo-card-desc">With <code>allowHtml</code> enabled (the default), HTML markup inside <code>&lt;option&gt;</code> tags is rendered live — bold text, colours, flags, icons, whatever you put in.</div>
+          <div class="demo-card-desc">Opt in with <code>allowHtml: true</code> to render HTML markup inside <code>&lt;option&gt;</code> tags — bold text, colours, flags, icons, whatever you put in. Off by default; enable only when option text is trusted.</div>
         </div>
       </div>
       <div class="demo-card-body">
@@ -840,7 +840,7 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
 <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"colored"</span><span class="tag">&gt;&lt;span</span> <span class="attr">style</span>=<span class="val">"color:#e11d48"</span><span class="tag">&gt;</span>Coloured<span class="tag">&lt;/span&gt;&lt;/option&gt;</span>
 
 <span class="kw">const</span> ksAllowHtml = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#allow-html-demo'</span>, {
-  <span class="key">allowHtml</span>: <span class="kw">true</span>, <span class="cm">// default — can be omitted</span>
+  <span class="key">allowHtml</span>: <span class="kw">true</span>, <span class="cm">// off by default — opt in for trusted markup</span>
 })[0];</pre>
         </div>
       </div>
@@ -852,7 +852,7 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
         <div class="demo-icon">🔒</div>
         <div>
           <div class="demo-card-title">HTML Option Labels — <code>allowHtml: false</code></div>
-          <div class="demo-card-desc">With <code>allowHtml: false</code>, HTML tags are shown as literal text. Useful when option content comes from user input or untrusted sources.</div>
+          <div class="demo-card-desc">With <code>allowHtml: false</code> (the default), HTML tags are shown as literal text. Safe when option content comes from user input or untrusted sources.</div>
         </div>
       </div>
       <div class="demo-card-body">
