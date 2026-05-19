@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.3.0
+ * Version 1.3.6
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -23,6 +23,15 @@
   --ks-color-option-selected-text: #ffffff;
   --ks-color-option-selected-bg: #eef2ff;
   --ks-color-option-selected-fg: #4f46e5;
+  --ks-color-option-selected-row: var(--ks-color-option-hover);
+  /* --ks-color-option-selected-row-text is intentionally undeclared. Defaults
+     come from var() fallbacks below: `inherit` in single mode, and
+     `--ks-color-option-selected-fg` in multi mode. Setting this variable in
+     a theme overrides both modes. */
+  /* --ks-color-option-hover-text is intentionally undeclared. When unset, the
+     hover/focused state doesn't change the text colour (selected-row colours
+     still apply on hover). Setting it makes the chosen colour win on hover
+     and keyboard focus in every state (single, multi, selected, unselected). */
 
   --ks-color-group-header: #f9fafb;
   --ks-color-group-label: #6b7280;
@@ -40,6 +49,7 @@
 
   --ks-color-checkbox-border: #d1d5db;
   --ks-color-checkbox-checked: #6366f1;
+  --ks-color-checkbox-tick: var(--ks-color-option-selected-fg);
 
   --ks-color-limit-badge-bg: #f3f4f6;
   --ks-color-limit-badge-text: #6b7280;
@@ -442,20 +452,56 @@
 }
 
 .ks-option:hover,
-.ks-option.ks-option-focused,
-.ks-option.ks-option-selected {
+.ks-option.ks-option-focused {
   background: var(--ks-color-option-hover);
 }
 
-/* Selected: the row stays highlighted with the same shade as hover (so it's
-   obvious which option(s) are selected even when nothing is being hovered),
-   plus a weight bump and — in multi mode — an indigo text tint. */
+/* Selected: the row stays highlighted (so it's obvious which option(s) are
+   selected even when nothing is being hovered), plus a weight bump and — in
+   multi mode — an indigo text tint. By default `--ks-color-option-selected-row`
+   inherits from `--ks-color-option-hover`, so hover and selected share a colour
+   unless a theme sets the selected-row variable explicitly. */
 .ks-option.ks-option-selected {
+  background: var(--ks-color-option-selected-row);
+  color: var(--ks-color-option-selected-row-text, inherit);
   font-weight: 500;
 }
 
+/* Multi-mode default text colour for selected rows is the indigo tint
+   (`--ks-color-option-selected-fg`). The `.ks-multiple` class is set on the
+   dropdown and mobile overlay (not only on the wrapper), so this descendant
+   selector reaches `.ks-option` even though the dropdown is appended to
+   `<body>`. A theme that sets `--ks-color-option-selected-row-text` overrides
+   this default (the var() resolves before the fallback applies). */
 .ks-multiple .ks-option.ks-option-selected {
-  color: var(--ks-color-option-selected-fg);
+  color: var(--ks-color-option-selected-row-text, var(--ks-color-option-selected-fg));
+}
+
+/* Hover / keyboard-focused text colour. `--ks-color-option-hover-text` is
+   undeclared by default — when unset, `var()` resolves to invalid-at-computed-
+   value-time which, for `color`, behaves like `inherit`, so we scope this rule
+   to non-selected rows to avoid clobbering the selected-row text colours. */
+.ks-option:hover:not(.ks-option-selected),
+.ks-option.ks-option-focused:not(.ks-option-selected) {
+  color: var(--ks-color-option-hover-text);
+}
+
+/* Selected + hovered/focused. Hover wins everywhere — both the background and
+   the text colour swap to the hover values, so a hovered selected row looks
+   visually consistent with a hovered non-selected row. Layered fallbacks
+   preserve the selected-row text colour (single mode) or the indigo tint
+   (multi mode) when the hover-text var is unset, while letting it dominate
+   every state when set. The multi-mode rule's higher specificity is required
+   to beat `.ks-multiple .ks-option.ks-option-selected` above; it only needs to
+   override `color` — `background` cascades from the rule above. */
+.ks-option.ks-option-selected:hover,
+.ks-option.ks-option-selected.ks-option-focused {
+  background: var(--ks-color-option-hover);
+  color: var(--ks-color-option-hover-text, var(--ks-color-option-selected-row-text, inherit));
+}
+.ks-multiple .ks-option.ks-option-selected:hover,
+.ks-multiple .ks-option.ks-option-selected.ks-option-focused {
+  color: var(--ks-color-option-hover-text, var(--ks-color-option-selected-row-text, var(--ks-color-option-selected-fg)));
 }
 
 .ks-option-disabled {
@@ -574,17 +620,22 @@
   display: block;
   width: 8px;
   height: 1.5px;
-  background: var(--ks-color-option-selected-fg);
+  background: var(--ks-color-checkbox-tick);
   border-radius: 1px;
 }
 
 /* ─── Checkbox ───────────────────────────────────────────────────────────── */
+/* `color` is set on `.ks-checkbox` so the inner `<path stroke="currentColor">`
+   resolves to `--ks-color-checkbox-tick` instead of inheriting the option's
+   text colour. Without this, the tick follows `--ks-color-option-hover-text`
+   on hover and can become invisible against the checkbox's pale background. */
 .ks-checkbox {
   width: 16px;
   height: 16px;
   min-width: 16px;
   border: 1.5px solid var(--ks-color-checkbox-border);
   border-radius: var(--ks-radius-checkbox);
+  color: var(--ks-color-checkbox-tick);
   display: flex;
   align-items: center;
   justify-content: center;

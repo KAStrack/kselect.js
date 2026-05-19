@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.3.0
+ * Version 1.3.6
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -269,7 +269,8 @@
 
     // ── Dropdown ──
     const dropdown = document.createElement('div');
-    dropdown.className = 'ks-dropdown';
+    dropdown.className = 'ks-dropdown' +
+      (this.isMultiple ? ' ks-multiple' : ' ks-single');
     dropdown.setAttribute('id', 'ks-dropdown-' + this.id);
     dropdown.setAttribute('role', 'listbox');
     dropdown.setAttribute('aria-multiselectable', this.isMultiple ? 'true' : 'false');
@@ -323,7 +324,8 @@
     // A full-screen sheet used instead of the dropdown on small touch devices
     // when mobileModal:true. Built once and reused; shown/hidden by open()/close().
     const mobileOverlay = document.createElement('div');
-    mobileOverlay.className = 'ks-mobile-overlay';
+    mobileOverlay.className = 'ks-mobile-overlay' +
+      (this.isMultiple ? ' ks-multiple' : ' ks-single');
     mobileOverlay.setAttribute('aria-modal', 'true');
     mobileOverlay.setAttribute('role', 'dialog');
 

@@ -6,6 +6,62 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.3.6] — 2026-05-19
+
+### Fixed
+
+- The checkbox tick in multi-select dropdowns no longer follows `--ks-color-option-hover-text` on hover. Previously the inner `<path stroke="currentColor">` inherited the option row's `color`, so setting a hover text colour (e.g. white) made the tick disappear against the pale checkbox background. The checkbox now sets its own `color`, anchored to a new `--ks-color-checkbox-tick` variable, so the tick stays readable regardless of option text colour.
+
+### Added
+
+- New `--ks-color-checkbox-tick` CSS custom property controls the colour of the checkmark glyph inside multi-select checkboxes (and the dash glyph used for the indeterminate state on per-group "Select all" rows). Defaults to `var(--ks-color-option-selected-fg)` so existing rendering is unchanged; set it explicitly to give the tick a distinct colour.
+
+---
+
+## [1.3.5] — 2026-05-19
+
+### Fixed
+
+- Hovering a selected row in the dropdown now applies the hover background (`--ks-color-option-hover`) as well as the hover text colour (`--ks-color-option-hover-text`), instead of keeping the selected-row background while only changing the text. Hover styling is consistent across selected and non-selected rows. Themes that set `--ks-color-option-selected-row` to a colour distinct from `--ks-color-option-hover` will see selected rows take the hover colour while hovered, then return to the selected colour when the pointer moves away.
+
+---
+
+## [1.3.4] — 2026-05-19
+
+### Added
+
+- New `--ks-color-option-hover-text` CSS custom property controls the text colour of dropdown rows on hover and keyboard focus. Undeclared by default so existing rendering is unchanged (the underlying selected-row text colours still apply on hover); set it in a theme and the chosen colour wins in every state — single, multi, selected, unselected.
+
+---
+
+## [1.3.3] — 2026-05-18
+
+### Fixed
+
+- Restored the multi-mode indigo text tint on selected rows in the dropdown. The previous `.ks-multiple .ks-option.ks-option-selected` rule was a no-op because the dropdown (and mobile overlay) are appended to `<body>`, and `.ks-multiple` was only set on the wrapper — so the descendant selector never reached the option. The dropdown and mobile overlay now also carry `.ks-single` / `.ks-multiple`, matching the wrapper, and the rule reaches them as intended.
+
+### Changed
+
+- `--ks-color-option-selected-row-text` is no longer declared on `:root`. Its default is now provided via `var()` fallback at each use site: `inherit` in single mode, `var(--ks-color-option-selected-fg)` in multi mode. Setting the variable in a theme still overrides both modes. (This makes multi-mode's restored indigo default themable by a single variable, rather than forcing themers to also override `.ks-multiple .ks-option.ks-option-selected` directly.)
+
+---
+
+## [1.3.2] — 2026-05-18
+
+### Added
+
+- New `--ks-color-option-selected-row-text` CSS custom property controls the text colour of selected options in the dropdown. Defaults to `inherit` (so the text colour matches surrounding option text as before); set it explicitly to give selected rows a distinct text colour.
+
+---
+
+## [1.3.1] — 2026-05-18
+
+### Added
+
+- New `--ks-color-option-selected-row` CSS custom property controls the row-background colour of selected options in the dropdown, independently of the hover/keyboard-focus colour (`--ks-color-option-hover`). Defaults to `var(--ks-color-option-hover)` so existing themes are unchanged; set it explicitly to give selected rows a distinct colour.
+
+---
+
 ## [1.3.0] — 2026-05-16
 
 ### Changed
