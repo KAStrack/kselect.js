@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.4.0] — 2026-05-20
+
+### Added
+
+- New `showEmptyOptGroups` option (default `true`) controls whether empty `<optgroup>` headers (groups with no `<option>` children) appear in the dropdown. When `true`, the header is always shown; when `false`, the optgroup is omitted entirely.
+
+### Fixed
+
+- Empty `<optgroup>` headers no longer disappear after the first time the dropdown is opened. Previously the post-close filter reset would mark groups with no visible children as hidden, so an empty optgroup was visible on first open but hidden on every subsequent open until the page reloaded.
+
+---
+
 ## [1.3.6] — 2026-05-19
 
 ### Fixed

@@ -112,6 +112,7 @@ Kselect.init('#my-select', {
   maxSelect:         null,
   maxSelectText:     'Max {n} items',
   allowHtml:         false,
+  showEmptyOptGroups: true,
 });
 ```
 
@@ -145,6 +146,7 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `summarizeSelected` | `'auto'`\|`'off'`\|`false`\|number | `'auto'` | Multi only. `'auto'` = collapse to a "{n} selected" summary when tags would wrap to a second line; `'off'` or `false` = always show all tags; number `n` = collapse when count exceeds `n` |
 | `summarizeSelectedText` | string | `'{n} selected'` | Template for the collapsed-summary text; `{n}` = the count of selected items |
 | `autoSync` | boolean | `true` | Watch the underlying `<select>` for external mutations and re-render automatically. Set `false` to manage syncing yourself via `refresh()` / `kselect:sync` |
+| `showEmptyOptGroups` | boolean | `true` | Whether empty `<optgroup>` headers (groups with no `<option>` children) appear in the dropdown. `true` always shows the header; `false` omits the optgroup entirely |
 
 ---
 

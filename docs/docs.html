@@ -657,6 +657,12 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><span class="default-val">true</span></td>
               <td>Watch the underlying <code>&lt;select&gt;</code> for external mutations and re-render automatically. Set to <code>false</code> to opt out and manage syncing manually via <code>refresh()</code> / <code>kselect:sync</code>. See the <a href="#dynamic-options">Dynamic options</a> section for the jQuery <code>.trigger("change")</code> caveat.</td>
             </tr>
+            <tr>
+              <td><code>showEmptyOptGroups</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">true</span></td>
+              <td>Whether empty <code>&lt;optgroup&gt;</code> headers (groups with no <code>&lt;option&gt;</code> children in the source <code>&lt;select&gt;</code>) appear in the dropdown. <code>true</code> always shows the header; <code>false</code> omits the optgroup entirely.</td>
+            </tr>
           </tbody>
         </table>
       </section>

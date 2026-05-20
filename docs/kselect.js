@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.3.6
+ * Version 1.4.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -79,6 +79,7 @@
       summarizeSelected: 'auto',  // multi only: 'auto' = collapse to "n selected" when tags would wrap; 'off' or false = always show all tags; number = collapse when count exceeds it
       summarizeSelectedText: '{n} selected', // template for the summary; {n} is replaced with the selected count
       autoSync: true,             // watch the underlying <select> for external mutations and stay in sync without manual refresh()/kselect:sync calls
+      showEmptyOptGroups: true,   // when an <optgroup> has no <option> children, true keeps its header in the dropdown; false omits it entirely
     }, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
@@ -575,6 +576,17 @@
 
   Kselect.prototype._renderGroup = function (optgroup, container) {
     const self = this;
+
+    // Empty optgroups (no <option> children in the source) are skipped entirely
+    // when showEmptyOptGroups is false. Otherwise we render the header as usual;
+    // _filterOptions keeps it visible while there's no active search query.
+    if (!this.options.showEmptyOptGroups) {
+      const hasOption = Array.prototype.some.call(optgroup.children, function (c) {
+        return c.tagName === 'OPTION';
+      });
+      if (!hasOption) return;
+    }
+
     const groupId = this.id + '-group-' + encodeURIComponent(optgroup.label);
     const isCollapsed = this._collapsedGroups[groupId] !== undefined
       ? this._collapsedGroups[groupId]
@@ -1682,8 +1694,16 @@
       if (match) visibleCount++;
     });
 
-    // Show group headers if any child option is visible; auto-expand on search
+    // Show group headers if any child option is visible; auto-expand on search.
+    // Empty optgroups (no .ks-option children at all) reach this loop only when
+    // showEmptyOptGroups is true (_renderGroup skips them otherwise), so they
+    // stay visible regardless of the search state.
     Array.prototype.forEach.call(this._optionsList.querySelectorAll('.ks-group'), function (group) {
+      const allChildren = group.querySelectorAll('.ks-option:not(.ks-select-all)');
+      if (allChildren.length === 0) {
+        group.classList.remove('ks-hidden');
+        return;
+      }
       const visibleChildren = group.querySelectorAll('.ks-option:not(.ks-select-all):not(.ks-hidden)');
       const hasVisible = visibleChildren.length > 0;
       group.classList.toggle('ks-hidden', !hasVisible);
