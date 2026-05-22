@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.4.0
+ * Version 1.4.4
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -504,6 +504,17 @@
   color: var(--ks-color-option-hover-text, var(--ks-color-option-selected-row-text, var(--ks-color-option-selected-fg)));
 }
 
+/* Select-all row: the row itself isn't clickable (cursor:default; only the
+   trigger is) and in search-in-row mode it also contains the search input.
+   Suppress mouse-hover background/text styling so the highlight doesn't
+   appear when the pointer crosses the search field or the row's whitespace.
+   Keyboard focus (.ks-option-focused) is left untouched so arrow-key
+   navigation onto the row still shows where focus is. */
+.ks-option.ks-select-all:hover:not(.ks-option-focused) {
+  background: transparent;
+  color: inherit;
+}
+
 .ks-option-disabled {
   cursor: not-allowed;
   opacity: 0.45;
@@ -514,6 +525,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Blank-label option (e.g. `<option value="">`): the text span has no content
+   so its line box collapses to zero, making the row shorter than its
+   neighbours. A non-breaking space inserted via ::before keeps the line box
+   intact without affecting search/text-matching (which reads `option.text`). */
+.ks-option-text:empty::before {
+  content: '\00a0';
 }
 
 /* ─── Select-all rows ────────────────────────────────────────────────────── */
@@ -944,8 +963,8 @@ body.ks-body-modal-open {
 .ks-mobile-sheet {
   position: relative;
   width: 100%;
+  max-height: 92vh; /* fallback for browsers without dvh */
   max-height: 92dvh;
-  max-height: 92vh; /* fallback */
   background: var(--ks-color-bg);
   border-radius: 20px 20px 0 0;
   display: flex;
@@ -1045,15 +1064,19 @@ body.ks-body-modal-open {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  /* Anchor sparse lists to the bottom so items sit near the search bar */
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
 }
 
-/* The options <ul> inside the wrap (the shared _optionsList) */
+/* The options <ul> inside the wrap (the shared _optionsList).
+   `margin-top: auto` anchors a short list to the bottom of the wrap (so items
+   sit near the search bar). When the list is taller than the wrap, the auto
+   margin resolves to 0, so long lists scroll from the top instead of starting
+   pre-scrolled to the bottom (which is what `justify-content: flex-end` on the
+   wrap used to cause). */
 .ks-mobile-options-wrap .ks-options {
   padding: 6px 0;
+  margin-top: auto;
 }
 
 .ks-mobile-options-wrap .ks-option {

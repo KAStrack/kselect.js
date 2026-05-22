@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.4.4] — 2026-05-22
+
+### Fixed
+
+- On mobile, the bottom-sheet modal could open taller than the visible viewport — pushing the header (and the × close button) above the top edge of the screen — when opened with the browser URL bar visible (typically at the top of a page, before any scroll). The sheet's `max-height` declarations were ordered `92dvh` then `92vh` with the latter labelled as a fallback, but CSS source-order means the second declaration wins wherever both are supported, so `92vh` was always the value used — `dvh` was dead. `vh` is fixed to the large viewport (URL-bar-collapsed size), so when the URL bar was actually visible the sheet was sized larger than the visible area. The order is now `92vh` (fallback) then `92dvh`, so modern browsers use the dynamic viewport and the sheet shrinks/grows in sync with the URL bar state.
+
+---
+
+## [1.4.3] — 2026-05-22
+
+### Fixed
+
+- The mobile bottom-sheet modal no longer opens pre-scrolled to the bottom of the options list when there are many options. The scrollable options wrap was using `justify-content: flex-end` to anchor sparse lists near the search bar; for lists tall enough to overflow, that flex anchoring also caused the initial scroll position to sit at the end of the content. The anchoring is now done with `margin-top: auto` on the `<ul>` instead — short lists still sit near the search bar, and long lists scroll from the top as expected.
+
+---
+
+## [1.4.2] — 2026-05-22
+
+### Fixed
+
+- An `<option>` with empty text (e.g. `<option value="">`) used as a blank/placeholder row no longer renders shorter than its neighbours. The `.ks-option-text` span collapses to a zero-height line box when its content is empty, so the row's height shrank to just the vertical padding. A `::before` pseudo-element with a non-breaking space now preserves the line box for empty labels, keeping the row at the same height as the rest. Search matching is unaffected (it reads `option.text`, not the rendered DOM).
+
+---
+
+## [1.4.1] — 2026-05-22
+
+### Fixed
+
+- The global "Select all" row no longer shows the option-hover background when the mouse passes over it. The row carries the `ks-option` class (so it can be reached by arrow-key navigation), which meant the `.ks-option:hover` styling fired across the whole row — including the search input when `selectAll` is enabled (search-in-row mode). The row itself has `cursor: default` (only the trigger is clickable), so the highlight was misleading. Mouse hover now leaves the row unstyled; keyboard focus (`.ks-option-focused`) still highlights it as before.
+
+---
+
 ## [1.4.0] — 2026-05-20
 
 ### Added

@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.4.0
+ * Version 1.4.4
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
