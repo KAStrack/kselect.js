@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.4.4
+ * Version 1.5.3
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -937,9 +937,24 @@ body.ks-body-modal-open {
 .ks-mobile-overlay {
   display: none;
   position: fixed;
+  /* inset:0 is the default (non-iframe) path. Inside a tall iframe, the JS
+     positioner overrides top/left/width/height (and sets bottom/right:auto)
+     to the user's visible slice so the sheet doesn't pin off-screen. */
   inset: 0;
   z-index: var(--ks-z-index);
   align-items: flex-end;
+}
+
+/* Invisible, inert probe that fills this frame's viewport. An
+   IntersectionObserver measures how much of it the user can actually see
+   (clipped by any ancestor iframe), which tells the mobile overlay where the
+   visible slice is. Never interactive, never painted. */
+.ks-iframe-sentinel {
+  position: fixed;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .ks-mobile-overlay.ks-mobile-overlay-open {

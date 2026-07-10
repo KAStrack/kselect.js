@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.4.4
+ * Version 1.5.2
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -11,6 +11,11 @@
   }
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
+
+  // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
+  // Kselect.version and embedded as an HTML comment in the mobile sheet so a
+  // cached build is easy to spot via "Inspect Element".
+  const KSELECT_VERSION = '1.5.3';
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -51,10 +56,40 @@
       && window.matchMedia('(pointer: coarse)').matches;
   }
 
+  // Are we running inside a (possibly cross-origin) iframe? `position: fixed`
+  // anchors to *this frame's* layout viewport, not the user's screen — so when
+  // the iframe is rendered taller than the parent window (a tall form in a
+  // full-bleed iframe), a bottom-pinned overlay can land far below the fold.
+  // Comparing window.self to window.top is allowed across origins and doesn't
+  // throw; the try/catch is belt-and-braces for locked-down embeds.
+  function inIframe() {
+    try {
+      return window.self !== window.top;
+    } catch (e) {
+      return true;
+    }
+  }
+
   function Kselect(selectEl, userOptions) {
     if (!(this instanceof Kselect)) return new Kselect(selectEl, userOptions);
     if (!selectEl || selectEl.tagName !== 'SELECT') {
       throw new Error('Kselect: first argument must be a <select> element.');
+    }
+
+    // Double-init guard. If this <select> already has a live kselect instance,
+    // return it instead of building a second widget on top of the first — re-init
+    // would hide the (already-hidden) select again and orphan the first instance's
+    // wrapper, dropdown, and event bindings, a common cause of "my change handler
+    // stopped firing" when a modal re-runs init on every open. Returning an object
+    // from a constructor overrides the `new` result, so both Kselect.init(el)
+    // (which calls `new Kselect`) and a direct `new Kselect(el)` yield the existing
+    // instance. destroy() clears data-kselect-id and the _instances entry, so
+    // re-init after destroy() still builds fresh; a cloned node carrying a stale
+    // data-kselect-id not present in _instances also falls through to a fresh build
+    // (and overwrites the stale attribute below).
+    const existingId = selectEl.getAttribute('data-kselect-id');
+    if (existingId && Kselect._instances && Kselect._instances[existingId]) {
+      return Kselect._instances[existingId];
     }
 
     this.select = selectEl;
@@ -150,6 +185,8 @@
     // you want the single instance.
     return instances;
   };
+
+  Kselect.version = KSELECT_VERSION;
 
   Kselect.getInstance = function (selectEl) {
     const id = selectEl && selectEl.getAttribute('data-kselect-id');
@@ -329,6 +366,9 @@
       (this.isMultiple ? ' ks-multiple' : ' ks-single');
     mobileOverlay.setAttribute('aria-modal', 'true');
     mobileOverlay.setAttribute('role', 'dialog');
+    // Version marker — inspect the modal's HTML to confirm you're not running a
+    // cached build. Shows up as `<!-- kselect.js v1.5.1 -->` inside the overlay.
+    mobileOverlay.appendChild(document.createComment(' kselect.js v' + KSELECT_VERSION + ' '));
 
     // Backdrop (the dark scrim behind the sheet)
     const mobileBackdrop = document.createElement('div');
@@ -425,6 +465,58 @@
     this._mobileSearchWrap = mobileSearchWrap;
     this._mobileSearchInput = mobileSearchInput;
     this._mobileNoResults  = mobileNoResults;
+
+    // ── iframe-aware mobile positioning ──
+    // If we're inside an iframe that's rendered taller than the parent window,
+    // `position: fixed` on the overlay anchors to the iframe's (oversized)
+    // viewport, so the bottom-pinned sheet can land off-screen. We track the
+    // slice of the iframe that's actually visible to the user with an
+    // IntersectionObserver whose implicit root is the *top-level* viewport —
+    // the intersection is clipped across (even cross-origin) frame boundaries,
+    // so this works with zero cooperation from the parent page. The cached
+    // rect is in this frame's viewport coordinates, exactly what fixed
+    // positioning needs. (Only wired up when the mobile modal can actually
+    // appear — coarse pointer, small viewport.)
+    this._inIframe = inIframe();
+    this._iframeVisibleRect = null;
+    if (this._inIframe && this.options.mobileModal && typeof IntersectionObserver === 'function') {
+      const sentinel = document.createElement('div');
+      sentinel.className = 'ks-iframe-sentinel';
+      sentinel.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(sentinel);
+      this._iframeSentinel = sentinel;
+
+      const self = this;
+      this._iframeObserver = new IntersectionObserver(function (entries) {
+        const entry = entries[entries.length - 1];
+        if (!entry) return;
+        // The observer's job here is mainly to *fire* — its callback runs when
+        // the parent scrolls (even cross-origin), which an in-frame scroll
+        // listener can't see when the iframe itself isn't the thing scrolling.
+        // For the actual coordinates we prefer the synchronous same-origin
+        // computation: `intersectionRect` is reported in the top-level
+        // viewport's coordinate space, not this frame's fixed-positioning
+        // space, so using it directly would mis-place the overlay by the
+        // parent scroll offset. We only fall back to it when the parent is
+        // unreachable (cross-origin) — a case where a content-tall iframe
+        // can't really arise without parent cooperation anyway.
+        const sync = self._computeIframeVisibleRect();
+        if (sync) {
+          self._iframeVisibleRect = sync;
+        } else {
+          const r = entry.intersectionRect;
+          self._iframeVisibleRect = entry.isIntersecting
+            ? { top: r.top, left: r.left, width: r.width, height: r.height }
+            : null;
+        }
+        // Re-pin live if the sheet is open.
+        if (self._mobileOverlay &&
+            self._mobileOverlay.classList.contains('ks-mobile-overlay-open')) {
+          self._positionMobileOverlay();
+        }
+      });
+      this._iframeObserver.observe(sentinel);
+    }
 
     // Store refs
     this._wrapper = wrapper;
@@ -1007,6 +1099,33 @@
     this._mobileOverlay.classList.add('ks-mobile-overlay-open');
     document.body.classList.add('ks-body-modal-open');
 
+    // Truly lock page scroll. iOS Safari ignores `overflow:hidden` /
+    // `touch-action:none` on <body> for *touch* scrolling, so a drag that
+    // starts inside the scrollable options list chains out to the page — or,
+    // when kselect is inside an iframe, to the iframe's own document — and
+    // carries the sheet off-screen (from which there's often no way to scroll
+    // back). Pinning the body with `position:fixed` removes it from the scroll
+    // flow entirely, so there is no scrollable ancestor for the list to chain
+    // into. The pre-modal scroll offset is reapplied as a negative `top` so the
+    // page doesn't visually jump, and restored in _closeMobileModal.
+    const bodyStyle = document.body.style;
+    this._prevBodyStyle = {
+      position: bodyStyle.position,
+      top: bodyStyle.top,
+      left: bodyStyle.left,
+      right: bodyStyle.right,
+      width: bodyStyle.width,
+    };
+    bodyStyle.position = 'fixed';
+    bodyStyle.top = (-this._modalScrollY) + 'px';
+    bodyStyle.left = (-this._modalScrollX) + 'px';
+    bodyStyle.right = '0';
+    bodyStyle.width = '100%';
+
+    // When inside a tall iframe, pin the overlay to the visible slice rather
+    // than to the iframe's (oversized) viewport bottom.
+    this._positionMobileOverlay();
+
     // Reset mobile search
     this._mobileSearchInput.value = '';
     this._filterOptions('');
@@ -1104,6 +1223,34 @@
     this._mobileSheet.addEventListener('touchstart', this._mobileTouchStart, { passive: true });
     this._mobileSheet.addEventListener('touchmove',  this._mobileTouchMove,  { passive: true });
     this._mobileSheet.addEventListener('touchend',   this._mobileTouchEnd,   { passive: true });
+
+    // ── Block scroll-chaining out of the options list ──
+    // When a drag inside the options list can't be consumed by the list itself
+    // — the list is shorter than its container (not scrollable at all), or it's
+    // already pinned at the top/bottom edge — iOS chains the scroll to the
+    // document. Inside an iframe that gesture *propagates to the parent frame*,
+    // which `position:fixed` on <body> cannot stop (the body lock only governs
+    // this frame). So we consume the gesture directly: a non-passive touchmove
+    // that calls preventDefault() exactly when the list can't scroll in the
+    // drag direction. Mid-list drags fall through untouched and scroll normally.
+    this._lastTouchY = 0;
+    this._mobileRecordTouchY = function (e) {
+      if (e.touches && e.touches.length) self._lastTouchY = e.touches[0].clientY;
+    };
+    this._mobilePreventChain = function (e) {
+      const wrap = self._mobileOptionsWrap;
+      if (!wrap || !wrap.contains(e.target)) return; // not the scrollable list
+      if (!e.touches || e.touches.length !== 1) return; // ignore pinch-zoom
+      const y = e.touches[0].clientY;
+      const dy = y - self._lastTouchY;
+      self._lastTouchY = y;
+      if (wrap.scrollHeight <= wrap.clientHeight) { e.preventDefault(); return; }
+      const atTop = wrap.scrollTop <= 0;
+      const atBottom = wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 1;
+      if ((atTop && dy > 0) || (atBottom && dy < 0)) e.preventDefault();
+    };
+    this._mobileSheet.addEventListener('touchstart', this._mobileRecordTouchY, { passive: true });
+    this._mobileSheet.addEventListener('touchmove',  this._mobilePreventChain, { passive: false });
   };
 
   Kselect.prototype._closeMobileModal = function () {
@@ -1112,6 +1259,22 @@
 
     this._mobileOverlay.classList.remove('ks-mobile-overlay-open');
     document.body.classList.remove('ks-body-modal-open');
+
+    // Un-pin the body (see _openMobileModal) and restore the pre-modal scroll
+    // position. `position:fixed` collapses the document's scroll range, so the
+    // scrollTo only takes effect once the inline styles are cleared.
+    if (this._prevBodyStyle) {
+      const bodyStyle = document.body.style;
+      bodyStyle.position = this._prevBodyStyle.position;
+      bodyStyle.top = this._prevBodyStyle.top;
+      bodyStyle.left = this._prevBodyStyle.left;
+      bodyStyle.right = this._prevBodyStyle.right;
+      bodyStyle.width = this._prevBodyStyle.width;
+      this._prevBodyStyle = null;
+      if (this._modalScrollX !== undefined && this._modalScrollY !== undefined) {
+        window.scrollTo(this._modalScrollX, this._modalScrollY);
+      }
+    }
 
     // Remove event listeners
     if (this._mobileCloseHandler) {
@@ -1138,9 +1301,94 @@
       this._mobileTouchMove  = null;
       this._mobileTouchEnd   = null;
     }
+    // Remove the scroll-chain blocker (see _openMobileModal)
+    if (this._mobilePreventChain) {
+      this._mobileSheet.removeEventListener('touchstart', this._mobileRecordTouchY);
+      this._mobileSheet.removeEventListener('touchmove',  this._mobilePreventChain);
+      this._mobileRecordTouchY = null;
+      this._mobilePreventChain = null;
+    }
     this._mobileSheet.style.transform = '';
     this._mobileSheet.style.transition = '';
     this._mobileBackdrop.style.opacity = '';
+
+    // Clear any iframe slice positioning so the next open (or a non-iframe
+    // context) starts from the CSS `inset: 0` / `max-height: 92dvh` defaults.
+    const ov = this._mobileOverlay.style;
+    ov.top = ov.left = ov.width = ov.height = ov.bottom = ov.right = '';
+    this._mobileSheet.style.maxHeight = '';
+  };
+
+  // Size and position the mobile overlay to the user's actually-visible slice
+  // of this frame. A no-op (leaves the CSS `inset: 0` default) when we're not
+  // in an iframe. Inside an iframe, prefer the IntersectionObserver-cached
+  // rect; if that hasn't reported yet (it's async), fall back to a synchronous
+  // same-origin computation so the very first open doesn't flash off-screen.
+  Kselect.prototype._positionMobileOverlay = function () {
+    if (!this._inIframe || !this._mobileOverlay) return;
+
+    // Prefer the synchronous computation (correct coordinate space for fixed
+    // positioning in this frame); fall back to the observer-cached rect, which
+    // is only populated for the cross-origin case.
+    let rect = this._computeIframeVisibleRect() || this._iframeVisibleRect;
+    const ov = this._mobileOverlay.style;
+    if (rect) {
+      ov.top    = rect.top + 'px';
+      ov.left   = rect.left + 'px';
+      ov.width  = rect.width + 'px';
+      ov.height = rect.height + 'px';
+      ov.bottom = 'auto';   // override the CSS `inset: 0`
+      ov.right  = 'auto';
+      // The sheet's CSS `max-height: 92dvh` is relative to *this frame's*
+      // (oversized) viewport, so it would tower far above the visible slice.
+      // Cap it to the slice instead so the header/close button stay on-screen.
+      this._mobileSheet.style.maxHeight = Math.round(rect.height * 0.92) + 'px';
+    } else {
+      // Unknown (cross-origin, IO not reported yet): use the CSS default and
+      // let the first IntersectionObserver callback snap it into place.
+      ov.top = ov.left = ov.width = ov.height = ov.bottom = ov.right = '';
+      this._mobileSheet.style.maxHeight = '';
+    }
+  };
+
+  // Best-effort synchronous computation of this frame's visible slice, walking
+  // up same-origin ancestor frames. Returns null at the first cross-origin
+  // boundary (where the async IntersectionObserver path takes over). Coordinates
+  // are in this frame's viewport space — what `position: fixed` uses.
+  Kselect.prototype._computeIframeVisibleRect = function () {
+    try {
+      const vv = window.visualViewport;
+      let top = 0;
+      let bottom = vv ? vv.height : window.innerHeight;
+      const left = 0;
+      const width = vv ? vv.width : window.innerWidth;
+
+      let win = window;
+      // Cumulative vertical offset from this frame's coords to `win`'s coords,
+      // so each ancestor's visible-band constraint can be expressed back in the
+      // innermost frame's coordinate space.
+      let offset = 0;
+      while (win !== win.parent) {
+        const frameEl = win.frameElement; // throws / null across origins
+        if (!frameEl) return null;
+        const fr = frameEl.getBoundingClientRect();
+        const parent = win.parent;
+        const pvv = parent.visualViewport;
+        const parentVisH = pvv ? pvv.height : parent.innerHeight;
+        // The parent's visible band is [0, parentVisH] in `win`'s parent coords;
+        // a point y in this frame maps to (offset + fr.top + y) there.
+        top    = Math.max(top, -fr.top - offset);
+        bottom = Math.min(bottom, parentVisH - fr.top - offset);
+        offset += fr.top;
+        win = parent;
+      }
+
+      const height = bottom - top;
+      if (height <= 0) return null;
+      return { top: top, left: left, width: width, height: height };
+    } catch (e) {
+      return null; // cross-origin — IntersectionObserver handles it
+    }
   };
 
   // Renders the current selection tags inside the mobile selection header area (multi only)
@@ -1403,6 +1651,7 @@
     });
     this._updateSelectAllState();
     this._updateControl();
+    this._dispatch('input');
     this._dispatch('change');
     this._dispatch('kselect:change');
   };
@@ -1432,6 +1681,7 @@
     });
     this._updateSelectAllState();
     this._updateControl();
+    this._dispatch('input');
     this._dispatch('change');
     this._dispatch('kselect:change');
   };
@@ -1538,6 +1788,7 @@
     if (this._mobileOverlay && this._mobileOverlay.classList.contains('ks-mobile-overlay-open')) {
       this._updateMobileSelection();
     }
+    this._dispatch('input');
     this._dispatch('change');
     this._dispatch('kselect:change');
   };
@@ -1763,6 +2014,7 @@
       this._updateControl();
     }
     if (changed) {
+      this._dispatch('input');
       this._dispatch('change');
       // In native mode, the native change listener forwards 'change' to
       // 'kselect:change' for us — don't double-dispatch.
@@ -1817,6 +2069,7 @@
 
     // Fire change exactly once, and only if something actually changed.
     if (changed) {
+      this._dispatch('input');
       this._dispatch('change');
       // In native mode, the native change listener forwards 'change' to
       // 'kselect:change' for us — don't double-dispatch.
@@ -1874,6 +2127,14 @@
       this._selectObserver.disconnect();
       this._selectObserver = null;
     }
+    if (this._iframeObserver) {
+      this._iframeObserver.disconnect();
+      this._iframeObserver = null;
+    }
+    if (this._iframeSentinel && this._iframeSentinel.parentNode) {
+      this._iframeSentinel.parentNode.removeChild(this._iframeSentinel);
+      this._iframeSentinel = null;
+    }
     if (this._externalChangeListener) {
       this.select.removeEventListener('change', this._externalChangeListener);
       this._externalChangeListener = null;
@@ -1884,6 +2145,20 @@
       this._mobileOverlay.parentNode.removeChild(this._mobileOverlay);
     }
     document.body.classList.remove('ks-body-modal-open');
+    // If destroyed while the mobile sheet was open, un-pin the body too (see
+    // _openMobileModal) so we don't leave the page stuck with position:fixed.
+    if (this._prevBodyStyle) {
+      const bodyStyle = document.body.style;
+      bodyStyle.position = this._prevBodyStyle.position;
+      bodyStyle.top = this._prevBodyStyle.top;
+      bodyStyle.left = this._prevBodyStyle.left;
+      bodyStyle.right = this._prevBodyStyle.right;
+      bodyStyle.width = this._prevBodyStyle.width;
+      this._prevBodyStyle = null;
+      if (this._modalScrollX !== undefined && this._modalScrollY !== undefined) {
+        window.scrollTo(this._modalScrollX, this._modalScrollY);
+      }
+    }
     // Restore the select's original inline display (may have been '' or anything else)
     this.select.style.display = this._originalDisplay || '';
     this.select.removeAttribute('data-kselect-id');

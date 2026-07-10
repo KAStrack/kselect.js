@@ -143,6 +143,10 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
           <span class="callout-icon">ℹ</span>
           <p><code>Kselect.init</code> always returns an <strong>array</strong> of instances, even when only one element matched. Use array destructuring (<code>const [ks] = …</code>) or <code>[0]</code> to get a single instance.</p>
         </div>
+        <div class="callout callout-note">
+          <span class="callout-icon">ℹ</span>
+          <p><code>init</code> is idempotent per element: re-initialising a <code>&lt;select&gt;</code> that already has a kselect attached returns the <strong>existing</strong> instance instead of stacking a second widget — so running <code>init</code> inside a modal that opens repeatedly is safe. To reconfigure with new options, call <code>destroy()</code> first; to reuse the current instance, use <code>Kselect.getInstance(el)</code>.</p>
+        </div>
       </section>
 
 
@@ -505,6 +509,10 @@ ks.<span class="t-fn">disable</span>();       <span class="t-cm">// disables the
 
         <div class="event-row">
           <div class="event-card">
+            <div class="event-name">input</div>
+            <p>Native DOM event. Fires when the selection changes, immediately before <code>change</code> — the same order a native <code>&lt;select&gt;</code> fires them. Works with form libraries that listen for <code>input</code>.</p>
+          </div>
+          <div class="event-card">
             <div class="event-name">change</div>
             <p>Native DOM event. Fires when the selection changes. Works with standard form libraries and frameworks.</p>
           </div>
@@ -698,7 +706,7 @@ ks.<span class="t-fn">getValue</span>(); <span class="t-cm">// multi  → ['js',
             <span class="method-returns">→ <span>void</span></span>
           </div>
           <div class="method-body">
-            <p>Programmatically sets the current selection. Fires <code>change</code> and <code>kselect:change</code> exactly once — or not at all if the new selection is identical to the old one.</p>
+            <p>Programmatically sets the current selection. Fires <code>input</code>, <code>change</code>, and <code>kselect:change</code> exactly once — or not at all if the new selection is identical to the old one.</p>
             <p>Pass a string for single mode, or an array for multi mode. Passing <code>null</code>, <code>undefined</code>, or an empty array is treated as a call to <code>clear()</code>.</p>
             <div class="code-block">
               <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -717,7 +725,7 @@ ks.<span class="t-fn">setValue</span>(<span class="t-num">null</span>);         
             <span class="method-returns">→ <span>void</span></span>
           </div>
           <div class="method-body">
-            <p>Clears all selected values and shows the placeholder. Fires <code>change</code> and <code>kselect:change</code> only if something was actually selected beforehand.</p>
+            <p>Clears all selected values and shows the placeholder. Fires <code>input</code>, <code>change</code>, and <code>kselect:change</code> only if something was actually selected beforehand.</p>
             <div class="code-block">
               <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
               <pre>ks.<span class="t-fn">clear</span>();</pre>

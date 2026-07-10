@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.5.3] — 2026-07-10
+
+### Fixed
+
+- **The native `input` event is now dispatched (immediately before `change`) whenever the selection changes.** A native `<select>` fires `input` followed by `change` on every user selection, but kselect previously only fired `change` — so host code and form frameworks that bind to `input` (a common pattern, since `input` is the spec-recommended "value changed" event) never saw kselect-driven changes. `input` now fires from every path that fires `change`: option selection, tag removal, select-all, per-group select-all, `clear()`, and `setValue()`. Like all kselect-dispatched events, it is tagged with `event.kselect === true` (`e.originalEvent.kselect` from jQuery) so it can be distinguished from user-driven native events.
+
+---
+
+## [1.5.2] — 2026-07-02
+
+### Fixed
+
+- **Initialising the same `<select>` twice no longer stacks a second widget.** `Kselect.init()` (and a direct `new Kselect()`) now returns the *existing* instance when the element already has a live kselect attached, instead of building a second wrapper/dropdown on top of the first and hiding the select again. The old behaviour orphaned the first instance's DOM and event bindings — a common cause of a `change` / `kselect:change` handler appearing to "stop firing" when a modal (or other re-entrant UI) ran `init` again on every open. Re-init after `destroy()` still builds a fresh instance, and a cloned node carrying a stale `data-kselect-id` also initialises cleanly. To reconfigure an existing instance with new options, call `destroy()` first, then `init()`; or reuse the current one via `Kselect.getInstance(el)`.
+
+---
+
+## [1.5.1] — 2026-06-30
+
+### Fixed
+
+- **Mobile bottom-sheet drag could scroll the page (or host iframe) away on iOS.** Dragging a finger that started on an *option* inside the bottom-sheet modal scrolled the underlying document instead of the options list — and on iPhone inside an iframe this carried the whole sheet off-screen with no way to scroll back. It happened specifically when the options list was **not scrollable** (few enough options to fit), so the gesture had nothing to consume and chained out. Two compounding causes are fixed:
+  1. The scroll-lock relied on `overflow: hidden` / `touch-action: none` on `<body>`, both of which iOS Safari ignores for touch scrolling. The body is now genuinely pinned with `position: fixed` (offset by the saved scroll position so the page doesn't jump) while the sheet is open, and the previous scroll position is restored on close (and on `destroy()` if torn down while open).
+  2. `position: fixed` on `<body>` only governs *this* frame — it cannot stop a touch gesture from propagating to a **parent** frame, which is what carried the sheet off-screen inside an iframe. A non-passive `touchmove` handler on the sheet now calls `preventDefault()` whenever the options list can't scroll in the drag direction (not scrollable at all, or already at the top/bottom edge), consuming the gesture so it never chains or propagates. Mid-list drags are untouched and scroll normally.
+
+### Added
+
+- `Kselect.version` (string) and a `<!-- kselect.js v… -->` HTML comment inside the mobile sheet overlay, so a cached build is easy to spot via *Inspect Element*.
+
+---
+
+## [1.5.0] — 2026-06-22
+
+### Added
+
+- **iframe-aware mobile bottom-sheet positioning.** When a kselect lives inside an iframe that is rendered taller than the parent window (e.g. a tall form in a full-bleed iframe on a phone), opening the mobile modal previously showed only the dark backdrop — the sheet itself was pinned to the bottom of the iframe's oversized layout viewport, far below the fold. The plugin now detects iframe context (`window.self !== window.top`) and, while in an iframe, tracks the slice of the iframe that is *actually visible* to the user with an `IntersectionObserver` (its implicit root is the top-level viewport, so the intersection is clipped across frame boundaries — including cross-origin ones). The mobile overlay is positioned to that visible slice, so the sheet pins to the bottom of the user's screen rather than the bottom of the iframe. Works with **no cooperation from the parent page** (no `postMessage`); same-origin parents additionally get a synchronous first-paint computation so the first open never flashes off-screen. Desktop dropdown positioning is unchanged.
+
+  *Known limitation:* the modal cannot lock the parent page's scroll without parent cooperation, so if the user scrolls the parent page while the sheet is open, the sheet re-pins via the (throttled) IntersectionObserver callback and may lag slightly during an active scroll.
+
+---
+
 ## [1.4.4] — 2026-05-22
 
 ### Fixed

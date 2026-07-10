@@ -84,6 +84,8 @@ const all = Kselect.init('.my-selects');
 
 `Kselect.init` always returns an array of instances. Use `[0]` or destructuring to get a single instance.
 
+`init` is idempotent per element: calling it again on a `<select>` that already has a kselect attached returns the **existing** instance rather than building a second widget on top of the first. If you initialise inside re-entrant UI (e.g. a modal that runs `init` every time it opens), this is safe — but if you want to reconfigure with new options, call `destroy()` first, then `init()` again. To reuse the current instance, prefer `Kselect.getInstance(el)`.
+
 ### Retrieve an existing instance
 
 ```js
@@ -172,6 +174,7 @@ kselect fires events on the original `<select>` element.
 
 | Event | When |
 |---|---|
+| `input` | A selection changes (native event, fired immediately before `change` — matching native `<select>` behaviour) |
 | `change` | A selection changes (native event) |
 | `kselect:change` | A selection changes (custom event) |
 | `kselect:open` | The dropdown opens |
