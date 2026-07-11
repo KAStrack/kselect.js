@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.5.2
+ * Version 1.6.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,7 +15,7 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.5.3';
+  const KSELECT_VERSION = '1.6.0';
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -879,8 +879,12 @@
       self._lastPointerType = null;
     });
 
-    // Keyboard nav on control
+    // Keyboard nav on control. The search input usually lives *inside* the
+    // control, so its keydown events bubble up here after its own listener
+    // (below) has already handled them — skip those, or every arrow press
+    // would move focus twice.
     this._control.addEventListener('keydown', function (e) {
+      if (e.target === self._searchInput) return;
       self._handleKeydown(e);
     });
 
@@ -913,6 +917,23 @@
     this._clearBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       self.clear();
+    });
+
+    // Keep focus where it is (search input or control) when the user mouses
+    // down inside the dropdown. Options are non-focusable <li>s, so the
+    // browser default would blur the search input to <body> before the click
+    // handler runs — then a single-mode click-select closes the dropdown with
+    // focus already gone, and close()'s focus handoff (which only reclaims
+    // focus from inside the widget) can't restore keyboard interaction.
+    // Two exemptions: the search wrap (in the select-all-row layout the
+    // search input lives inside the dropdown and must be clickable to focus),
+    // and the dropdown element itself (a mousedown targeting it directly is
+    // on its scrollbar — Firefox dispatches those, and preventing the default
+    // would break scrollbar dragging).
+    this._dropdown.addEventListener('mousedown', function (e) {
+      if (e.target === self._dropdown) return;
+      if (self._searchWrap.contains(e.target)) return;
+      e.preventDefault();
     });
 
     // Close on outside click. The dropdown lives in <body>, not inside the
@@ -1013,7 +1034,18 @@
   Kselect.prototype._handleKeydown = function (e) {
     const key = e.key;
     if (!this._open) {
-      if (key === 'Enter' || key === ' ' || key === 'ArrowDown') {
+      if (key === 'ArrowDown' || key === 'ArrowUp') {
+        e.preventDefault();
+        // Mirror a closed native <select>: in single mode, plain arrows step
+        // the selection up/down without opening the picker (Alt+Arrow opens
+        // it, as native does). Multi mode has no native "step" concept, so
+        // arrows open the dropdown.
+        if (this.isMultiple || e.altKey) {
+          this.open();
+        } else {
+          this._stepSelection(key === 'ArrowDown' ? 1 : -1);
+        }
+      } else if (key === 'Enter' || key === ' ') {
         e.preventDefault();
         this.open();
       }
@@ -1042,6 +1074,26 @@
       }
     } else if (key === 'Tab') {
       this.close();
+    }
+  };
+
+  // Step the selection up/down while the dropdown is closed (single mode
+  // only) — the keyboard behaviour of a closed native <select>. Walks from
+  // the currently selected option (or from the top/bottom edge when nothing
+  // is selected), skips disabled options, and stops at the list edge rather
+  // than wrapping around, matching the native control.
+  Kselect.prototype._stepSelection = function (dir) {
+    const opts = this.select.options;
+    let idx = -1;
+    for (let i = 0; i < opts.length; i++) {
+      if (opts[i].selected) { idx = i; break; }
+    }
+    let i = idx === -1 ? (dir > 0 ? 0 : opts.length - 1) : idx + dir;
+    for (; i >= 0 && i < opts.length; i += dir) {
+      if (!opts[i].disabled) {
+        this._selectOption(opts[i].value);
+        return;
+      }
     }
   };
 
@@ -1484,6 +1536,15 @@
     if (this._mobileOverlay && this._mobileOverlay.classList.contains('ks-mobile-overlay-open')) {
       this._closeMobileModal();
     } else {
+      // If focus is on the search input (or anywhere in the dropdown), hiding
+      // it would drop focus to <body> and kill keyboard interaction — e.g.
+      // selecting with Enter closes the dropdown, and the user should be able
+      // to keep arrowing through options on the closed control. Hand focus
+      // back to the control before hiding.
+      if (document.activeElement === this._searchInput ||
+          this._dropdown.contains(document.activeElement)) {
+        this._control.focus();
+      }
       this._dropdown.style.display = 'none';
       if (this._wrapper.classList.contains('ks-search-in-row')) {
         this._searchWrap.style.display = 'none';

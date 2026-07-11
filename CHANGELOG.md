@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.6.0] — 2026-07-10
+
+### Added
+
+- **Closed-dropdown arrow-key selection in single mode, mirroring a closed native `<select>`.** When a single-mode kselect has focus and the dropdown is closed, `ArrowDown`/`ArrowUp` now step the selection to the next/previous enabled option — without opening the dropdown — starting from the currently selected option (or from the top/bottom of the list when nothing is selected). Disabled options are skipped and stepping stops at the list edges rather than wrapping, matching the native control. Each step fires the usual `input`, `change`, and `kselect:change` events. `Alt+Arrow` opens the dropdown (as native does), and `Enter`/`Space` still open it. In multi mode — which has no native "step" concept — both `ArrowDown` and `ArrowUp` open the dropdown (`ArrowUp` previously did nothing while closed).
+
+### Fixed
+
+- **Keyboard interaction no longer dies after a selection closes the dropdown.** Closing the desktop dropdown hides the search input; if it held focus (the default while the dropdown is open), the browser dropped focus to `<body>`, so further key presses went nowhere. `close()` now hands focus back to the control whenever focus was inside the dropdown or on the search input — so after picking an option with Enter (or a click) you can immediately keep arrowing through options on the closed control.
+- **Mouse interaction inside the dropdown no longer steals focus.** Options are non-focusable `<li>`s, so the browser's `mousedown` default blurred the search input to `<body>` *before* the click handler ran — a click-select then closed the dropdown with focus already gone (so arrow keys went dead), and in multi mode every option click knocked focus out of the search input. The dropdown now cancels the `mousedown` default (the standard combobox pattern), keeping focus on the search input / control throughout; exemptions preserve click-to-focus on the in-dropdown search input (`selectAll` row layout) and scrollbar dragging in Firefox.
+
+---
+
+## [1.5.4] — 2026-07-10
+
+### Fixed
+
+- **Arrow-key navigation moved focus two options per keypress.** The search input lives inside the control element, and both had `keydown` listeners calling the same handler — so a key pressed while the search input was focused (the default after opening) was handled once by the input's listener and a second time when the event bubbled up to the control's. Every `ArrowDown`/`ArrowUp` skipped an option, and `Enter` in multi mode could toggle an option on and instantly off again. The control's listener now ignores events that originate from the search input. (The one configuration that *didn't* exhibit the bug was multi mode with `selectAll: true`, where the search input is relocated into the dropdown and the event never bubbled to the control.)
+
+---
+
 ## [1.5.3] — 2026-07-10
 
 ### Fixed
