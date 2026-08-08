@@ -34,6 +34,7 @@
     <a class="nav-link" href="#multi-select">Multi select</a>
     <a class="nav-link" href="#optgroups">Optgroups</a>
     <a class="nav-link" href="#per-row-styling">Per-row styling</a>
+    <a class="nav-link" href="#framework-classes">Form-framework classes</a>
     <a class="nav-link" href="#select-all">Select all</a>
     <a class="nav-link" href="#search">Search</a>
     <a class="nav-link" href="#disabled-states">Disabled states</a>
@@ -50,9 +51,11 @@
     <a class="nav-link nav-link-sub" href="#api-enable-disable">enable() / disable()</a>
     <a class="nav-link nav-link-sub" href="#api-refresh">refresh()</a>
     <a class="nav-link nav-link-sub" href="#api-destroy">destroy()</a>
+    <a class="nav-link nav-link-sub" href="#api-destroyAll">Kselect.destroyAll()</a>
     <a class="nav-link" href="#events-ref">Events</a>
     <a class="nav-link" href="#css-vars">CSS variables</a>
     <a class="nav-link" href="#theming">Theming</a>
+    <a class="nav-link" href="#accessibility">Accessibility</a>
     <a class="nav-link" href="#browser-support">Browser support</a>
 
     <div class="sidebar-footer">
@@ -322,6 +325,50 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
         <div class="callout callout-warn">
           <span class="callout-icon">⚠️</span>
           <p>The carry-through does not run in <code>nativeOnMobile: true</code> mode when the device matches <code>(pointer: coarse)</code>: the OS owns the native picker, and per-option styling is not reliable across mobile browsers.</p>
+        </div>
+
+        <h3>Per-row colours under a strict CSP</h3>
+        <p>A <code>style</code> <em>attribute</em> is blocked outright by a strict <code>style-src 'self'</code>, and a CSP nonce cannot whitelist one — nonces apply to <code>&lt;style&gt;</code> <em>elements</em> only. If your app enforces a strict CSP, carry the colour as data instead of as inline style:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;optgroup</span> <span class="t-attr">label</span>=<span class="t-str">"Rock"</span> <span class="t-attr">data-ks-group-color</span>=<span class="t-str">"#b53f5c"</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"rock"</span> <span class="t-attr">data-ks-color</span>=<span class="t-str">"#b53f5c"</span><span class="t-tag">&gt;</span>Rock<span class="t-tag">&lt;/option&gt;</span>
+<span class="t-tag">&lt;/optgroup&gt;</span></pre>
+        </div>
+
+        <p>kselect applies these with <code>element.style.setProperty()</code> — a CSSOM write, which CSP does not govern — setting <code>--chip-color</code> and <code>--group-color</code> exactly as the <code>style</code> route would. It also adds a <code>ks-coloured</code> class to every element it colours, so your CSS can target coloured rows directly instead of reaching for a brittle <code>[style*="--chip-color"]</code> attribute selector:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">css</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>.ks-option.ks-coloured::before {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--chip-color);
+}</pre>
+        </div>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p>Both routes work and they compose — an element can carry a <code>style</code> attribute and a <code>data-ks-color</code> at the same time. Use whichever suits your policy.</p>
+        </div>
+      </section>
+
+
+      <!-- ── Form-framework classes ─────────────────────────────────────────── -->
+      <section class="doc-section" id="framework-classes">
+        <h2>Form-framework classes</h2>
+        <p>By default kselect copies the source <code>&lt;select&gt;</code>'s <code>class</code> onto the wrapper <code>&lt;div&gt;</code>. That is what keeps sizing and layout utility classes working after enhancement.</p>
+
+        <p>If that class styles the control itself — Bootstrap's <code>.form-select</code> / <code>.form-control</code>, or any class setting border, padding, radius or background — it paints a second box around the already-bordered <code>.ks-control</code>. Set <code>copyClassName: false</code> to keep it on the native element only:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'.form-control'</span>, { <span class="t-key">copyClassName</span>: <span class="t-bool">false</span> });
+
+<span class="t-cm">// wrapper: &lt;div class="ks-wrapper ks-single"&gt;</span>
+<span class="t-cm">// select:  &lt;select class="form-control" …&gt;  (untouched)</span></pre>
         </div>
       </section>
 
@@ -671,6 +718,12 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><span class="default-val">true</span></td>
               <td>Whether empty <code>&lt;optgroup&gt;</code> headers (groups with no <code>&lt;option&gt;</code> children in the source <code>&lt;select&gt;</code>) appear in the dropdown. <code>true</code> always shows the header; <code>false</code> omits the optgroup entirely.</td>
             </tr>
+            <tr>
+              <td><code>copyClassName</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">true</span></td>
+              <td>Copy the source <code>&lt;select&gt;</code>'s <code>class</code> onto the wrapper <code>&lt;div&gt;</code>. Set to <code>false</code> when that class styles the <em>native</em> control (borders, padding, background) and would otherwise draw a second box around <code>.ks-control</code>. See <a href="#framework-classes">Form-framework classes</a>.</td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -779,6 +832,7 @@ ks.<span class="t-fn">enable</span>();</pre>
           </div>
           <div class="method-body">
             <p>Rebuilds the dropdown option list from the current state of the underlying <code>&lt;select&gt;</code>. Use this after adding, removing, or replacing <code>&lt;option&gt;</code> or <code>&lt;optgroup&gt;</code> elements programmatically. Equivalent to dispatching <code>kselect:sync</code>.</p>
+            <p>It also re-reads the <code>&lt;select&gt;</code>'s runtime state — its <code>disabled</code> property, its <code>class</code>, and the validation ARIA listed under <a href="#accessibility">Accessibility</a> — so setting any of those on the native element is enough for the widget to follow. With the default <code>autoSync: true</code>, <code>refresh()</code> is called for you when they change.</p>
             <div class="code-block">
               <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
               <pre><span class="t-cm">// Add option to native select, then sync the widget</span>
@@ -806,6 +860,29 @@ ks.<span class="t-fn">refresh</span>();</pre>
             </div>
           </div>
         </div>
+
+        <h3>Static methods</h3>
+
+        <!-- Kselect.destroyAll -->
+        <div class="method-card" id="api-destroyAll">
+          <div class="method-header">
+            <span class="method-name">Kselect.destroyAll</span>
+            <span class="method-sig">(root?)</span>
+            <span class="method-returns">→ <span>number</span></span>
+          </div>
+          <div class="method-body">
+            <p>Destroys every kselect instance inside <code>root</code> (an element; defaults to the whole document) and returns how many were destroyed. Call it before tearing down a DOM subtree.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>Kselect.<span class="t-fn">destroyAll</span>(modalBody);  <span class="t-cm">// before, not after</span>
+modalBody.innerHTML = <span class="t-str">''</span>;</pre>
+            </div>
+            <div class="callout callout-warn">
+              <span class="callout-icon">⚠️</span>
+              <p>Each widget's dropdown lives in <code>&lt;body&gt;</code>, not inside the wrapper — so wiping a container with <code>innerHTML = ''</code> leaves every dropdown behind, along with each instance's window scroll/resize listeners and its observers. Destroying first releases all of it.</p>
+            </div>
+          </div>
+        </div>
       </section>
 
 
@@ -813,6 +890,8 @@ ks.<span class="t-fn">refresh</span>();</pre>
       <section class="doc-section" id="css-vars">
         <h2>CSS variables</h2>
         <p>Every visual property in kselect is expressed as a CSS custom property. Override any of them on <code>:root</code>, on a parent container, or directly on the <code>.ks-wrapper</code> to restyle the widget without touching the stylesheet.</p>
+
+        <p>kselect declares its own defaults inside <code>:where(:root)</code>, which carries zero specificity — so <strong>your overrides win regardless of stylesheet order</strong>, even when <code>kselect.css</code> loads after yours. There is no need to raise specificity or control the load order.</p>
 
         <h3>Typography</h3>
         <table class="ref-table css-var-table">
@@ -958,21 +1037,68 @@ ks.<span class="t-fn">refresh</span>();</pre>
 
 
       <!-- ── Browser support ────────────────────────────────────────────────── -->
+      <!-- ── Accessibility ──────────────────────────────────────────────────── -->
+      <section class="doc-section" id="accessibility">
+        <h2>Accessibility</h2>
+        <p>kselect is fully compliant with <strong>WCAG 2.1 AA</strong>. It uses <code>role="combobox"</code>, <code>aria-expanded</code>, <code>aria-selected</code>, <code>aria-activedescendant</code>, <code>aria-live</code> announcements for search results, and native <code>&lt;button&gt;</code> elements for group headers.</p>
+
+        <h3>Keyboard</h3>
+        <table class="ref-table">
+          <thead><tr><th>Key</th><th>Closed control</th><th>Open dropdown</th></tr></thead>
+          <tbody>
+            <tr><td><code>↓</code> / <code>↑</code></td><td>Single mode: step the selection to the next/previous enabled option, as a closed native select does. Multi mode: open the dropdown.</td><td>Move the focused option</td></tr>
+            <tr><td><code>Alt</code> + <code>↓</code></td><td>Open the dropdown</td><td>—</td></tr>
+            <tr><td><code>Enter</code> / <code>Space</code></td><td>Open the dropdown</td><td><code>Enter</code> selects the focused option</td></tr>
+            <tr><td>A letter or digit</td><td>Single mode: jump to the first option starting with it. Repeating the same key cycles through the matches; typing several different characters matches the whole prefix.</td><td>Types into the search box</td></tr>
+            <tr><td><code>Esc</code></td><td>—</td><td>Close and return focus to the control</td></tr>
+            <tr><td><code>Tab</code></td><td>Move to the next field</td><td>Close the dropdown</td></tr>
+          </tbody>
+        </table>
+
+        <h3>What is mirrored from the &lt;select&gt;</h3>
+        <p>The original <code>&lt;select&gt;</code> is hidden, so anything your form markup wires to it would otherwise be stranded on an element no assistive technology can reach. kselect copies it onto the visible <code>.ks-control</code>:</p>
+
+        <table class="ref-table">
+          <thead><tr><th>On the <code>&lt;select&gt;</code></th><th>On <code>.ks-control</code></th></tr></thead>
+          <tbody>
+            <tr><td><code>label[for="…"]</code></td><td><code>aria-labelledby</code> — and clicking the label focuses the control, as it would a native select</td></tr>
+            <tr><td><code>aria-describedby</code></td><td><code>aria-describedby</code> — help text, validation messages, async verdicts</td></tr>
+            <tr><td><code>aria-invalid</code></td><td><code>aria-invalid</code></td></tr>
+            <tr><td><code>aria-required</code>, or the native <code>required</code> attribute</td><td><code>aria-required</code></td></tr>
+          </tbody>
+        </table>
+
+        <p>These are re-read on every <a href="#api-refresh"><code>refresh()</code></a>, so they track validation state as it changes:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>selectEl.<span class="t-fn">setAttribute</span>(<span class="t-str">'aria-invalid'</span>, <span class="t-str">'true'</span>);
+selectEl.<span class="t-fn">setAttribute</span>(<span class="t-str">'aria-describedby'</span>, <span class="t-str">'email-error'</span>);
+<span class="t-cm">// autoSync picks both up — no manual sync needed</span></pre>
+        </div>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p>The same applies to <code>disabled</code>. Setting <code>selectEl.disabled = true</code> disables the widget properly — greying the control <em>and</em> taking it out of the tab order. Greying a wrapper with <code>pointer-events: none</code> does not: the control keeps <code>tabindex="0"</code> and stays reachable by keyboard.</p>
+        </div>
+      </section>
+
+
       <section class="doc-section" id="browser-support">
         <h2>Browser support</h2>
         <p>kselect uses standard DOM APIs and CSS custom properties. It works in all modern browsers:</p>
         <ul>
-          <li>Chrome / Edge 80+</li>
-          <li>Firefox 75+</li>
-          <li>Safari 13+</li>
-          <li>Mobile Safari (iOS 13+)</li>
+          <li>Chrome / Edge 88+</li>
+          <li>Firefox 78+</li>
+          <li>Safari 14+</li>
+          <li>Mobile Safari (iOS 14+)</li>
           <li>Chrome for Android</li>
         </ul>
         <p>Internet Explorer is not supported.</p>
 
         <div class="callout callout-note" style="margin-top: 24px;">
           <span class="callout-icon">ℹ</span>
-          <p>kselect is fully compliant with <strong>WCAG 2.1 AA</strong>. It uses <code>role="combobox"</code>, <code>aria-expanded</code>, <code>aria-selected</code>, <code>aria-activedescendant</code>, <code>aria-live</code> announcements for search results, and native <code>&lt;button&gt;</code> elements for group headers.</p>
+          <p>The floor is set by the stylesheet's <code>:where()</code> selector, which wraps the custom-property defaults so your overrides win regardless of stylesheet order. The JavaScript itself runs further back.</p>
         </div>
       </section>
 

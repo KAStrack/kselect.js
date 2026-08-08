@@ -1,10 +1,14 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.6.0
+ * Version 1.7.0
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
-:root {
+/* Declared inside :where() so the defaults carry zero specificity. Any host
+   or theme declaration — including a plain `:root { --ks-color-bg: … }` —
+   therefore wins regardless of stylesheet load order, which hosts often don't
+   control. Requires :where() support (Chrome 88 / Safari 14 / Firefox 78). */
+:where(:root) {
   --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
   --ks-font-size: 0.9rem;
   --ks-line-height: 1.4;

@@ -23,7 +23,7 @@ kselect.js progressively enhances native `<select>` elements with live search, m
 - **Syncs the native `<select>`** - all selections are reflected back to the real element
 - **Native `change` event** - fires on the original `<select>` so existing listeners and frameworks work without changes
 - **Custom events** - `kselect:change`, `kselect:open`, `kselect:close`
-- **Keyboard accessible** - Arrow keys, Enter, Escape, and Tab navigation fully supported
+- **Keyboard accessible** - Arrow keys, Enter, Escape, and Tab navigation fully supported, plus native-style arrow stepping and first-letter type-ahead on a closed single select
 - **Screen reader friendly** - WCAG 2.1 AA compliant with full ARIA attributes
 - **Themeable** - ~40 CSS custom properties; 20 ready-made themes included
 - **Lightweight** - single `.js` + single `.css`, minified versions included, zero dependencies
@@ -115,6 +115,7 @@ Kselect.init('#my-select', {
   maxSelectText:     'Max {n} items',
   allowHtml:         false,
   showEmptyOptGroups: true,
+  copyClassName:     true,
 });
 ```
 
@@ -149,6 +150,7 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `summarizeSelectedText` | string | `'{n} selected'` | Template for the collapsed-summary text; `{n}` = the count of selected items |
 | `autoSync` | boolean | `true` | Watch the underlying `<select>` for external mutations and re-render automatically. Set `false` to manage syncing yourself via `refresh()` / `kselect:sync` |
 | `showEmptyOptGroups` | boolean | `true` | Whether empty `<optgroup>` headers (groups with no `<option>` children) appear in the dropdown. `true` always shows the header; `false` omits the optgroup entirely |
+| `copyClassName` | boolean | `true` | Copy the source `<select>`'s `class` onto the wrapper `<div>`. Set `false` when that class styles the *native* control (see [Form-framework classes](#form-framework-classes-on-the-select)) |
 
 ---
 
@@ -163,8 +165,26 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `close()` | Close the dropdown |
 | `enable()` | Enable the control |
 | `disable()` | Disable the control |
-| `refresh()` | Rebuild option list from the native `<select>` DOM |
+| `refresh()` | Rebuild the option list from the native `<select>` DOM, and re-read its `disabled` state, `class`, and validation ARIA |
 | `destroy()` | Remove the widget and restore the original `<select>` |
+
+### Static methods
+
+| Method | Description |
+|---|---|
+| `Kselect.init(selector, options)` | Enhance matching `<select>` elements; always returns an array |
+| `Kselect.getInstance(selectEl)` | Retrieve the instance attached to an element |
+| `Kselect.destroyAll(root)` | Destroy every instance inside `root` (default: the whole document); returns the number destroyed |
+| `Kselect.version` | The version string of the loaded build |
+
+`destroyAll()` matters if your app tears down DOM subtrees:
+
+```js
+Kselect.destroyAll(container);   // before, not after
+container.innerHTML = '';
+```
+
+Each widget's dropdown lives in `<body>`, not inside the wrapper, so wiping a container leaves the dropdown behind along with the instance's window listeners and observers. Destroying first releases all of it.
 
 ---
 
@@ -272,6 +292,40 @@ Use `style` for values that vary per row and come from your data (DB-derived col
 
 Framework classes (`ks-option`, `ks-tag`, `ks-group-header`, …) are preserved — your classes are appended, not substituted. The carry-through does not apply in `nativeOnMobile: true` mode (the OS owns the native picker).
 
+### Per-row colours under a strict Content-Security-Policy
+
+A `style` **attribute** is blocked outright by `style-src 'self'`, and a CSP nonce cannot whitelist one — nonces apply to `<style>` elements only. If your app enforces a strict CSP, carry the colour as data instead:
+
+```html
+<option value="rock" data-ks-color="#b53f5c">Rock</option>
+<optgroup label="Rock" data-ks-group-color="#b53f5c">…</optgroup>
+```
+
+kselect applies these with `element.style.setProperty()` — a CSSOM write, which CSP does not govern — setting `--chip-color` / `--group-color` exactly as the `style` route would, and additionally marking the element with `.ks-coloured` so your CSS can target coloured rows directly:
+
+```css
+.ks-option.ks-coloured::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--chip-color);
+}
+```
+
+Both routes work; use whichever suits your policy. They compose, so an element can carry a `style` attribute and a `data-ks-color` at once.
+
+---
+
+## Form-framework classes on the `<select>`
+
+By default kselect copies the source `<select>`'s `class` onto the wrapper `<div>`, which is what keeps sizing and layout utility classes working after enhancement.
+
+If that class styles the control itself — Bootstrap's `.form-select` / `.form-control`, or any class setting border, padding, radius or background — it will paint a *second* box around the already-bordered `.ks-control`. Turn the copy off:
+
+```js
+Kselect.init('.form-control', { copyClassName: false });
+```
+
+The wrapper then carries only kselect's own classes; the `<select>` keeps its class untouched.
+
 ---
 
 ## Optgroups
@@ -346,17 +400,40 @@ Override CSS custom properties on `.ks-wrapper`, a parent element, or `:root`:
 
 20 ready-made themes are included in the `themes/` directory.
 
+kselect declares its own defaults inside `:where(:root)`, which carries zero specificity — so **your overrides win regardless of stylesheet order**, even if `kselect.css` loads after yours. There is no need to raise specificity or control the load order.
+
 ---
 
 ## Accessibility
 
 WCAG 2.1 AA compliant - `role="combobox"`, full ARIA labelling, `aria-live` announcements, `:focus-visible` outlines on all interactive elements, and contrast-checked default colours.
 
+Because the original `<select>` is hidden, kselect mirrors what your form markup wires to it onto the visible `.ks-control`:
+
+| On the `<select>` | On `.ks-control` |
+|---|---|
+| `label[for="…"]` | `aria-labelledby`, and clicking the label focuses the control |
+| `aria-describedby` | `aria-describedby` — help text, validation messages |
+| `aria-invalid` | `aria-invalid` |
+| `aria-required`, or the native `required` attribute | `aria-required` |
+
+These are re-read on every `refresh()` (which `autoSync: true` calls for you), so they track validation state as it changes:
+
+```js
+select.setAttribute('aria-invalid', 'true');
+select.setAttribute('aria-describedby', 'email-error');
+// the widget picks both up — no manual sync needed
+```
+
+The same applies to `disabled`: setting `select.disabled = true` disables the widget, greying the control and taking it out of the tab order.
+
 ---
 
 ## Browser Support
 
-Chrome / Edge 80+, Firefox 75+, Safari 13+, iOS Safari 13+, Chrome for Android. Internet Explorer is not supported.
+Chrome / Edge 88+, Firefox 78+, Safari 14+, iOS Safari 14+, Chrome for Android. Internet Explorer is not supported.
+
+The floor is set by the stylesheet's `:where()` selector; the JavaScript itself runs further back.
 
 ---
 

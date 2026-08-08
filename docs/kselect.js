@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.6.0
+ * Version 1.7.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,7 +15,7 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.6.0';
+  const KSELECT_VERSION = '1.7.0';
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -115,6 +115,7 @@
       summarizeSelectedText: '{n} selected', // template for the summary; {n} is replaced with the selected count
       autoSync: true,             // watch the underlying <select> for external mutations and stay in sync without manual refresh()/kselect:sync calls
       showEmptyOptGroups: true,   // when an <optgroup> has no <option> children, true keeps its header in the dropdown; false omits it entirely
+      copyClassName: true,        // copy the source <select>'s class onto the wrapper <div>; set false when that class styles the native control (borders/padding) and would double up around .ks-control
     }, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
@@ -193,6 +194,31 @@
     return id ? (Kselect._instances || {})[id] : null;
   };
 
+  // Destroy every kselect instance inside `root` (default: the whole document),
+  // returning the number destroyed.
+  //
+  // Hosts that tear a subtree down with `container.innerHTML = ''` silently
+  // leak every widget in it: the dropdown lives in <body> (so it survives the
+  // wipe), along with a capturing window scroll listener, resize/click/
+  // visualViewport listeners, and the MutationObserver/ResizeObserver pair —
+  // none of which are released, because destroy() never ran. Call this before
+  // wiping the container.
+  Kselect.destroyAll = function (root) {
+    const scope = root || document;
+    let count = 0;
+    const destroyOne = function (el) {
+      const inst = Kselect.getInstance(el);
+      if (inst) { inst.destroy(); count++; }
+    };
+    if (scope.tagName === 'SELECT') destroyOne(scope);
+    if (scope.querySelectorAll) {
+      Array.prototype.forEach.call(
+        scope.querySelectorAll('select[data-kselect-id]'), destroyOne
+      );
+    }
+    return count;
+  };
+
   // Returns true when the mobile-modal experience should be used for this instance.
   // Requires mobileModal:true AND a coarse-pointer device AND the viewport is in
   // the "phone" size range (≤ 640 px wide — same breakpoint used by the CSS).
@@ -209,11 +235,19 @@
     const self = this;
 
     // Wrapper
+    // The source select's class is copied on by default — that's what makes
+    // sizing and layout utility classes on the <select> keep working. But a
+    // form framework's field class (.form-control, .form-select, an @apply'd
+    // input class) paints its own border/padding/radius, which then draws a
+    // second box around the already-boxed .ks-control. copyClassName:false is
+    // the supported way to say "that class is for the native control".
+    // _copiedClassName records what we copied so refresh() can diff it.
+    this._copiedClassName = this.options.copyClassName ? (this.select.className || '') : '';
     const wrapper = document.createElement('div');
     wrapper.className = 'ks-wrapper' +
       (this.isMultiple ? ' ks-multiple' : ' ks-single') +
       (this.isDisabled ? ' ks-disabled' : '') +
-      (this.select.className ? ' ' + this.select.className : '');
+      (this._copiedClassName ? ' ' + this._copiedClassName : '');
     wrapper.setAttribute('id', 'ks-wrapper-' + this.id);
 
     // Copy width style if set
@@ -241,6 +275,20 @@
         labelEl.id = labelId;
         control.setAttribute('aria-labelledby', labelId);
         labelText = labelEl.textContent.trim();
+
+        // The label's `for` still points at the now-hidden <select>, so
+        // clicking it focuses nothing — where a native control would take
+        // focus. Redirect the click to the widget. The label lives outside
+        // the wrapper, so destroy() has to unbind this explicitly.
+        this._labelEl = labelEl;
+        this._labelClick = function (e) {
+          if (self.isDisabled) return;
+          // Don't hijack clicks on anything interactive nested in the label.
+          if (e.target !== labelEl && e.target.closest &&
+              e.target.closest('a, button, input, select, textarea')) return;
+          self._control.focus();
+        };
+        labelEl.addEventListener('click', this._labelClick);
       }
     }
     if (!labelText && this.select.getAttribute('aria-label')) {
@@ -534,6 +582,9 @@
     this._noResults = noResults;
     this._arrow = arrow;
 
+    // Mirror the host's validation/description ARIA onto the control
+    this._syncAria();
+
     // Build option items
     this._buildOptionsList();
 
@@ -783,6 +834,25 @@
       target.style.cssText = target.style.cssText
         ? target.style.cssText + ';' + style
         : style;
+    }
+
+    // CSP-safe per-row colours. A host running a strict `style-src 'self'`
+    // cannot write style="--chip-color: …" on the source <option> at all — a
+    // nonce whitelists <style> *elements*, never style *attributes*, so there
+    // is no escape hatch short of re-adding 'unsafe-inline'. These data
+    // attributes carry the colour as data instead, and setProperty() is a
+    // CSSOM write, which CSP does not govern. The `.ks-coloured` marker saves
+    // consumers from hooking coloured rows with a brittle [style*="…"]
+    // attribute selector.
+    const chipColor = source.getAttribute('data-ks-color');
+    if (chipColor) {
+      target.style.setProperty('--chip-color', chipColor);
+      target.classList.add('ks-coloured');
+    }
+    const groupColor = source.getAttribute('data-ks-group-color');
+    if (groupColor) {
+      target.style.setProperty('--group-color', groupColor);
+      target.classList.add('ks-coloured');
     }
   };
 
@@ -1048,6 +1118,13 @@
       } else if (key === 'Enter' || key === ' ') {
         e.preventDefault();
         this.open();
+      } else if (!this.isMultiple && key.length === 1 &&
+                 !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // First-letter type-ahead, the last piece of closed-control parity
+        // with a native <select>. Space is excluded above — it opens the
+        // dropdown, and always has.
+        e.preventDefault();
+        this._typeAhead(key);
       }
       return;
     }
@@ -1092,6 +1169,47 @@
     for (; i >= 0 && i < opts.length; i += dir) {
       if (!opts[i].disabled) {
         this._selectOption(opts[i].value);
+        return;
+      }
+    }
+  };
+
+  // Type-ahead on a closed single select — typing "b" jumps to the first
+  // option starting with B, as a native <select> does. Single mode only, like
+  // _stepSelection: multi mode has no closed-state "current option".
+  //
+  // Native's two-mode rule: while every buffered keystroke is the *same*
+  // letter, each press cycles to the next option starting with it (so "bbb"
+  // walks B-options); as soon as the buffer holds different letters it
+  // becomes a prefix match ("be" finds the first "Be…"). The buffer expires
+  // after a second of no typing.
+  Kselect.prototype._typeAhead = function (ch) {
+    const self = this;
+    this._typeBuffer = (this._typeBuffer || '') + ch.toLowerCase();
+    if (this._typeTimer) clearTimeout(this._typeTimer);
+    this._typeTimer = setTimeout(function () {
+      self._typeBuffer = '';
+      self._typeTimer = null;
+    }, 1000);
+
+    const buf = this._typeBuffer;
+    const sameLetter = buf.split('').every(function (c) { return c === buf[0]; });
+    const needle = sameLetter ? buf[0] : buf;
+
+    const opts = this.select.options;
+    if (!opts.length) return;
+    let current = -1;
+    for (let i = 0; i < opts.length; i++) {
+      if (opts[i].selected) { current = i; break; }
+    }
+    // Cycling starts after the current option and wraps; a fresh prefix match
+    // starts at the top of the list.
+    const start = sameLetter ? current + 1 : 0;
+    for (let n = 0; n < opts.length; n++) {
+      const opt = opts[(start + n) % opts.length];
+      if (opt.disabled) continue;
+      if (opt.text.toLowerCase().indexOf(needle) === 0) {
+        this._selectOption(opt.value);
         return;
       }
     }
@@ -1528,6 +1646,10 @@
     if (this._nativeMode) return;
     if (!this._open) return;
     this._open = false;
+    // Anything typed into the search input shouldn't seed closed-control
+    // type-ahead once the dropdown is gone.
+    if (this._typeTimer) { clearTimeout(this._typeTimer); this._typeTimer = null; }
+    this._typeBuffer = '';
     this._wrapper.classList.remove('ks-open');
     this._control.setAttribute('aria-expanded', 'false');
     this._control.removeAttribute('aria-activedescendant');
@@ -2200,6 +2322,14 @@
       this.select.removeEventListener('change', this._externalChangeListener);
       this._externalChangeListener = null;
     }
+    // The <label> lives outside the wrapper, so removing the wrapper doesn't
+    // take this listener with it.
+    if (this._labelEl && this._labelClick) {
+      this._labelEl.removeEventListener('click', this._labelClick);
+      this._labelEl = null;
+      this._labelClick = null;
+    }
+    if (this._typeTimer) { clearTimeout(this._typeTimer); this._typeTimer = null; }
     this._wrapper.parentNode && this._wrapper.parentNode.removeChild(this._wrapper);
     this._dropdown.parentNode && this._dropdown.parentNode.removeChild(this._dropdown);
     if (this._mobileOverlay && this._mobileOverlay.parentNode) {
@@ -2226,10 +2356,78 @@
     if (Kselect._instances) delete Kselect._instances[this.id];
   };
 
+  // Classes the widget owns on the wrapper. _syncWrapperClasses never removes
+  // these, even if a host happens to put an identically-named class on the
+  // <select> and later takes it off again.
+  const KS_WRAPPER_OWNED = [
+    'ks-wrapper', 'ks-single', 'ks-multiple',
+    'ks-disabled', 'ks-open', 'ks-dropup', 'ks-at-limit',
+  ];
+
+  function classTokens(str) {
+    return (str || '').split(/\s+/).filter(Boolean);
+  }
+
+  // Re-read `disabled` from the <select>. Hosts reasonably assume setting the
+  // attribute is enough — it's the native contract — so with autoSync on, the
+  // MutationObserver's refresh() lands here.
+  //
+  // The equality guard does two jobs: it stops disable()'s close() firing on
+  // every unrelated refresh, and it terminates the observer loop. enable() and
+  // disable() assign select.disabled, which reflects to the content attribute
+  // and re-fires the observer; the second pass finds state already in sync and
+  // does nothing.
+  Kselect.prototype._syncDisabledFromSelect = function () {
+    if (this.select.disabled === this.isDisabled) return;
+    if (this.select.disabled) this.disable(); else this.enable();
+  };
+
+  // Re-read the <select>'s class onto the wrapper. Diff-based rather than a
+  // wholesale rebuild, because the wrapper also carries runtime state the
+  // widget owns (ks-open, ks-dropup, ks-at-limit) that a rebuild would wipe.
+  Kselect.prototype._syncWrapperClasses = function () {
+    if (!this._wrapper) return;
+    const next = this.options.copyClassName ? (this.select.className || '') : '';
+    if (next === this._copiedClassName) return;
+    const nextTokens = classTokens(next);
+    const self = this;
+    classTokens(this._copiedClassName).forEach(function (c) {
+      if (nextTokens.indexOf(c) === -1 && KS_WRAPPER_OWNED.indexOf(c) === -1) {
+        self._wrapper.classList.remove(c);
+      }
+    });
+    nextTokens.forEach(function (c) { self._wrapper.classList.add(c); });
+    this._copiedClassName = next;
+  };
+
+  // Mirror the host's validation/description ARIA from the <select> onto
+  // .ks-control. The select is display:none, so anything a form framework
+  // wires to it (help text, error messages, required/invalid state) is
+  // otherwise stranded on an element no assistive tech can reach. All three
+  // are valid on the control's role="combobox". Called from _build() and from
+  // refresh(), so it tracks validation state as it changes.
+  Kselect.prototype._syncAria = function () {
+    if (!this._control) return;
+    const self = this;
+    ['aria-describedby', 'aria-invalid', 'aria-required'].forEach(function (attr) {
+      const val = self.select.getAttribute(attr);
+      if (val === null) self._control.removeAttribute(attr);
+      else self._control.setAttribute(attr, val);
+    });
+    // Hosts commonly set the native `required` attribute and not the ARIA
+    // form; map it across when no explicit aria-required overrides it.
+    if (this.select.getAttribute('aria-required') === null && this.select.required) {
+      this._control.setAttribute('aria-required', 'true');
+    }
+  };
+
   Kselect.prototype.refresh = function () {
     if (this._nativeMode) return; // nothing to rebuild — native picker reads <select> live
     this._buildOptionsList();
     this._syncFromSelect();
+    this._syncDisabledFromSelect();
+    this._syncWrapperClasses();
+    this._syncAria();
     // _buildOptionsList recreates every <li>, wiping the ks-hidden classes that
     // represent the active search filter. If a query is in flight (typically
     // because refresh() was called mid-search by a host framework reacting to
