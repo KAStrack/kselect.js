@@ -150,7 +150,7 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `summarizeSelectedText` | string | `'{n} selected'` | Template for the collapsed-summary text; `{n}` = the count of selected items |
 | `autoSync` | boolean | `true` | Watch the underlying `<select>` for external mutations and re-render automatically. Set `false` to manage syncing yourself via `refresh()` / `kselect:sync` |
 | `showEmptyOptGroups` | boolean | `true` | Whether empty `<optgroup>` headers (groups with no `<option>` children) appear in the dropdown. `true` always shows the header; `false` omits the optgroup entirely |
-| `copyClassName` | boolean | `true` | Copy the source `<select>`'s `class` onto the wrapper `<div>`. Set `false` when that class styles the *native* control (see [Form-framework classes](#form-framework-classes-on-the-select)) |
+| `copyClassName` | boolean | `true` | Copy the source `<select>`'s `class` onto the wrapper `<div>`. Set `false` when that class styles the *native* control. Also disables class *mirroring* on `refresh()` — see [Form-framework classes](#form-framework-classes-on-the-select) |
 
 ---
 
@@ -326,6 +326,11 @@ Kselect.init('.form-control', { copyClassName: false });
 
 The wrapper then carries only kselect's own classes; the `<select>` keeps its class untouched.
 
+> **If you toggle state classes on the `<select>`, apply them to the wrapper instead.**
+> `copyClassName: false` turns off the copy *and* the mirroring — they are the same mechanism — so a class your form layer adds to the `<select>` later (`is-invalid`, `is-dirty`, …) will no longer reach the widget. Nothing errors; the styling just stops appearing. Put those classes on the wrapper yourself (`selectEl.nextElementSibling`) when the copy is off.
+>
+> This does **not** affect the ARIA mirroring described under [Accessibility](#accessibility). `aria-describedby`, `aria-invalid` and `aria-required` are mirrored onto `.ks-control` regardless of `copyClassName`, so validation state still reaches assistive technology either way.
+
 ---
 
 ## Optgroups
@@ -434,6 +439,8 @@ The same applies to `disabled`: setting `select.disabled = true` disables the wi
 Chrome / Edge 88+, Firefox 78+, Safari 14+, iOS Safari 14+, Chrome for Android. Internet Explorer is not supported.
 
 The floor is set by the stylesheet's `:where()` selector; the JavaScript itself runs further back.
+
+Worth knowing before you set your own floor: the failure mode is all-or-nothing. A browser that does not understand `:where()` discards the whole selector, and with it **every** `--ks-*` default — so the widget renders completely unstyled rather than slightly off. If you must support below the versions above, serve a copy of `kselect.css` with `:where(:root)` rewritten to `:root` (you then lose the load-order independence, nothing else).
 
 ---
 

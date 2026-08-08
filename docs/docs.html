@@ -370,6 +370,16 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
 <span class="t-cm">// wrapper: &lt;div class="ks-wrapper ks-single"&gt;</span>
 <span class="t-cm">// select:  &lt;select class="form-control" …&gt;  (untouched)</span></pre>
         </div>
+
+        <div class="callout callout-warn">
+          <span class="callout-icon">⚠️</span>
+          <p><strong>If your form layer toggles state classes on the <code>&lt;select&gt;</code>, apply them to the wrapper instead.</strong> <code>copyClassName: false</code> turns off the initial copy <em>and</em> the mirroring that <a href="#api-refresh"><code>refresh()</code></a> performs — they are the same mechanism — so a class added to the <code>&lt;select&gt;</code> later (<code>is-invalid</code>, <code>is-dirty</code>, …) will no longer reach the widget. Nothing errors; the styling simply stops appearing. Put those classes on the wrapper yourself (<code>selectEl.nextElementSibling</code>) when the copy is off.</p>
+        </div>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p><code>copyClassName</code> does <strong>not</strong> affect ARIA mirroring. <code>aria-describedby</code>, <code>aria-invalid</code> and <code>aria-required</code> reach <code>.ks-control</code> either way — see <a href="#accessibility">Accessibility</a> — so validation state still gets to assistive technology with the class copy switched off.</p>
+        </div>
       </section>
 
 
@@ -722,7 +732,7 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><code>copyClassName</code></td>
               <td><span class="type-pill bool">boolean</span></td>
               <td><span class="default-val">true</span></td>
-              <td>Copy the source <code>&lt;select&gt;</code>'s <code>class</code> onto the wrapper <code>&lt;div&gt;</code>. Set to <code>false</code> when that class styles the <em>native</em> control (borders, padding, background) and would otherwise draw a second box around <code>.ks-control</code>. See <a href="#framework-classes">Form-framework classes</a>.</td>
+              <td>Copy the source <code>&lt;select&gt;</code>'s <code>class</code> onto the wrapper <code>&lt;div&gt;</code>. Set to <code>false</code> when that class styles the <em>native</em> control (borders, padding, background) and would otherwise draw a second box around <code>.ks-control</code>. Also disables class <em>mirroring</em> on <code>refresh()</code> — see <a href="#framework-classes">Form-framework classes</a>.</td>
             </tr>
           </tbody>
         </table>
@@ -1099,6 +1109,11 @@ selectEl.<span class="t-fn">setAttribute</span>(<span class="t-str">'aria-descri
         <div class="callout callout-note" style="margin-top: 24px;">
           <span class="callout-icon">ℹ</span>
           <p>The floor is set by the stylesheet's <code>:where()</code> selector, which wraps the custom-property defaults so your overrides win regardless of stylesheet order. The JavaScript itself runs further back.</p>
+        </div>
+
+        <div class="callout callout-warn">
+          <span class="callout-icon">⚠️</span>
+          <p>The failure mode is all-or-nothing. A browser that does not understand <code>:where()</code> discards the whole selector and with it <strong>every</strong> <code>--ks-*</code> default, so the widget renders completely unstyled rather than slightly off. If you must support below the versions above, serve a copy of <code>kselect.css</code> with <code>:where(:root)</code> rewritten to <code>:root</code> — you then lose the load-order independence, and nothing else.</p>
         </div>
       </section>
 
