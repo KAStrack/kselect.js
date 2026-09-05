@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.8.0] — 2026-09-05
+
+### Added
+
+- **`revealSelection` option (default `true`): the dropdown opens at the current selection.** On a list longer than `maxHeight`, the dropdown opened at the top and the selected option could be hundreds of pixels below the fold — the user could not see what the field was set to at the moment they were deciding whether to change it, and scrolling to find it lost their place with no landmark to come back to. The list now opens already scrolled so the selected option (the first selected one in multi mode) is centred in the dropdown. The scroll offset is applied synchronously inside `open()`, after positioning and before the browser paints, so the dropdown *starts* at the selection rather than opening at the top and visibly scrolling. A selection that is already visible is left where it is. Nothing selected, an active search, or a selection inside a collapsed group opens at the top as before — a collapsed group is deliberately not expanded, since a consumer that collapses groups owns that decision. The same applies to the mobile bottom sheet. Set `revealSelection: false` to always open at the top.
+
+### Changed
+
+- **Keyboard focus starts on the selected option.** With the list opened at the selection, the first `↓` previously focused the *first* option and scrolled straight back to the top. `open()` now seeds `ks-option-focused` and `aria-activedescendant` on the selected row (when it is enabled and reachable), so arrow keys continue from the current value, as they do on a native `<select>`. Arrow handling itself is unchanged.
+- The one thing this can break in a consumer is a browser test asserting `scrollTop === 0` on the dropdown after open; such tests should pass `revealSelection: false` or assert the selected row is visible instead.
+
+---
+
 ## [1.7.0] — 2026-08-08
 
 A host-integration release. Everything here came out of an audit of what a kselect widget actually looks and behaves like when it is embedded in a form framework that generates its own markup — the cases where kselect gave a host no supported way to do something ordinary, so hosts hand-rolled shims that reach into kselect's internals.

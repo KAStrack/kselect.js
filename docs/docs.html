@@ -734,6 +734,12 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><span class="default-val">true</span></td>
               <td>Copy the source <code>&lt;select&gt;</code>'s <code>class</code> onto the wrapper <code>&lt;div&gt;</code>. Set to <code>false</code> when that class styles the <em>native</em> control (borders, padding, background) and would otherwise draw a second box around <code>.ks-control</code>. Also disables class <em>mirroring</em> on <code>refresh()</code> — see <a href="#framework-classes">Form-framework classes</a>.</td>
             </tr>
+            <tr>
+              <td><code>revealSelection</code></td>
+              <td><span class="type-pill bool">boolean</span></td>
+              <td><span class="default-val">true</span></td>
+              <td>Open the list already scrolled to the current selection (the first selected option in multi mode), centred in the dropdown when it would otherwise be off-screen. The scroll offset is applied before the dropdown is first painted, so the list <em>starts</em> at the selection rather than opening at the top and scrolling. An already-visible selection is left alone; nothing selected, or a selection inside a collapsed group, opens at the top (the group is not expanded). Applies to the mobile sheet too. <code>false</code> always opens at the top.</td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -1056,7 +1062,7 @@ modalBody.innerHTML = <span class="t-str">''</span>;</pre>
         <table class="ref-table">
           <thead><tr><th>Key</th><th>Closed control</th><th>Open dropdown</th></tr></thead>
           <tbody>
-            <tr><td><code>↓</code> / <code>↑</code></td><td>Single mode: step the selection to the next/previous enabled option, as a closed native select does. Multi mode: open the dropdown.</td><td>Move the focused option</td></tr>
+            <tr><td><code>↓</code> / <code>↑</code></td><td>Single mode: step the selection to the next/previous enabled option, as a closed native select does. Multi mode: open the dropdown.</td><td>Move the focused option. Focus starts on the current selection when the dropdown opens (see <code>revealSelection</code>), so the first press moves from there rather than from the top of the list.</td></tr>
             <tr><td><code>Alt</code> + <code>↓</code></td><td>Open the dropdown</td><td>—</td></tr>
             <tr><td><code>Enter</code> / <code>Space</code></td><td>Open the dropdown</td><td><code>Enter</code> selects the focused option</td></tr>
             <tr><td>A letter or digit</td><td>Single mode: jump to the first option starting with it. Repeating the same key cycles through the matches; typing several different characters matches the whole prefix.</td><td>Types into the search box</td></tr>

@@ -116,6 +116,7 @@ Kselect.init('#my-select', {
   allowHtml:         false,
   showEmptyOptGroups: true,
   copyClassName:     true,
+  revealSelection:   true,
 });
 ```
 
@@ -151,6 +152,7 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `autoSync` | boolean | `true` | Watch the underlying `<select>` for external mutations and re-render automatically. Set `false` to manage syncing yourself via `refresh()` / `kselect:sync` |
 | `showEmptyOptGroups` | boolean | `true` | Whether empty `<optgroup>` headers (groups with no `<option>` children) appear in the dropdown. `true` always shows the header; `false` omits the optgroup entirely |
 | `copyClassName` | boolean | `true` | Copy the source `<select>`'s `class` onto the wrapper `<div>`. Set `false` when that class styles the *native* control. Also disables class *mirroring* on `refresh()` — see [Form-framework classes](#form-framework-classes-on-the-select) |
+| `revealSelection` | boolean | `true` | Open the list already scrolled to the current selection (the first selected option in multi mode), centred if it would otherwise be off-screen. Nothing selected, or a selection inside a collapsed group, opens at the top. `false` always opens at the top |
 
 ---
 
@@ -431,6 +433,8 @@ select.setAttribute('aria-describedby', 'email-error');
 ```
 
 The same applies to `disabled`: setting `select.disabled = true` disables the widget, greying the control and taking it out of the tab order.
+
+When the dropdown opens it starts at the current selection (see `revealSelection`), and keyboard focus starts there too — the first `↓` / `↑` moves from the selected option, as in a native `<select>`, rather than from the top of the list.
 
 ---
 

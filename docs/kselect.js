@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.7.0
+ * Version 1.8.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,7 +15,7 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.7.0';
+  const KSELECT_VERSION = '1.8.0';
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -116,6 +116,7 @@
       autoSync: true,             // watch the underlying <select> for external mutations and stay in sync without manual refresh()/kselect:sync calls
       showEmptyOptGroups: true,   // when an <optgroup> has no <option> children, true keeps its header in the dropdown; false omits it entirely
       copyClassName: true,        // copy the source <select>'s class onto the wrapper <div>; set false when that class styles the native control (borders/padding) and would double up around .ks-control
+      revealSelection: true,      // on open, start the list scrolled so the (first) selected option is visible and centred; false = always open at the top
     }, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
@@ -1247,6 +1248,81 @@
     }
   };
 
+  // ─── Reveal the current selection on open ────────────────────────────────────
+
+  // Scrolls `scroller` so the first selected, reachable option row is visible,
+  // and returns that row (or null when there is nothing to reveal).
+  //
+  // Called synchronously from open() *after* the dropdown has been shown and
+  // positioned — that is what applies the inline maxHeight that makes the
+  // dropdown overflow, and a scrollTop write on a container that has no
+  // overflow yet is a silent no-op. Because nothing between display:block and
+  // this write yields to the browser, the first painted frame already shows
+  // the selection: the list *starts* at the selected row rather than opening
+  // at the top and then visibly scrolling.
+  //
+  // `scroller` is the element that actually scrolls: the fixed-position
+  // .ks-dropdown on desktop, .ks-mobile-options-wrap in the mobile sheet. The
+  // row search goes through _optionsList (not _dropdown) because the <ul> is
+  // moved between those two containers.
+  //
+  // Rules:
+  //  - already visible → left alone (an on-screen selection should not jump)
+  //  - otherwise → centred in the scroller, so the user has context both ways
+  //  - nothing selected → do nothing; the top is right
+  //  - search active → do nothing; the filtered list is the user's question
+  //  - selection inside a collapsed group → do nothing; the group is not
+  //    expanded (a consumer that collapses groups did so deliberately)
+  //  - multi mode → the first selected row in DOM order
+  Kselect.prototype._revealSelection = function (scroller) {
+    if (!this.options.revealSelection || !scroller || this._searchQuery) return null;
+
+    const selected = this._optionsList.querySelectorAll('.ks-option-selected');
+    let li = null;
+    for (let i = 0; i < selected.length; i++) {
+      // _kselectOption excludes the select-all row; offsetParent excludes rows
+      // hidden by the filter or by a collapsed group (same test _moveFocus uses).
+      if (selected[i]._kselectOption && selected[i].offsetParent !== null) {
+        li = selected[i];
+        break;
+      }
+    }
+    if (!li) return null;
+
+    // Measure via rects rather than offsetTop so the maths is independent of
+    // whatever positioned ancestors sit between the row and the scroller.
+    const sRect = scroller.getBoundingClientRect();
+    const rRect = li.getBoundingClientRect();
+    const viewH = scroller.clientHeight;
+    const rowH = rRect.height;
+    const rowTop = rRect.top - sRect.top + scroller.scrollTop - scroller.clientTop;
+
+    const alreadyVisible = rowTop >= scroller.scrollTop &&
+                           rowTop + rowH <= scroller.scrollTop + viewH;
+    if (!alreadyVisible) {
+      // The browser clamps an over-large value to the maximum scroll offset.
+      scroller.scrollTop = Math.max(0, rowTop - (viewH - rowH) / 2);
+    }
+    return li;
+  };
+
+  // Seeds keyboard focus on `li` so the first ArrowDown/ArrowUp after open
+  // continues from the current selection (as a native <select> does) instead
+  // of restarting from the top — which, with the list opened at the selection,
+  // would scroll straight back up. Mirrors the three writes _moveFocus makes;
+  // _moveFocus itself is unchanged and picks up from this row via indexOf.
+  Kselect.prototype._seedFocus = function (li) {
+    if (!li || li.classList.contains('ks-option-disabled')) return;
+    const prev = this._dropdown.querySelector('.ks-option-focused');
+    if (prev && prev !== li) prev.classList.remove('ks-option-focused');
+    li.classList.add('ks-option-focused');
+    const itemId = li.getAttribute('id');
+    if (itemId) {
+      this._control.setAttribute('aria-activedescendant', itemId);
+      this._searchInput.setAttribute('aria-activedescendant', itemId);
+    }
+  };
+
   // ─── Mobile modal ────────────────────────────────────────────────────────────
 
   Kselect.prototype._openMobileModal = function () {
@@ -1299,6 +1375,11 @@
     // Reset mobile search
     this._mobileSearchInput.value = '';
     this._filterOptions('');
+
+    // Start the sheet's list at the current selection. The options <ul> now
+    // lives inside _mobileOptionsWrap, which is the sheet's scroller. No
+    // keyboard focus is seeded here — the sheet has no arrow-key navigation.
+    this._revealSelection(this._mobileOptionsWrap);
 
     // Bind search
     if (!this._debouncedMobileFilter) {
@@ -1618,6 +1699,11 @@
         this._searchWrap.style.display = 'block';
       }
       this._positionDropdown();
+
+      // Start the list at the current selection. Must run after
+      // _positionDropdown() (which applies the maxHeight that makes the
+      // dropdown scrollable) and before anything can yield to the browser.
+      this._seedFocus(this._revealSelection(this._dropdown));
 
       // Start observing wrapper height changes so we can scroll-compensate
       // when tags wrap to a new line (or a line collapses). Snapshot the
