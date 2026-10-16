@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.8.0
+ * Version 1.9.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,7 +15,7 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.8.0';
+  const KSELECT_VERSION = '1.9.0';
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -25,6 +25,13 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  // Fills a text-option template: formatText('Remove {label}', 'label', 'Ledig').
+  // The function replacer keeps `$&`, `$1` etc. in option text literal —
+  // a string replacement would expand them.
+  function formatText(template, key, value) {
+    return String(template).replace('{' + key + '}', function () { return value; });
   }
 
   function debounce(fn, delay) {
@@ -93,9 +100,20 @@
     }
 
     this.select = selectEl;
+
+    // data-* attributes sit above Kselect.defaults and below per-instance
+    // options, so a page-wide default never overrides markup.
+    const dataOptions = {};
+    if (selectEl.getAttribute('data-placeholder')) {
+      dataOptions.placeholder = selectEl.getAttribute('data-placeholder');
+    }
+    if (selectEl.getAttribute('data-search-placeholder')) {
+      dataOptions.searchPlaceholder = selectEl.getAttribute('data-search-placeholder');
+    }
+
     this.options = Object.assign({
-      placeholder: selectEl.getAttribute('data-placeholder') || 'Select an option…',
-      searchPlaceholder: selectEl.getAttribute('data-search-placeholder') || 'Search…',
+      placeholder: 'Select an option…',
+      searchPlaceholder: 'Search…',
       noResultsText: 'No results found',
       maxHeight: 300,
       searchable: true,
@@ -105,8 +123,12 @@
       selectAll: false,           // show a global "Select all" checkbox (multi only)
       selectAllText: 'Select all',
       selectAllGroups: false,     // show a "Select all" checkbox inside each optgroup (multi only)
-      selectAllGroupText: 'Select all',
-      nativeOnMobile: false,      // on coarse-pointer devices, leave the native <select> in place
+      selectAllGroupText: 'Select all', // unused — superseded by selectAllGroupLabel; kept so existing configs don't break
+      selectAllGroupLabel: 'Select all in {group}', // accessible name of each optgroup's select-all button; {group} = the optgroup label
+      clearText: 'Clear selection',     // accessible name of the clear (×) button
+      closeText: 'Close',               // accessible name of the mobile sheet's close button
+      removeTagText: 'Remove {label}',  // accessible name of each tag's remove button; {label} = the option's plain text
+      nativeOnMobile: false,     // on coarse-pointer devices, leave the native <select> in place
       mobileModal: true,          // on coarse-pointer devices, open a full-screen modal instead of a dropdown
       maxSelect: null,            // maximum number of items that can be selected (multi only; null = unlimited)
       maxSelectText: 'Max {n} items', // label shown in the control when the limit is reached
@@ -117,7 +139,7 @@
       showEmptyOptGroups: true,   // when an <optgroup> has no <option> children, true keeps its header in the dropdown; false omits it entirely
       copyClassName: true,        // copy the source <select>'s class onto the wrapper <div>; set false when that class styles the native control (borders/padding) and would double up around .ks-control
       revealSelection: true,      // on open, start the list scrolled so the (first) selected option is visible and centred; false = always open at the top
-    }, userOptions || {});
+    }, Kselect.defaults, dataOptions, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
     this.isDisabled = selectEl.disabled;
@@ -190,6 +212,12 @@
 
   Kselect.version = KSELECT_VERSION;
 
+  // Page-wide option defaults, merged under each new instance's options —
+  // a multilingual page sets its language's strings here once instead of
+  // passing them to every init. data-* attributes and per-instance options
+  // still win. Read at construction, so set it before the first init.
+  Kselect.defaults = {};
+
   Kselect.getInstance = function (selectEl) {
     const id = selectEl && selectEl.getAttribute('data-kselect-id');
     return id ? (Kselect._instances || {})[id] : null;
@@ -245,9 +273,13 @@
     // _copiedClassName records what we copied so refresh() can diff it.
     this._copiedClassName = this.options.copyClassName ? (this.select.className || '') : '';
     const wrapper = document.createElement('div');
+    // ks-no-search goes on the wrapper, dropdown and mobile overlay (the last
+    // two live in <body>) so the stylesheet can hide every search box —
+    // searchable:false used to only skip focusing it.
+    const noSearch = this.options.searchable ? '' : ' ks-no-search';
     wrapper.className = 'ks-wrapper' +
       (this.isMultiple ? ' ks-multiple' : ' ks-single') +
-      (this.isDisabled ? ' ks-disabled' : '') +
+      (this.isDisabled ? ' ks-disabled' : '') + noSearch +
       (this._copiedClassName ? ' ' + this._copiedClassName : '');
     wrapper.setAttribute('id', 'ks-wrapper-' + this.id);
 
@@ -336,7 +368,7 @@
     const clearBtn = document.createElement('button');
     clearBtn.type = 'button';
     clearBtn.className = 'ks-clear';
-    clearBtn.setAttribute('aria-label', 'Clear selection');
+    clearBtn.setAttribute('aria-label', this.options.clearText);
     clearBtn.innerHTML = '<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
     control.appendChild(selection);
@@ -357,7 +389,7 @@
     // ── Dropdown ──
     const dropdown = document.createElement('div');
     dropdown.className = 'ks-dropdown' +
-      (this.isMultiple ? ' ks-multiple' : ' ks-single');
+      (this.isMultiple ? ' ks-multiple' : ' ks-single') + noSearch;
     dropdown.setAttribute('id', 'ks-dropdown-' + this.id);
     dropdown.setAttribute('role', 'listbox');
     dropdown.setAttribute('aria-multiselectable', this.isMultiple ? 'true' : 'false');
@@ -412,7 +444,7 @@
     // when mobileModal:true. Built once and reused; shown/hidden by open()/close().
     const mobileOverlay = document.createElement('div');
     mobileOverlay.className = 'ks-mobile-overlay' +
-      (this.isMultiple ? ' ks-multiple' : ' ks-single');
+      (this.isMultiple ? ' ks-multiple' : ' ks-single') + noSearch;
     mobileOverlay.setAttribute('aria-modal', 'true');
     mobileOverlay.setAttribute('role', 'dialog');
     // Version marker — inspect the modal's HTML to confirm you're not running a
@@ -439,7 +471,7 @@
     const mobileClose = document.createElement('button');
     mobileClose.type = 'button';
     mobileClose.className = 'ks-mobile-close';
-    mobileClose.setAttribute('aria-label', 'Close');
+    mobileClose.setAttribute('aria-label', this.options.closeText);
     mobileClose.innerHTML =
       '<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
         '<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
@@ -767,7 +799,9 @@
       const groupCheckBtn = document.createElement('button');
       groupCheckBtn.type = 'button';
       groupCheckBtn.className = 'ks-group-select-all';
-      groupCheckBtn.setAttribute('aria-label', 'Select all in ' + optgroup.label);
+      groupCheckBtn.setAttribute('aria-label',
+        formatText(this.options.selectAllGroupLabel, 'group', optgroup.label));
+      this._markUiLang(groupCheckBtn, header);
       groupCheckBtn.innerHTML =
         '<span class="ks-checkbox">' +
           '<svg viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">' +
@@ -855,6 +889,34 @@
       target.style.setProperty('--group-color', groupColor);
       target.classList.add('ks-coloured');
     }
+
+    // Language of parts (WCAG 3.1.2). A language switcher whose labels are
+    // each in their own language marks that per option; without this every
+    // re-rendered label is read in the page language's voice. An option with
+    // no lang/dir of its own takes its optgroup's, as it does natively — that
+    // matters for tags and the single-value span, which render in the control
+    // rather than inside the group's list. The <select>'s own lang is
+    // deliberately not consulted. Absent → removed, so an element can never
+    // keep a stale value.
+    const group = source.tagName === 'OPTION' && source.parentNode &&
+      source.parentNode.tagName === 'OPTGROUP' ? source.parentNode : null;
+    ['lang', 'dir'].forEach(function (attr) {
+      let val = source.getAttribute(attr);
+      if (val === null && group) val = group.getAttribute(attr);
+      if (val === null) target.removeAttribute(attr);
+      else target.setAttribute(attr, val);
+    });
+  };
+
+  // kselect's own strings (remove/select-all labels) are in the page's
+  // language. When they sit inside an element that carried an option's lang
+  // (a tag, a group header), mark them back to the language the wrapper
+  // inherits so "Remove Svenska" isn't read with a Swedish voice.
+  Kselect.prototype._markUiLang = function (el, container) {
+    if (!container.hasAttribute('lang')) return;
+    const scope = this._wrapper && this._wrapper.parentNode;
+    const langEl = scope && scope.closest ? scope.closest('[lang]') : null;
+    if (langEl) el.setAttribute('lang', langEl.getAttribute('lang'));
   };
 
   // Populates a label element with the option's display content.
@@ -1668,7 +1730,8 @@
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.className = 'ks-tag-remove';
-      removeBtn.setAttribute('aria-label', 'Remove ' + o.text);
+      removeBtn.setAttribute('aria-label', formatText(self.options.removeTagText, 'label', o.text));
+      self._markUiLang(removeBtn, tag);
       removeBtn.innerHTML = '<svg viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1L7 7M7 1L1 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
       removeBtn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -2082,7 +2145,7 @@
       if (this._limitNotice) {
         const noticeText = this._limitNotice.querySelector('.ks-limit-notice-text');
         if (noticeText) {
-          noticeText.textContent = this.options.maxSelectText.replace('{n}', limit);
+          noticeText.textContent = formatText(this.options.maxSelectText, 'n', limit);
         }
       }
       // Update unselected option rows: add ks-option-at-limit when at the cap
@@ -2101,7 +2164,7 @@
       this._limitBadge.classList.toggle('ks-limit-reached', atLimit);
       // Announce to screen readers via the live region when the limit is first hit
       if (atLimit && this._liveRegion) {
-        const msg = this.options.maxSelectText.replace('{n}', limit);
+        const msg = formatText(this.options.maxSelectText, 'n', limit);
         this._liveRegion.textContent = msg;
       } else if (!atLimit && this._liveRegion) {
         this._liveRegion.textContent = '';
@@ -2133,7 +2196,8 @@
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'ks-tag-remove';
-        removeBtn.setAttribute('aria-label', 'Remove ' + o.text);
+        removeBtn.setAttribute('aria-label', formatText(self.options.removeTagText, 'label', o.text));
+        self._markUiLang(removeBtn, tag);
         removeBtn.innerHTML = '<svg viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1L7 7M7 1L1 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
         removeBtn.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -2181,7 +2245,7 @@
     this._selection.innerHTML = '';
     const summary = document.createElement('span');
     summary.className = 'ks-summary';
-    summary.textContent = this.options.summarizeSelectedText.replace('{n}', count);
+    summary.textContent = formatText(this.options.summarizeSelectedText, 'n', count);
     this._selection.appendChild(summary);
   };
 
@@ -2447,7 +2511,7 @@
   // <select> and later takes it off again.
   const KS_WRAPPER_OWNED = [
     'ks-wrapper', 'ks-single', 'ks-multiple',
-    'ks-disabled', 'ks-open', 'ks-dropup', 'ks-at-limit',
+    'ks-disabled', 'ks-open', 'ks-dropup', 'ks-at-limit', 'ks-no-search',
   ];
 
   function classTokens(str) {

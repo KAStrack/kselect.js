@@ -113,3 +113,19 @@ bindOutput('no-html-demo',    'no-html-output',    ksNoHtml);
 
 const ksPerRowStyling = Kselect.init('#per-row-styling-demo')[0];
 bindOutput('per-row-styling-demo', 'per-row-styling-output', ksPerRowStyling);
+
+// Multilingual demo. A Swedish page would put these in Kselect.defaults once;
+// the demo page is English, so they are passed to this instance only.
+const ksLangSwitcher = Kselect.init('#lang-switcher-demo')[0];
+const ksSwedish = Kselect.init('#swedish-demo', {
+  selectAllGroups:       true,
+  summarizeSelected:     'off',
+  searchPlaceholder:     'Sök…',
+  noResultsText:         'Inga träffar',
+  selectAllGroupLabel:   'Markera alla i {group}',
+  removeTagText:         'Ta bort {label}',
+  clearText:             'Rensa val',
+  closeText:             'Stäng',
+  summarizeSelectedText: '{n} valda',
+})[0];
+bindOutput('swedish-demo', 'swedish-demo-output', ksSwedish);

@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.9.0] — 2026-10-13
+
+An accessibility release for multilingual hosts. All three changes came out of a WCAG 2.2 audit (axe-core with the `wcag22aa` tags) of a page in English, Swedish and Chinese, and each was a defect in kselect itself, not in the host's markup.
+
+### Added
+
+- **`lang` and `dir` are carried from `<option>` / `<optgroup>` onto the rendered widget.** A language switcher whose labels are each written in their own language marks that per option (WCAG 3.1.2, Language of Parts). kselect hides the `<select>` and re-renders every label into its own chrome, and none of that chrome carried `lang`. Screen readers read "Svenska" and "中文" in the page language's voice, and hosts had to leave such selects native. `lang` and `dir` now travel the same route as `class` and `style`: option rows, group wrappers, headers and lists, tags (control and mobile sheet), and the single-value span. An option without its own value takes its optgroup's, as it does natively, so a tag rendered outside the group still gets it. A missing attribute is actively removed, so a rebuilt element can never keep a stale value, and `refresh()` / autoSync pick up runtime edits. The `<select>`'s own `lang` is deliberately not copied: the wrapper inherits the page language as the native control does. No option is needed, and a host that never sets these attributes sees no difference.
+- **Translatable accessible names: `clearText`, `closeText`, `selectAllGroupLabel`, `removeTagText`.** kselect's visible strings were already options, but four accessible names were English literals, so a Swedish page announced "Remove Ledig" mid-sentence. They are now options with the same `{…}` templates as `maxSelectText`: `removeTagText: 'Remove {label}'` and `selectAllGroupLabel: 'Select all in {group}'`, with the placeholder allowed anywhere for languages that order words differently. `{label}` is the option's plain text, never HTML, even with `allowHtml`. The defaults are exactly the old English wording, so hosts and tests that match on "Remove …" are unaffected. Where a tag or group header carries an option's `lang`, its button is marked back to the page's language, so "Remove Svenska" isn't read with a Swedish voice.
+- **`Kselect.defaults`: page-wide option defaults.** An object merged under every new instance's options, so a page sets its language's strings once instead of passing them to every `init`. Precedence, highest first: per-instance options, then `data-placeholder` / `data-search-placeholder`, then `Kselect.defaults`, then the built-in defaults. It is read at construction, so set it before the first `init`.
+- **`--ks-target-size` token (default `24px`).** Sets the minimum hit area of the small targets. A theme can raise it (e.g. `44px` for touch-first apps) without overriding selectors.
+
+### Fixed
+
+- **kselect's small buttons were smaller than WCAG 2.2's 24 × 24 px minimum (SC 2.5.8, AA).** axe's `target-size` rule failed on every tag's remove button (18 × 18, with neighbouring tags too close for the spacing exception). The clear button (18 × 18), the optgroup select-all button (20 × 20) and the search input in the control (20 px tall) were also too small. Each now has a hit area of at least `--ks-target-size`. Only the button's box grows: the icons stay the same size and in the same place. Up to a few pixels of the larger box are pulled into the surrounding padding with negative margins, so tags, group headers and the control keep their exact size. Measured before and after: tag pills stay 73 × 24, group headers stay 30 px tall, and the control's height is unchanged open and closed. The mobile sheet's close button was already 32 px and now honours the token when it is larger.
+- **`searchable: false` now hides the search box.** It only stopped the input taking focus. The stylesheet still showed the search box on open, so a non-searchable single select opened with an empty search box beside its value, and the mobile sheet kept its search bar. kselect now adds `.ks-no-search` to the wrapper, the dropdown and the mobile sheet, and the stylesheet hides every search box under it. Themes can rely on the class.
+
+### Deprecated
+
+- **`selectAllGroupText` never did anything.** It was documented as the per-group button's accessible label, but the label was hard-coded to `'Select all in ' + group`. Use `selectAllGroupLabel`. The option is still accepted, so existing configurations don't break.
+
+---
+
 ## [1.8.0] — 2026-09-05
 
 ### Added

@@ -109,6 +109,10 @@ Kselect.init('#my-select', {
   selectAll:         false,
   selectAllText:     'Select all',
   selectAllGroups:   false,
+  selectAllGroupLabel: 'Select all in {group}',
+  clearText:         'Clear selection',
+  closeText:         'Close',
+  removeTagText:     'Remove {label}',
   nativeOnMobile:    false,
   mobileModal:       true,
   maxSelect:         null,
@@ -120,11 +124,13 @@ Kselect.init('#my-select', {
 });
 ```
 
-Options can also be set via `data-` attributes on the `<select>` element:
+`placeholder` and `searchPlaceholder` can also be set via `data-` attributes on the `<select>` element:
 
 ```html
-<select data-placeholder="Pick a country…" data-max-height="400">…</select>
+<select data-placeholder="Pick a country…" data-search-placeholder="Find a country…">…</select>
 ```
+
+Precedence, highest first: per-instance options → `data-` attributes → [`Kselect.defaults`](#translating-kselect) → built-in defaults.
 
 ### Full options reference
 
@@ -134,14 +140,18 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `searchPlaceholder` | string | `'Search…'` | Placeholder inside the search input |
 | `noResultsText` | string | `'No results found'` | Shown when search returns nothing |
 | `maxHeight` | number | `300` | Maximum height of the dropdown in px |
-| `searchable` | boolean | `true` | Show or hide the search input |
+| `searchable` | boolean | `true` | Show or hide the search input. `false` also adds `.ks-no-search` to the wrapper, dropdown and mobile sheet |
 | `allowClear` | boolean | `true` | Show a clear (×) button |
 | `closeOnSelect` | boolean | `true` | Close after picking in single mode |
 | `collapseGroups` | boolean | `false` | Start optgroups collapsed |
 | `selectAll` | boolean | `false` | Show a global "Select all" row (multi only) |
 | `selectAllText` | string | `'Select all'` | Label for the global select-all row |
 | `selectAllGroups` | boolean | `false` | Show a select-all checkbox in each optgroup header (multi only) |
-| `selectAllGroupText` | string | `'Select all'` | Accessible label for per-group select-all buttons |
+| `selectAllGroupText` | string | `'Select all'` | Unused — it never reached the button. Superseded by `selectAllGroupLabel` |
+| `selectAllGroupLabel` | string | `'Select all in {group}'` | Accessible name of each optgroup's select-all button; `{group}` = the optgroup label |
+| `clearText` | string | `'Clear selection'` | Accessible name of the clear (×) button |
+| `closeText` | string | `'Close'` | Accessible name of the mobile sheet's close button |
+| `removeTagText` | string | `'Remove {label}'` | Accessible name of each tag's remove button; `{label}` = the option's plain text (never HTML, even with `allowHtml`) |
 | `nativeOnMobile` | boolean | `false` | Use the native OS picker on coarse-pointer (touch) devices |
 | `mobileModal` | boolean | `true` | Show a bottom-sheet modal on phones instead of a dropdown |
 | `maxSelect` | number\|null | `null` | Maximum items selectable (multi only; `null` = unlimited) |
@@ -178,6 +188,7 @@ Options can also be set via `data-` attributes on the `<select>` element:
 | `Kselect.getInstance(selectEl)` | Retrieve the instance attached to an element |
 | `Kselect.destroyAll(root)` | Destroy every instance inside `root` (default: the whole document); returns the number destroyed |
 | `Kselect.version` | The version string of the loaded build |
+| `Kselect.defaults` | Page-wide option defaults, merged under every new instance's options — see [Translating kselect](#translating-kselect) |
 
 `destroyAll()` matters if your app tears down DOM subtrees:
 
@@ -294,6 +305,20 @@ Use `style` for values that vary per row and come from your data (DB-derived col
 
 Framework classes (`ks-option`, `ks-tag`, `ks-group-header`, …) are preserved — your classes are appended, not substituted. The carry-through does not apply in `nativeOnMobile: true` mode (the OS owns the native picker).
 
+### `lang` and `dir`
+
+`lang` and `dir` are carried too, so per-option language marking (WCAG 3.1.2, Language of Parts) survives enhancement — a screen reader reads each label in its own language's voice:
+
+```html
+<select name="lang" id="f-lang">
+  <option value="en" lang="en" selected>English</option>
+  <option value="sv" lang="sv">Svenska</option>
+  <option value="zh" lang="zh-Hans">中文（简体）</option>
+</select>
+```
+
+The row, the single-value span and the tag all get `lang="sv"` for Svenska. An option without its own `lang`/`dir` takes its `<optgroup>`'s, as it does natively. The `<select>`'s own `lang` is not copied — the widget inherits the page's language like the native control. Remove the attribute from the option and the widget drops it on the next `refresh()` (automatic with `autoSync`).
+
 ### Per-row colours under a strict Content-Security-Policy
 
 A `style` **attribute** is blocked outright by `style-src 'self'`, and a CSP nonce cannot whitelist one — nonces apply to `<style>` elements only. If your app enforces a strict CSP, carry the colour as data instead:
@@ -313,6 +338,32 @@ kselect applies these with `element.style.setProperty()` — a CSSOM write, whic
 ```
 
 Both routes work; use whichever suits your policy. They compose, so an element can carry a `style` attribute and a `data-ks-color` at once.
+
+---
+
+## Translating kselect
+
+Every string kselect shows or announces is an option. A page in one language sets them once in `Kselect.defaults`, before the first `init`:
+
+```js
+// Swedish page
+Object.assign(Kselect.defaults, {
+  placeholder:           'Välj…',
+  searchPlaceholder:     'Sök…',
+  noResultsText:         'Inga träffar',
+  selectAllText:         'Markera alla',
+  selectAllGroupLabel:   'Markera alla i {group}',
+  maxSelectText:         'Högst {n} val',
+  summarizeSelectedText: '{n} valda',
+  removeTagText:         'Ta bort {label}',
+  clearText:             'Rensa val',
+  closeText:             'Stäng',
+});
+
+Kselect.init('select');
+```
+
+`{label}`, `{group}` and `{n}` can sit anywhere in the template, for languages that order words differently (`'{label} 移除'`). Per-instance options and `data-placeholder` / `data-search-placeholder` still win over `Kselect.defaults`.
 
 ---
 
@@ -409,6 +460,18 @@ Override CSS custom properties on `.ks-wrapper`, a parent element, or `:root`:
 
 kselect declares its own defaults inside `:where(:root)`, which carries zero specificity — so **your overrides win regardless of stylesheet order**, even if `kselect.css` loads after yours. There is no need to raise specificity or control the load order.
 
+### Target size
+
+The small targets — tag remove, clear, optgroup select-all, the search input in the control, and the mobile sheet's close — have a hit area of at least `--ks-target-size` (default `24px`, the WCAG 2.2 SC 2.5.8 minimum). Only the button's box grows; the icons and the tag pill keep their size. Touch-first apps can raise it:
+
+```css
+:root { --ks-target-size: 44px; }   /* tags and group headers grow to fit */
+```
+
+### State hooks
+
+`.ks-no-search` is set on the wrapper, the dropdown and the mobile sheet when `searchable: false`, and hides every search box.
+
 ---
 
 ## Accessibility
@@ -433,6 +496,8 @@ select.setAttribute('aria-describedby', 'email-error');
 ```
 
 The same applies to `disabled`: setting `select.disabled = true` disables the widget, greying the control and taking it out of the tab order.
+
+Every small button has a hit area of at least 24 × 24 CSS px (WCAG 2.2 SC 2.5.8) — see [Target size](#target-size). Per-option `lang` / `dir` are carried onto the rendered labels (see [`lang` and `dir`](#lang-and-dir)), and kselect's own accessible names are translatable (see [Translating kselect](#translating-kselect)).
 
 When the dropdown opens it starts at the current selection (see `revealSelection`), and keyboard focus starts there too — the first `↓` / `↑` moves from the selected option, as in a native `<select>`, rather than from the top of the list.
 

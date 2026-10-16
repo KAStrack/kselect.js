@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.8.0
+ * Version 1.9.0
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -71,6 +71,12 @@
   --ks-shadow-dropdown: 0 4px 6px -1px rgba(0,0,0,.1), 0 10px 30px -5px rgba(0,0,0,.12);
 
   --ks-transition: 0.18s ease;
+
+  /* Minimum hit area of kselect's small buttons (tag remove, clear, optgroup
+     select-all, mobile close) — WCAG 2.2 SC 2.5.8 asks for 24 × 24 CSS px.
+     Only the button's box grows; the icons stay the size they are. Raise it
+     (e.g. 44px) for touch-first apps; tags and group headers grow to fit. */
+  --ks-target-size: 24px;
 
   --ks-z-index: 9999;
 }
@@ -231,10 +237,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  box-sizing: border-box;
+  width: var(--ks-target-size);
+  height: var(--ks-target-size);
   padding: 0;
-  margin: 0;
+  /* The tag's own 18 px slot is unchanged: up to 3 px a side of the larger
+     hit area is pulled into the tag's padding and border (and the label gap),
+     so the pill keeps its size. Anything beyond that grows the tag. */
+  margin: max(-3px, calc((18px - var(--ks-target-size)) / 2));
   background: none;
   border: none;
   cursor: pointer;
@@ -256,7 +266,7 @@
 
 .ks-tag-remove:focus-visible {
   outline: 2px solid var(--ks-color-border-focus);
-  outline-offset: 1px;
+  outline-offset: -2px; /* inside the enlarged box, so the ring stays within the pill */
 }
 
 /* ─── Search input ───────────────────────────────────────────────────────── */
@@ -274,6 +284,14 @@
 .ks-single.ks-open .ks-search-wrap {
   display: block;
   flex: 1;
+}
+
+/* searchable: false — no search box anywhere. .ks-no-search is set on the
+   wrapper, the dropdown and the mobile overlay. !important beats the open-state
+   rules above and the inline display open() writes. */
+.ks-no-search .ks-search-wrap,
+.ks-mobile-overlay.ks-no-search .ks-mobile-search-wrap {
+  display: none !important;
 }
 
 /* ── Search inside the select-all row ──
@@ -304,6 +322,14 @@
   padding: 0 0 0 8px;
   margin: 0;
   line-height: var(--ks-line-height);
+}
+
+/* In the control the input is a ~20 px line; give it the target-size hit
+   area, pulling up to 2 px a side into the row gap so the control keeps its
+   height. (The select-all-row and mobile-sheet inputs are already taller.) */
+.ks-control .ks-search-input {
+  min-height: var(--ks-target-size);
+  margin: max(-2px, calc((20px - var(--ks-target-size)) / 2)) 0;
 }
 
 /* Search input focus ring — shown when navigating by keyboard */
@@ -349,10 +375,15 @@
 .ks-clear {
   display: none;
   position: absolute;
-  right: 30px;
+  /* The 10 px icon stays where it was (centred 39 px from the right edge);
+     the padding grows evenly around it to the target size. */
+  right: calc(39px - var(--ks-target-size) / 2);
   top: 50%;
   transform: translateY(-50%);
-  padding: 4px;
+  box-sizing: border-box;
+  width: var(--ks-target-size);
+  height: var(--ks-target-size);
+  padding: calc((var(--ks-target-size) - 10px) / 2);
   background: none;
   border: none;
   cursor: pointer;
@@ -596,8 +627,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--ks-target-size);
+  min-height: var(--ks-target-size);
+  /* Up to 2 px a side of the hit area is pulled into the header's padding so
+     the header keeps its height; a larger target size grows the header. */
+  margin: max(-2px, calc((20px - var(--ks-target-size)) / 2));
   margin-left: auto;
-  padding: 2px;
+  padding: 0;
   background: none;
   border: none;
   cursor: pointer;
@@ -1037,8 +1074,8 @@ body.ks-body-modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: max(32px, var(--ks-target-size));
+  height: max(32px, var(--ks-target-size));
   padding: 0;
   background: #f3f4f6;
   border: none;

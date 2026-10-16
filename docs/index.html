@@ -985,6 +985,81 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
       </div>
     </div>
 
+    <!-- ── DEMO: Multilingual pages — lang, translated labels, target size ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🌍</div>
+        <div>
+          <div class="demo-card-title">Multilingual pages — <code>lang</code>, translated labels, target size</div>
+          <div class="demo-card-desc"><code>lang</code> and <code>dir</code> on an <code>&lt;option&gt;</code> / <code>&lt;optgroup&gt;</code> are carried onto every rendered row, tag and value, so screen readers switch voice per label (WCAG 3.1.2). The Swedish instance translates kselect's own accessible names with <code>removeTagText</code>, <code>clearText</code>, <code>closeText</code> and <code>selectAllGroupLabel</code>. Every small button — tag remove, clear, group select-all — has a 24 × 24 px hit area (WCAG 2.2, 2.5.8), adjustable with <code>--ks-target-size</code>.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="split">
+          <div>
+            <div class="section-label">Language switcher — each label in its own language</div>
+            <select id="lang-switcher-demo">
+              <option value="en" lang="en">English</option>
+              <option value="sv" lang="sv" selected>Svenska</option>
+              <option value="zh" lang="zh-Hans">中文（简体）</option>
+              <option value="ar" lang="ar" dir="rtl">العربية</option>
+            </select>
+          </div>
+          <div lang="sv">
+            <div class="section-label" lang="en">Swedish page — grouped multi select</div>
+            <select id="swedish-demo" multiple data-placeholder="Välj status…">
+              <optgroup label="Tillgänglig">
+                <option value="ledig" selected>Ledig</option>
+                <option value="distans" selected>Distans</option>
+                <option value="kontor" selected>På kontoret</option>
+              </optgroup>
+              <optgroup label="Upptagen">
+                <option value="mote" selected>I möte</option>
+                <option value="semester" selected>Semester</option>
+                <option value="sjuk">Sjuk</option>
+              </optgroup>
+              <optgroup label="English" lang="en">
+                <option value="away">Away</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="swedish-demo-output">—</span>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="cm">&lt;!-- lang / dir are carried through — no option needed. --&gt;</span>
+<span class="tag">&lt;select</span> <span class="attr">id</span>=<span class="val">"lang"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"en"</span> <span class="attr">lang</span>=<span class="val">"en"</span><span class="tag">&gt;</span>English<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"sv"</span> <span class="attr">lang</span>=<span class="val">"sv"</span><span class="tag">&gt;</span>Svenska<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"zh"</span> <span class="attr">lang</span>=<span class="val">"zh-Hans"</span><span class="tag">&gt;</span>中文（简体）<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;option</span> <span class="attr">value</span>=<span class="val">"ar"</span> <span class="attr">lang</span>=<span class="val">"ar"</span> <span class="attr">dir</span>=<span class="val">"rtl"</span><span class="tag">&gt;</span>العربية<span class="tag">&lt;/option&gt;</span>
+<span class="tag">&lt;/select&gt;</span>
+
+<span class="cm">// On a Swedish page — set once for every instance:</span>
+<span class="fn">Object</span>.<span class="fn">assign</span>(<span class="fn">Kselect</span>.defaults, {
+  <span class="key">placeholder</span>:         <span class="str">'Välj…'</span>,
+  <span class="key">searchPlaceholder</span>:   <span class="str">'Sök…'</span>,
+  <span class="key">noResultsText</span>:       <span class="str">'Inga träffar'</span>,
+  <span class="key">removeTagText</span>:       <span class="str">'Ta bort {label}'</span>,
+  <span class="key">clearText</span>:           <span class="str">'Rensa val'</span>,
+  <span class="key">closeText</span>:           <span class="str">'Stäng'</span>,
+  <span class="key">selectAllGroupLabel</span>: <span class="str">'Markera alla i {group}'</span>,
+  <span class="key">summarizeSelectedText</span>: <span class="str">'{n} valda'</span>,
+});
+<span class="kw">const</span> ks = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#swedish-demo'</span>, { <span class="key">selectAllGroups</span>: <span class="kw">true</span> })[<span class="num">0</span>];</pre>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /demo-grid -->
 
   <div class="sponsored-by-kastrack">

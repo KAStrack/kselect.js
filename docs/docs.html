@@ -37,6 +37,7 @@
     <a class="nav-link" href="#framework-classes">Form-framework classes</a>
     <a class="nav-link" href="#select-all">Select all</a>
     <a class="nav-link" href="#search">Search</a>
+    <a class="nav-link" href="#translating">Translating</a>
     <a class="nav-link" href="#disabled-states">Disabled states</a>
     <a class="nav-link" href="#dynamic-options">Dynamic options</a>
     <a class="nav-link" href="#mobile">Mobile</a>
@@ -52,6 +53,7 @@
     <a class="nav-link nav-link-sub" href="#api-refresh">refresh()</a>
     <a class="nav-link nav-link-sub" href="#api-destroy">destroy()</a>
     <a class="nav-link nav-link-sub" href="#api-destroyAll">Kselect.destroyAll()</a>
+    <a class="nav-link nav-link-sub" href="#api-defaults">Kselect.defaults</a>
     <a class="nav-link" href="#events-ref">Events</a>
     <a class="nav-link" href="#css-vars">CSS variables</a>
     <a class="nav-link" href="#theming">Theming</a>
@@ -174,7 +176,7 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
         </div>
 
         <h3>Data attributes</h3>
-        <p>Several options can also be set directly on the <code>&lt;select&gt;</code> element as <code>data-</code> attributes. The JavaScript option always takes precedence when both are present.</p>
+        <p><code>placeholder</code> and <code>searchPlaceholder</code> can also be set directly on the <code>&lt;select&gt;</code> element as <code>data-</code> attributes. Precedence, highest first: the per-instance JavaScript option, then the <code>data-</code> attribute, then <a href="#api-defaults"><code>Kselect.defaults</code></a>, then the built-in default.</p>
 
         <div class="code-block">
           <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -327,6 +329,20 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
           <p>The carry-through does not run in <code>nativeOnMobile: true</code> mode when the device matches <code>(pointer: coarse)</code>: the OS owns the native picker, and per-option styling is not reliable across mobile browsers.</p>
         </div>
 
+        <h3>Language of parts — <code>lang</code> and <code>dir</code></h3>
+        <p><code>lang</code> and <code>dir</code> are carried too, so per-option language marking (WCAG 3.1.2, Language of Parts) survives enhancement — a screen reader reads each label in its own language's voice. A language switcher is the typical case:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">name</span>=<span class="t-str">"lang"</span> <span class="t-attr">id</span>=<span class="t-str">"f-lang"</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"en"</span> <span class="t-attr">lang</span>=<span class="t-str">"en"</span> <span class="t-attr">selected</span><span class="t-tag">&gt;</span>English<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"sv"</span> <span class="t-attr">lang</span>=<span class="t-str">"sv"</span><span class="t-tag">&gt;</span>Svenska<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"zh"</span> <span class="t-attr">lang</span>=<span class="t-str">"zh-Hans"</span><span class="t-tag">&gt;</span>中文（简体）<span class="t-tag">&lt;/option&gt;</span>
+<span class="t-tag">&lt;/select&gt;</span></pre>
+        </div>
+
+        <p>The option row, the single-value span and the tag all carry the attribute. An option without its own <code>lang</code>/<code>dir</code> takes its <code>&lt;optgroup&gt;</code>'s, as it does natively. The <code>&lt;select&gt;</code>'s own <code>lang</code> is not copied — the widget inherits the page's language, like the native control. Remove the attribute from an option and the widget drops it on the next <a href="#api-refresh"><code>refresh()</code></a> (automatic with <code>autoSync</code>).</p>
+
         <h3>Per-row colours under a strict CSP</h3>
         <p>A <code>style</code> <em>attribute</em> is blocked outright by a strict <code>style-src 'self'</code>, and a CSP nonce cannot whitelist one — nonces apply to <code>&lt;style&gt;</code> <em>elements</em> only. If your app enforces a strict CSP, carry the colour as data instead of as inline style:</p>
 
@@ -412,7 +428,7 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
           <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#permissions'</span>, {
   <span class="t-key">selectAll</span>:          <span class="t-num">true</span>,
   <span class="t-key">selectAllGroups</span>:    <span class="t-num">true</span>,
-  <span class="t-key">selectAllGroupText</span>: <span class="t-str">'Select all'</span>, <span class="t-cm">// accessible label for group checkboxes</span>
+  <span class="t-key">selectAllGroupLabel</span>: <span class="t-str">'Select all in {group}'</span>, <span class="t-cm">// accessible name of each group's button</span>
 });</pre>
         </div>
       </section>
@@ -432,6 +448,41 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
   <span class="t-key">noResultsText</span>:     <span class="t-str">'No results found'</span>, <span class="t-cm">// shown when search matches nothing</span>
   <span class="t-key">searchPlaceholder</span>: <span class="t-str">'Type to filter…'</span>,
 });</pre>
+        </div>
+
+        <p>With <code>searchable: false</code>, kselect adds a <code>ks-no-search</code> class to the wrapper, the dropdown and the mobile sheet, and the stylesheet hides every search box under it. Themes can rely on the class.</p>
+      </section>
+
+
+      <!-- ── Translating ────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="translating">
+        <h2>Translating</h2>
+        <p>Every string kselect shows or announces is an option — including the accessible names of its buttons, which screen-reader users hear even though they are never displayed. A page in one language sets them once in <a href="#api-defaults"><code>Kselect.defaults</code></a>, before the first <code>init</code>:</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-cm">// Swedish page</span>
+Object.<span class="t-fn">assign</span>(Kselect.defaults, {
+  <span class="t-key">placeholder</span>:           <span class="t-str">'Välj…'</span>,
+  <span class="t-key">searchPlaceholder</span>:     <span class="t-str">'Sök…'</span>,
+  <span class="t-key">noResultsText</span>:         <span class="t-str">'Inga träffar'</span>,
+  <span class="t-key">selectAllText</span>:         <span class="t-str">'Markera alla'</span>,
+  <span class="t-key">selectAllGroupLabel</span>:   <span class="t-str">'Markera alla i {group}'</span>,
+  <span class="t-key">maxSelectText</span>:         <span class="t-str">'Högst {n} val'</span>,
+  <span class="t-key">summarizeSelectedText</span>: <span class="t-str">'{n} valda'</span>,
+  <span class="t-key">removeTagText</span>:         <span class="t-str">'Ta bort {label}'</span>,
+  <span class="t-key">clearText</span>:             <span class="t-str">'Rensa val'</span>,
+  <span class="t-key">closeText</span>:             <span class="t-str">'Stäng'</span>,
+});
+
+Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>);</pre>
+        </div>
+
+        <p><code>{label}</code>, <code>{group}</code> and <code>{n}</code> can sit anywhere in a template, for languages that order words differently (<code>'{label} 移除'</code>). <code>{label}</code> is always the option's plain text, never HTML, even with <code>allowHtml</code>.</p>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p>When a tag or group header carries an option's <code>lang</code>, kselect marks its remove / select-all button back to the page's language, so "Remove Svenska" is not read with a Swedish voice.</p>
         </div>
       </section>
 
@@ -654,7 +705,7 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><code>searchable</code></td>
               <td><span class="type-pill bool">boolean</span></td>
               <td><span class="default-val">true</span></td>
-              <td>Show or hide the search input inside the dropdown.</td>
+              <td>Show or hide the search input. <code>false</code> also adds <code>ks-no-search</code> to the wrapper, dropdown and mobile sheet.</td>
             </tr>
             <tr>
               <td><code>allowClear</code></td>
@@ -696,7 +747,31 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><code>selectAllGroupText</code></td>
               <td><span class="type-pill">string</span></td>
               <td><span class="default-val">'Select all'</span></td>
-              <td>Accessible label (aria-label) for the per-group select-all checkbox buttons.</td>
+              <td>Unused — it never reached the button. Superseded by <code>selectAllGroupLabel</code>.</td>
+            </tr>
+            <tr>
+              <td><code>selectAllGroupLabel</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Select all in {group}'</span></td>
+              <td>Accessible name (aria-label) of each optgroup's select-all button. <code>{group}</code> is replaced with the optgroup label.</td>
+            </tr>
+            <tr>
+              <td><code>clearText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Clear selection'</span></td>
+              <td>Accessible name of the clear (×) button.</td>
+            </tr>
+            <tr>
+              <td><code>closeText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Close'</span></td>
+              <td>Accessible name of the mobile sheet's close button.</td>
+            </tr>
+            <tr>
+              <td><code>removeTagText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Remove {label}'</span></td>
+              <td>Accessible name of each tag's remove button. <code>{label}</code> is replaced with the option's plain text (never HTML, even with <code>allowHtml</code>).</td>
             </tr>
             <tr>
               <td><code>nativeOnMobile</code></td>
@@ -899,6 +974,23 @@ modalBody.innerHTML = <span class="t-str">''</span>;</pre>
             </div>
           </div>
         </div>
+
+        <!-- Kselect.defaults -->
+        <div class="method-card" id="api-defaults">
+          <div class="method-header">
+            <span class="method-name">Kselect.defaults</span>
+            <span class="method-sig"></span>
+            <span class="method-returns">→ <span>object</span></span>
+          </div>
+          <div class="method-body">
+            <p>Page-wide option defaults, merged under every new instance's options. Set it once — typically with a page's translated strings (see <a href="#translating">Translating</a>) — instead of passing the same options to every <code>init</code>. Per-instance options and <code>data-</code> attributes still win. It is read when an instance is constructed, so set it before the first <code>init</code>.</p>
+            <div class="code-block">
+              <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+              <pre>Kselect.defaults.removeTagText = <span class="t-str">'Ta bort {label}'</span>;
+Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>);</pre>
+            </div>
+          </div>
+        </div>
       </section>
 
 
@@ -978,6 +1070,7 @@ modalBody.innerHTML = <span class="t-str">''</span>;</pre>
             <tr><td><code>--ks-shadow-dropdown</code></td><td><span class="default-val">(layered shadow)</span></td><td>Box shadow of the dropdown</td></tr>
             <tr><td><code>--ks-transition</code></td><td><span class="default-val">0.18s ease</span></td><td>Duration and easing for all transitions</td></tr>
             <tr><td><code>--ks-z-index</code></td><td><span class="default-val">9999</span></td><td>Z-index of the floating dropdown</td></tr>
+            <tr><td><code>--ks-target-size</code></td><td><span class="default-val">24px</span></td><td>Minimum hit area of the small targets — tag remove, clear, optgroup select-all, the in-control search input and the mobile close button (WCAG 2.2 SC 2.5.8). Icons keep their size. Raise it (e.g. <code>44px</code>) for touch-first apps; tags and group headers grow to fit.</td></tr>
           </tbody>
         </table>
       </section>
@@ -1056,7 +1149,8 @@ modalBody.innerHTML = <span class="t-str">''</span>;</pre>
       <!-- ── Accessibility ──────────────────────────────────────────────────── -->
       <section class="doc-section" id="accessibility">
         <h2>Accessibility</h2>
-        <p>kselect is fully compliant with <strong>WCAG 2.1 AA</strong>. It uses <code>role="combobox"</code>, <code>aria-expanded</code>, <code>aria-selected</code>, <code>aria-activedescendant</code>, <code>aria-live</code> announcements for search results, and native <code>&lt;button&gt;</code> elements for group headers.</p>
+        <p>kselect is fully compliant with <strong>WCAG 2.1 AA</strong>, and meets WCAG 2.2's target-size minimum (SC 2.5.8): every small button has a hit area of at least 24 × 24 CSS px (<code>--ks-target-size</code>). Per-option <code>lang</code>/<code>dir</code> are carried onto the rendered labels (see <a href="#per-row-styling">Per-row styling</a>), and kselect's own accessible names are translatable (see <a href="#translating">Translating</a>).</p>
+        <p>It uses <code>role="combobox"</code>, <code>aria-expanded</code>, <code>aria-selected</code>, <code>aria-activedescendant</code>, <code>aria-live</code> announcements for search results, and native <code>&lt;button&gt;</code> elements for group headers.</p>
 
         <h3>Keyboard</h3>
         <table class="ref-table">
