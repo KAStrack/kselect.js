@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.10.0
+ * Version 1.11.0
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -819,6 +819,75 @@
   color: var(--ks-color-placeholder);
   font-size: 0.87rem;
   text-align: center;
+}
+
+/* ─── Option detail line (data-ks-detail / a remote answer's detail) ─────── */
+/* The row wraps so the detail takes a line of its own under the label.
+   --ks-color-option-detail is intentionally undeclared: by default the detail
+   takes the row's own colour (hover, selected, theme), so it is exactly as
+   legible as the label in every state, and is set apart by size alone. A
+   softer colour (or opacity) fails 4.5:1 on some rows — the multi-mode
+   selected row's indigo, for one — so a theme that sets the variable owns
+   that contrast check. */
+.ks-option.ks-option-has-detail {
+  flex-wrap: wrap;
+  row-gap: 1px;
+}
+
+.ks-option-detail {
+  flex: 0 0 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85em;
+  font-weight: 400;
+  color: var(--ks-color-option-detail, inherit);
+}
+
+/* Multi mode: line the detail up with the label, past the 16px checkbox and
+   the row's 8px gap. */
+.ks-multiple .ks-option-detail {
+  padding-left: 24px;
+  box-sizing: border-box;
+}
+
+/* ─── Remote search (load option) ────────────────────────────────────────── */
+/* .ks-loading is on the wrapper, the dropdown and the mobile sheet while
+   load() is pending; .ks-remote while its answer is shown. */
+/* Sticky, so it stays in view over a long, scrolled list: at the top of the
+   dropdown, and at the bottom of the sheet's list, beside its search bar. */
+.ks-loading-text {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 12px;
+  background: var(--ks-color-bg);
+  color: var(--ks-color-placeholder);
+  font-size: 0.87rem;
+  text-align: center;
+}
+
+.ks-loading .ks-loading-text {
+  display: block;
+}
+
+.ks-mobile-options-wrap .ks-loading-text {
+  top: auto;
+  bottom: 0;
+  padding: 14px 18px;
+  font-size: 0.9rem;
+  font-family: var(--ks-font-family);
+}
+
+/* Select-all would only tick the page the server chose to send, so it is
+   hidden while a remote answer is shown. In the search-in-row layout the row
+   also holds the search box, so only its trigger goes. */
+.ks-remote .ks-select-all-trigger,
+.ks-dropdown.ks-remote:not(.ks-search-in-row) .ks-select-all,
+.ks-mobile-overlay.ks-remote .ks-select-all {
+  display: none;
 }
 
 /* ─── Selection limit (maxSelect option) ────────────────────────────────── */

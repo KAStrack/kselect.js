@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.10.0
+ * Version 1.11.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,7 +15,7 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.10.0';
+  const KSELECT_VERSION = '1.11.0';
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -169,6 +169,10 @@
       copyClassName: true,        // copy the source <select>'s class onto the wrapper <div>; set false when that class styles the native control (borders/padding) and would double up around .ks-control
       revealSelection: true,      // on open, start the list scrolled so the (first) selected option is visible and centred; false = always open at the top
       dropdownParent: null,       // where the dropdown and the mobile sheet are mounted: null = <body> (escapes every overflow ancestor); 'wrapper' = inside .ks-wrapper; an Element, a CSS selector, or a function(select, wrapper) returning one — for a Shadow DOM or a scoped theme
+      load: null,                 // remote source: function(query, signal) returning (a promise of) [{ value, label, detail }]; called as the user types in either search box, and its answer replaces the offered rows
+      loadDelay: 250,             // debounce before load() is called, ms
+      loadMinChars: 1,            // shorter queries filter the select's own options locally instead of calling load()
+      loadingText: 'Searching…',  // shown in the dropdown and the mobile sheet while load() is pending
     }, Kselect.defaults, dataOptions, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
@@ -445,6 +449,17 @@
       '<span class="ks-limit-notice-text"></span>';
     dropdown.insertBefore(limitNotice, optionsList);
 
+    // Remote-search loading line (load option). Shown by CSS while the
+    // dropdown carries .ks-loading — a class, not an inline style, so it
+    // needs nothing from style-src.
+    let loadingEl = null;
+    if (typeof this.options.load === 'function') {
+      loadingEl = document.createElement('div');
+      loadingEl.className = 'ks-loading-text';
+      loadingEl.textContent = this.options.loadingText;
+      dropdown.insertBefore(loadingEl, optionsList);
+    }
+
     // Live region announces status changes (no results, count) to screen readers
     const liveRegion = document.createElement('div');
     liveRegion.className = 'ks-live';
@@ -508,6 +523,7 @@
 
     const mobileTitle = document.createElement('span');
     mobileTitle.className = 'ks-mobile-title';
+    mobileTitle.setAttribute('id', 'ks-mobile-title-' + this.id);
     // Use the label text if we found one above, else placeholder
     mobileTitle.textContent = labelText || this.options.placeholder;
 
@@ -528,9 +544,16 @@
     mobileSelection.className = 'ks-mobile-selection';
 
     // The scrollable options area — grows to fill available space,
-    // but anchors content to the bottom so sparse lists sit near the search bar
+    // but anchors content to the bottom so sparse lists sit near the search bar.
+    // It is the listbox while the sheet is open (the options <ul> moves in
+    // here), so it carries the role the desktop dropdown has and gives the
+    // sheet's search box something to point aria-controls at.
     const mobileOptionsWrap = document.createElement('div');
     mobileOptionsWrap.className = 'ks-mobile-options-wrap';
+    mobileOptionsWrap.setAttribute('id', 'ks-mobile-options-' + this.id);
+    mobileOptionsWrap.setAttribute('role', 'listbox');
+    mobileOptionsWrap.setAttribute('aria-multiselectable', this.isMultiple ? 'true' : 'false');
+    mobileOptionsWrap.setAttribute('aria-labelledby', 'ks-mobile-title-' + this.id);
 
     // Search bar (fixed at the very bottom of the sheet)
     const mobileSearchWrap = document.createElement('div');
@@ -547,6 +570,8 @@
     mobileSearchInput.setAttribute('autocapitalize', 'off');
     mobileSearchInput.setAttribute('spellcheck', 'false');
     mobileSearchInput.setAttribute('inputmode', 'search');
+    mobileSearchInput.setAttribute('aria-autocomplete', 'list');
+    mobileSearchInput.setAttribute('aria-controls', 'ks-mobile-options-' + this.id);
 
     const mobileSearchIcon = document.createElement('span');
     mobileSearchIcon.className = 'ks-mobile-search-icon';
@@ -567,6 +592,8 @@
     mobileNoResults.style.display = 'none';
 
     mobileOptionsWrap.appendChild(mobileNoResults);
+
+    if (loadingEl) mobileOptionsWrap.appendChild(loadingEl.cloneNode(true));
 
     mobileSheet.appendChild(mobileHeader);
     mobileSheet.appendChild(mobileSelection);
@@ -750,7 +777,46 @@
       this._dropdown.classList.remove('ks-search-in-row');
     }
 
-    this._renderChildren(children, this._optionsList, null);
+    // .ks-remote marks a list that shows a remote answer (load option) rather
+    // than the select's own options. The stylesheet hides select-all under it.
+    const remote = !!this._remote;
+    [this._wrapper, this._dropdown, this._mobileOverlay].forEach(function (el) {
+      if (el) el.classList.toggle('ks-remote', remote);
+    });
+    if (remote) {
+      this._renderRemote(this._optionsList);
+    } else {
+      this._renderChildren(children, this._optionsList, null);
+    }
+  };
+
+  // The list while a remote answer is shown: picked options the answer lacks
+  // first — still selected, and still where the user can untick them — then
+  // the answer in the server's order. An answered value the select already
+  // has an <option> for renders that option, so its selected state, class and
+  // style are the select's own; the rest render detached <option>s, which
+  // only join the select when picked (_materialize). An empty-value option is
+  // a single select's "nothing chosen" placeholder (selected by default), not
+  // a pick, so it is not carried into the answer.
+  Kselect.prototype._renderRemote = function (container) {
+    const self = this;
+    const answered = {};
+    this._remote.options.forEach(function (o) { answered[o.value] = true; });
+    Array.prototype.forEach.call(this.select.options, function (o) {
+      if (o.selected && o.value !== '' && !answered[o.value]) self._renderOption(o, container, null);
+    });
+    this._remote.options.forEach(function (o) {
+      self._renderOption(self._nativeOption(o.value) || o, container, null);
+    });
+  };
+
+  // The select's first <option> with this value, or null.
+  Kselect.prototype._nativeOption = function (value) {
+    const opts = this.select.options;
+    for (let i = 0; i < opts.length; i++) {
+      if (opts[i].value === value) return opts[i];
+    }
+    return null;
   };
 
   Kselect.prototype._renderSelectAll = function (container) {
@@ -1015,6 +1081,18 @@
     self._setLabel(text, option);
     li.appendChild(text);
 
+    // Optional second line (data-ks-detail, or a remote answer's `detail`).
+    // Always plain text, whatever allowHtml says, and outside .ks-option-text
+    // so the local search filter still matches on the label alone.
+    const detail = option.getAttribute('data-ks-detail');
+    if (detail) {
+      li.classList.add('ks-option-has-detail');
+      const detailEl = document.createElement('span');
+      detailEl.className = 'ks-option-detail';
+      detailEl.textContent = detail;
+      li.appendChild(detailEl);
+    }
+
     if (!option.disabled) {
       li.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -1074,11 +1152,13 @@
 
     // Search input. Debounced — but keep a reference so close() can cancel
     // any pending invocation (an empty close() doesn't want a filter() chasing it).
+    // With a remote source the debounce is loadDelay, since it now spaces out
+    // server requests; the mobile sheet's box uses the same delay.
+    this._searchDelay = typeof this.options.load === 'function' ? this.options.loadDelay : 100;
     this._debouncedFilter = debounce(function () {
-      self._searchQuery = self._searchInput.value;
       self._wrapper.classList.toggle('ks-searching', self._searchInput.value.length > 0);
-      self._filterOptions(self._searchQuery);
-    }, 100);
+      self._applySearch(self._searchInput.value);
+    }, this._searchDelay);
     this._searchInput.addEventListener('input', this._debouncedFilter);
 
     this._searchInput.addEventListener('keydown', function (e) {
@@ -1505,12 +1585,8 @@
     // Bind search
     if (!this._debouncedMobileFilter) {
       this._debouncedMobileFilter = debounce(function () {
-        self._searchQuery = self._mobileSearchInput.value;
-        self._filterOptions(self._searchQuery);
-        // Sync no-results visibility in mobile
-        const anyVisible = self._optionsList.querySelector('.ks-option:not(.ks-hidden):not(.ks-select-all)');
-        self._mobileNoResults.style.display = anyVisible ? 'none' : '';
-      }, 100);
+        self._applySearch(self._mobileSearchInput.value);
+      }, this._searchDelay);
     }
     this._mobileSearchInput.addEventListener('input', this._debouncedMobileFilter);
 
@@ -1898,6 +1974,9 @@
     // Clear search
     this._searchInput.value = '';
     this._searchQuery = '';
+    // Drop any remote answer (and a request still in flight): the next open
+    // starts from the select's own options, picked rows included.
+    this._endRemote();
     this._wrapper.classList.remove('ks-searching');
     this._wrapper.classList.remove('ks-search-focused');
     this._filterOptions('');
@@ -2027,6 +2106,10 @@
   };
 
   Kselect.prototype._toggleSelectAll = function () {
+    // A remote answer is a page the server chose, not a scope the user can
+    // see whole; select-all is hidden while one is shown (.ks-remote), and the
+    // keyboard can still reach the row in the search-in-row layout.
+    if (this._remote) return;
     const enabledOpts = this._scopeOptions(null);
     const allSelected = enabledOpts.every(function (o) { return o.selected; });
     const self = this;
@@ -2152,6 +2235,7 @@
   };
 
   Kselect.prototype._selectOption = function (value) {
+    this._materialize(value);
     // Find all <option>s with this value (duplicates are legal HTML).
     const matches = Array.prototype.filter.call(
       this.select.options,
@@ -2336,6 +2420,20 @@
   // ─── Search / Filter ─────────────────────────────────────────────────────────
 
   Kselect.prototype._filterOptions = function (query) {
+    // The server is the filter: a remote answer is shown whole, never
+    // re-filtered by the query (it may have matched on fields the label
+    // doesn't show). No-results means the server answered with nothing.
+    if (this._remote) {
+      const count = this._remote.options.length;
+      this._noResults.style.display = count === 0 ? '' : 'none';
+      this._mobileNoResults.style.display = count === 0 ? '' : 'none';
+      this._updateSelectAllState();
+      this._liveRegion.textContent = count === 0
+        ? this.options.noResultsText
+        : count + ' result' + (count === 1 ? '' : 's');
+      return;
+    }
+
     const q = query.toLowerCase().trim();
     const self = this;
     let visibleCount = 0;
@@ -2382,6 +2480,7 @@
     }
 
     this._noResults.style.display = visibleCount === 0 ? '' : 'none';
+    this._mobileNoResults.style.display = visibleCount === 0 ? '' : 'none';
 
     // Select-all rows toggle against the visible scope while filtering, so
     // their checked/indeterminate visual needs to follow the filter too.
@@ -2395,6 +2494,156 @@
     } else {
       this._liveRegion.textContent = '';
     }
+  };
+
+  // ─── Remote source (load option) ─────────────────────────────────────────────
+
+  // Turns a load() answer into detached <option>s: value as a string, label
+  // falling back to the value, detail carried as data-ks-detail (rendered as
+  // plain text by _renderOption). Rows without a value, and repeats of a value
+  // already seen, are dropped — one row per value keeps _materialize exact.
+  function remoteOptions(items) {
+    const out = [];
+    const seen = {};
+    items.forEach(function (item) {
+      if (!item || item.value === undefined || item.value === null) return;
+      const value = String(item.value);
+      if (seen[value]) return;
+      seen[value] = true;
+      const o = document.createElement('option');
+      o.value = value;
+      o.textContent = item.label === undefined || item.label === null ? value : String(item.label);
+      if (item.detail !== undefined && item.detail !== null && item.detail !== '') {
+        o.setAttribute('data-ks-detail', String(item.detail));
+      }
+      out.push(o);
+    });
+    return out;
+  }
+
+  // One path for both search boxes (the dropdown's and the mobile sheet's).
+  // With `load`, a query of loadMinChars or more goes to the server; anything
+  // shorter — and every query without `load` — filters the select's own
+  // options locally, as kselect always has.
+  Kselect.prototype._applySearch = function (value) {
+    this._searchQuery = value;
+    const q = value.trim();
+    if (typeof this.options.load === 'function' && q && q.length >= this.options.loadMinChars) {
+      this._startLoad(q);
+    } else {
+      this._endRemote();
+      this._filterOptions(value);
+    }
+  };
+
+  // Calls load(query, signal) and shows its answer, unless a later search (or
+  // close/destroy) has overtaken it. Overtaken requests are aborted through
+  // their AbortSignal, and their answers ignored even if load() disregards
+  // the signal. A throw, a rejection or a non-array answer leaves the list as
+  // it was; nothing escapes to the page beyond a console warning.
+  Kselect.prototype._startLoad = function (q) {
+    const self = this;
+    if (this._remote && this._remote.query === q && !this._loading) return;
+    this._abortLoad();
+    const seq = this._loadSeq;
+    const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    this._loadController = ctrl;
+    this._setLoading(true);
+
+    let result;
+    try {
+      result = this.options.load.call(this, q, ctrl ? ctrl.signal : undefined);
+    } catch (err) {
+      result = Promise.reject(err);
+    }
+    Promise.resolve(result).then(function (items) {
+      if (seq !== self._loadSeq) return;
+      if (!Array.isArray(items)) throw new TypeError('load() must resolve to an array');
+      self._loadController = null;
+      self._setLoading(false);
+      self._remote = { query: q, options: remoteOptions(items) };
+      self._buildOptionsList();
+      self._syncFromSelect();
+      // The rows aria-activedescendant pointed at were just replaced, and a
+      // new answer reads from its first row, whatever the old list's scroll.
+      self._control.removeAttribute('aria-activedescendant');
+      self._searchInput.removeAttribute('aria-activedescendant');
+      self._dropdown.scrollTop = 0;
+      self._mobileOptionsWrap.scrollTop = 0;
+      self._filterOptions(self._searchQuery);
+    }).catch(function (err) {
+      if (seq !== self._loadSeq) return;
+      self._loadController = null;
+      self._setLoading(false);
+      if (err && err.name === 'AbortError') return;
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('kselect: load() failed; the list is unchanged', err);
+      }
+    });
+  };
+
+  // Invalidates the request in flight, if any. Bumping the sequence is what
+  // makes a late answer lose; abort() is the courtesy that lets fetch() stop.
+  Kselect.prototype._abortLoad = function () {
+    this._loadSeq = (this._loadSeq || 0) + 1;
+    if (this._loadController) {
+      this._loadController.abort();
+      this._loadController = null;
+    }
+  };
+
+  // Loading state on the wrapper, the dropdown and the mobile sheet (the
+  // latter two may live in <body>): .ks-loading shows the loadingText line,
+  // aria-busy marks both listboxes, and no-results stays hidden until the
+  // server has actually answered.
+  Kselect.prototype._setLoading = function (on) {
+    this._loading = on;
+    const self = this;
+    [this._wrapper, this._dropdown, this._mobileOverlay].forEach(function (el) {
+      el.classList.toggle('ks-loading', on);
+    });
+    [this._dropdown, this._mobileOptionsWrap].forEach(function (el) {
+      if (on) el.setAttribute('aria-busy', 'true');
+      else el.removeAttribute('aria-busy');
+    });
+    if (on) {
+      self._noResults.style.display = 'none';
+      self._mobileNoResults.style.display = 'none';
+    }
+  };
+
+  // Back to the select's own options: cancels a pending request and, if a
+  // remote answer was showing, rebuilds the list from the select.
+  Kselect.prototype._endRemote = function () {
+    this._abortLoad();
+    if (this._loading) this._setLoading(false);
+    if (this._remote) {
+      this._remote = null;
+      this._buildOptionsList();
+      this._syncFromSelect();
+    }
+  };
+
+  // Picking a row of a remote answer that the select has no <option> for adds
+  // that row's detached <option> to the select, so the form posts it and the
+  // ordinary selection path (and its input/change events) takes over. The
+  // mutation is our own, so the autoSync observer's record of it is dropped
+  // rather than rebuilding the list — a rebuild would discard keyboard focus.
+  // Nothing is added when a multi select is at maxSelect: the pick would be
+  // refused anyway.
+  Kselect.prototype._materialize = function (value) {
+    if (!this._remote || this._nativeOption(value)) return;
+    let option = null;
+    for (let i = 0; i < this._remote.options.length; i++) {
+      if (this._remote.options[i].value === value) { option = this._remote.options[i]; break; }
+    }
+    if (!option) return;
+    if (this.isMultiple && this.options.maxSelect != null) {
+      const count = Array.prototype.filter.call(this.select.options, function (o) { return o.selected; }).length;
+      if (count >= this.options.maxSelect) return;
+    }
+    this.select.appendChild(option);
+    if (this._selectObserver) this._selectObserver.takeRecords();
   };
 
   // ─── Public API ──────────────────────────────────────────────────────────────
@@ -2553,6 +2802,11 @@
       this._labelClick = null;
     }
     if (this._typeTimer) { clearTimeout(this._typeTimer); this._typeTimer = null; }
+    // A pending search must not call load() — or render its answer — after
+    // the widget is gone.
+    if (this._debouncedFilter) this._debouncedFilter.cancel();
+    if (this._debouncedMobileFilter) this._debouncedMobileFilter.cancel();
+    this._abortLoad();
     this._wrapper.parentNode && this._wrapper.parentNode.removeChild(this._wrapper);
     this._dropdown.parentNode && this._dropdown.parentNode.removeChild(this._dropdown);
     if (this._mobileOverlay && this._mobileOverlay.parentNode) {
@@ -2590,6 +2844,7 @@
   const KS_WRAPPER_OWNED = [
     'ks-wrapper', 'ks-single', 'ks-multiple',
     'ks-disabled', 'ks-open', 'ks-dropup', 'ks-at-limit', 'ks-no-search',
+    'ks-loading', 'ks-remote',
   ];
 
   function classTokens(str) {

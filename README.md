@@ -11,6 +11,7 @@ kselect.js progressively enhances native `<select>` elements with live search, m
 ## Features
 
 - **Searchable** - live filtering as you type; optgroups auto-expand on match
+- **Remote search** - with `load`, search a list too large to load on the server as the user types; picked results become real `<option>`s
 - **Single & multi select** - both modes supported, auto-detected from the `<select>` element
 - **Tag-style multi select** - selected values appear as removable inline pills
 - **Checkbox list** - dropdown items show checkboxes in multi-select mode
@@ -122,6 +123,10 @@ Kselect.init('#my-select', {
   copyClassName:     true,
   revealSelection:   true,
   dropdownParent:    null,
+  load:              null,
+  loadDelay:         250,
+  loadMinChars:      1,
+  loadingText:       'Searching…',
 });
 ```
 
@@ -165,6 +170,10 @@ Precedence, highest first: per-instance options → `data-` attributes → [`Kse
 | `copyClassName` | boolean | `true` | Copy the source `<select>`'s `class` onto the wrapper `<div>`. Set `false` when that class styles the *native* control. Also disables class *mirroring* on `refresh()` — see [Form-framework classes](#form-framework-classes-on-the-select) |
 | `revealSelection` | boolean | `true` | Open the list already scrolled to the current selection (the first selected option in multi mode), centred if it would otherwise be off-screen. Nothing selected, or a selection inside a collapsed group, opens at the top. `false` always opens at the top |
 | `dropdownParent` | `null`\|`'wrapper'`\|Element\|string\|function | `null` | Where the dropdown (and the mobile sheet) is mounted. `null` = `<body>`, which escapes every overflow ancestor; `'wrapper'` = inside the widget's own `.ks-wrapper`; an element, a CSS selector (resolved in the select's own root, so it may name an element inside a Shadow DOM) or `function(select, wrapper)` returning one. See [Mounting the dropdown elsewhere](#mounting-the-dropdown-elsewhere-shadow-dom) |
+| `load` | function\|null | `null` | Remote source: `function(query, signal)` returning an array, or a promise of one, of `{ value, label, detail }`. Called (debounced) as the user types in either search box; its answer replaces the offered rows. See [Remote search](#remote-search-load) |
+| `loadDelay` | number | `250` | Debounce, in ms, before `load()` is called (with `load`, the search boxes use this instead of their 100 ms filter delay) |
+| `loadMinChars` | number | `1` | Queries shorter than this filter the select's own options locally instead of calling `load()`. An empty box always shows the select's own options |
+| `loadingText` | string | `'Searching…'` | Shown in the dropdown and the mobile sheet while `load()` is pending |
 
 ---
 
@@ -435,6 +444,48 @@ Only enable when the option text is trusted (authored by you, not derived from u
 
 ---
 
+## Remote search (`load`)
+
+For a list too large to put in the `<select>` (thousands of records), give kselect a `load` function and it searches your server as the user types, in the dropdown and in the mobile sheet alike:
+
+```js
+Kselect.init('#assignee', {
+  load: function (query, signal) {
+    return fetch('/api/people?q=' + encodeURIComponent(query), { signal })
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(j => j.results.map(r => ({ value: r.id, label: r.name, detail: r.team })));
+  },
+  loadDelay: 250,          // debounce, ms
+  loadMinChars: 1,         // shorter queries filter the select's own options instead
+  loadingText: 'Searching…',
+});
+```
+
+```html
+<!-- The select holds what is already picked, plus a first page if you like -->
+<select id="assignee" name="assignee" multiple>
+  <option value="42" selected data-ks-detail="Accounts">Ada Smith</option>
+  <option value="7" data-ks-detail="Sales">Jon Jones</option>
+</select>
+```
+
+**The contract.** `load(query, signal)` is called with the trimmed query and an `AbortSignal`, with `this` set to the kselect instance (handy when one function in `Kselect.defaults` serves several selects). Return an array — or a promise of one — of `{ value, label, detail }`: `value` is required (coerced to a string; rows without one, and repeats, are dropped), `label` falls back to the value, and `detail` is optional.
+
+- **The answer replaces the offered rows, not the selected ones.** A picked option the answer lacks stays picked and is listed first, so it can still be unticked. The select's own options come back when the box is emptied, dropped below `loadMinChars`, or the list closes.
+- **Picking a row adds a real `<option>`** (`selected`, with the label as its text and `detail` as `data-ks-detail`) to the `<select>`, so the form posts it, and `input` / `change` / `kselect:change` fire as for any pick, single or multiple. Unpicked rows never touch the select.
+- **The server is the filter.** A remote answer is shown whole and never re-filtered locally by the query, so your endpoint may match on fields the label doesn't show. `noResultsText` appears only when the server answers with an empty array.
+- **Stale answers lose.** Each new search aborts the previous request through its `signal`, and an overtaken answer is discarded even if your `load` ignores the signal.
+- **Errors leave the list as it was.** A throw, a rejected promise or a non-array answer clears the loading state, keeps the current rows and logs a `console.warn`; nothing is thrown into your page.
+- **Loading state:** `.ks-loading` on the wrapper, the dropdown and the mobile sheet, `aria-busy="true"` on the listbox, and the `loadingText` line. `.ks-remote` marks a list that is showing a remote answer; the select-all row is hidden while it does, since it would only tick the page the server chose to send.
+- **Labels follow `allowHtml`** like any option text; `detail` is always plain text.
+- Works with `dropdownParent` inside a Shadow DOM, and under a `style-src` without `'unsafe-inline'`: the loading and answer states are classes, and the few inline styles kselect sets elsewhere are CSSOM writes, which `style-src` does not govern. Ignored with `nativeOnMobile` on touch devices and with `searchable: false`.
+
+### A detail line on any option
+
+`data-ks-detail` on an `<option>` renders a second, plain-text line under its label (`.ks-option-detail`), with or without `load`. It takes the row's colour by default; set `--ks-color-option-detail` to soften it, and check its contrast on selected and hovered rows. Local search matches the label only.
+
+---
+
 ## Mounting the dropdown elsewhere (Shadow DOM)
 
 By default the dropdown is appended to `<body>` and positioned with `position: fixed`, so no `overflow: hidden` or `overflow: scroll` ancestor can clip it. Two situations want it somewhere else:
@@ -493,6 +544,8 @@ The small targets — tag remove, clear, optgroup select-all, the search input i
 
 `.ks-no-search` is set on the wrapper, the dropdown and the mobile sheet when `searchable: false`, and hides every search box.
 
+With [`load`](#remote-search-load), `.ks-loading` is on the same three elements while a request is pending, and `.ks-remote` while a remote answer is shown. Option rows with a `data-ks-detail` line carry `.ks-option-has-detail`.
+
 ---
 
 ## Accessibility
@@ -521,6 +574,8 @@ The same applies to `disabled`: setting `select.disabled = true` disables the wi
 Every small button has a hit area of at least 24 × 24 CSS px (WCAG 2.2 SC 2.5.8) — see [Target size](#target-size). Per-option `lang` / `dir` are carried onto the rendered labels (see [`lang` and `dir`](#lang-and-dir)), and kselect's own accessible names are translatable (see [Translating kselect](#translating-kselect)).
 
 When the dropdown opens it starts at the current selection (see `revealSelection`), and keyboard focus starts there too — the first `↓` / `↑` moves from the selected option, as in a native `<select>`, rather than from the top of the list.
+
+In the mobile sheet the options area is a named `role="listbox"` (labelled by the sheet's title), and the sheet's search box carries `aria-controls` pointing at it and `aria-autocomplete="list"`, as the dropdown's search box does.
 
 ---
 

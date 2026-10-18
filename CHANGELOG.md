@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.11.0] — 2026-10-17
+
+A release for pickers over lists too large to load whole — another table's records, thousands of rows — where the server has to do the searching. Nothing changes for a select without `load`, apart from three fixes to the mobile sheet.
+
+### Added
+
+- **`load` — search a remote source as the user types.** `load(query, signal)` is called (debounced by `loadDelay`, default 250 ms) from the dropdown's and the mobile sheet's search boxes alike, with the trimmed query, an `AbortSignal` and `this` set to the instance. It returns an array, or a promise of one, of `{ value, label, detail }`, and the answer replaces the offered rows. Why: a host whose `<select>` held only a first page had to reach into kselect's private search inputs, swap `<option>`s on each answer, and rely on the local filter still running over them — which hid any record the server had matched on a field other than the label.
+  - The answer replaces the offered rows, not the selected ones: a picked option the answer lacks stays picked and is listed first.
+  - Picking a row appends a real `<option>` (selected; `detail` carried as `data-ks-detail`) to the `<select>`, so the form posts it and `input` / `change` / `kselect:change` fire as for any pick, in single and multiple mode. Rows that are not picked never touch the select. The append is kselect's own, so the `autoSync` observer's record of it is dropped instead of rebuilding the list — keyboard focus survives an Enter-pick in multi mode.
+  - The server is the filter: a remote answer is never re-filtered locally by the query. `noResultsText` shows only when the server answered with an empty array.
+  - Each new search aborts the previous request through its signal, and an overtaken answer is discarded even if `load` ignores the signal. A throw, a rejection or a non-array answer leaves the list as it was and logs a `console.warn`; nothing is thrown into the page.
+  - Loading state: `.ks-loading` on the wrapper, the dropdown and the mobile sheet, `aria-busy="true"` on the listbox, and a sticky `loadingText` line (default `'Searching…'`). `.ks-remote` marks a list showing a remote answer; the select-all row is hidden while it does.
+  - `loadMinChars` (default 1): shorter queries filter the select's own options locally, as before. An empty box always shows the select's own options, and so does the next open.
+  - Works with `dropdownParent` inside a Shadow DOM and under a `style-src` without `'unsafe-inline'`; the new states are classes only.
+- **`data-ks-detail` — a second line under an option's label**, with or without `load`. Always plain text (whatever `allowHtml` says) and outside `.ks-option-text`, so local search still matches the label alone. The row gets `.ks-option-has-detail`; the line is `.ks-option-detail`. It takes the row's colour by default, so it is as legible as the label in every state; `--ks-color-option-detail` (undeclared) softens it.
+
+### Fixed
+
+- **The mobile sheet's search box was not tied to the list it filters.** It now has `aria-controls` (pointing at the sheet's options area) and `aria-autocomplete="list"`, as the dropdown's search box always has.
+- **Options in the mobile sheet had no listbox parent** (axe `aria-required-parent`): the `<ul>` moves into the sheet's options area, which had no role. That area is now a `role="listbox"` with `aria-multiselectable`, named by the sheet's title.
+- **The mobile sheet's "No results" message could be stale on reopen** — it was set only by the sheet's own search handler, so closing after a search with no matches and reopening showed it over the full list. Both no-results messages now follow every filter pass.
+
+---
+
 ## [1.10.0] — 2026-10-15
 
 A release for hosts that render kselect inside a Shadow DOM or under a theme scoped to one container. Nothing changes for a page that sets none of this: the dropdown still mounts in `<body>` with fixed positioning, and the stylesheet's `:root` tokens still win as before.

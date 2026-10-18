@@ -40,6 +40,8 @@
     <a class="nav-link" href="#translating">Translating</a>
     <a class="nav-link" href="#disabled-states">Disabled states</a>
     <a class="nav-link" href="#dynamic-options">Dynamic options</a>
+    <a class="nav-link" href="#remote-search">Remote search</a>
+    <a class="nav-link" href="#mount">Mounting (Shadow DOM)</a>
     <a class="nav-link" href="#mobile">Mobile</a>
 
     <div class="nav-section-label">Reference</div>
@@ -574,6 +576,58 @@ ks.<span class="t-fn">refresh</span>(); <span class="t-cm">// rebuild from new D
       </section>
 
 
+      <!-- ── Remote search ──────────────────────────────────────────────────── -->
+      <section class="doc-section" id="remote-search">
+        <h2>Remote search</h2>
+        <p>For a list too large to put in the <code>&lt;select&gt;</code> — another table's records, thousands of rows — give kselect a <code>load</code> function and it searches your server as the user types, in the dropdown and in the mobile sheet alike. The <code>&lt;select&gt;</code> holds what is already picked, plus a first page if you like.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">html</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-tag">&lt;select</span> <span class="t-attr">id</span>=<span class="t-str">"assignee"</span> <span class="t-attr">name</span>=<span class="t-str">"assignee"</span> <span class="t-attr">multiple</span><span class="t-tag">&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"42"</span> <span class="t-attr">selected</span> <span class="t-attr">data-ks-detail</span>=<span class="t-str">"Accounts"</span><span class="t-tag">&gt;</span>Ada Smith<span class="t-tag">&lt;/option&gt;</span>
+  <span class="t-tag">&lt;option</span> <span class="t-attr">value</span>=<span class="t-str">"7"</span> <span class="t-attr">data-ks-detail</span>=<span class="t-str">"Sales"</span><span class="t-tag">&gt;</span>Jon Jones<span class="t-tag">&lt;/option&gt;</span>
+<span class="t-tag">&lt;/select&gt;</span></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#assignee'</span>, {
+  <span class="t-key">load</span>: <span class="t-kw">function</span> (query, signal) {
+    <span class="t-kw">return</span> <span class="t-fn">fetch</span>(<span class="t-str">'/api/people?q='</span> + <span class="t-fn">encodeURIComponent</span>(query), { signal })
+      .<span class="t-fn">then</span>(r =&gt; { <span class="t-kw">if</span> (!r.ok) <span class="t-kw">throw new</span> <span class="t-fn">Error</span>(r.status); <span class="t-kw">return</span> r.<span class="t-fn">json</span>(); })
+      .<span class="t-fn">then</span>(j =&gt; j.results.<span class="t-fn">map</span>(r =&gt; ({ <span class="t-key">value</span>: r.id, <span class="t-key">label</span>: r.name, <span class="t-key">detail</span>: r.team })));
+  },
+  <span class="t-key">loadDelay</span>:    <span class="t-num">250</span>,          <span class="t-cm">// debounce, ms</span>
+  <span class="t-key">loadMinChars</span>: <span class="t-num">1</span>,            <span class="t-cm">// shorter queries filter the select's own options instead</span>
+  <span class="t-key">loadingText</span>:  <span class="t-str">'Searching…'</span>,
+});</pre>
+        </div>
+
+        <h3>The <code>load</code> contract</h3>
+        <p><code>load(query, signal)</code> is called with the trimmed query and an <code>AbortSignal</code>, with <code>this</code> set to the kselect instance — handy when one function in <a href="#api-defaults"><code>Kselect.defaults</code></a> serves several selects. It returns an array, or a promise of one, of <code>{ value, label, detail }</code>: <code>value</code> is required (coerced to a string; rows without one, and repeats, are dropped), <code>label</code> falls back to the value, and <code>detail</code> is optional.</p>
+
+        <table class="ref-table">
+          <thead><tr><th>Behaviour</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Selected options</td><td>The answer replaces the <em>offered</em> rows, not the selected ones. A picked option the answer lacks stays picked and is listed first, so it can still be unticked. The select's own options return when the box is emptied, drops below <code>loadMinChars</code>, or the list closes.</td></tr>
+            <tr><td>Picking a row</td><td>Adds a real <code>&lt;option&gt;</code> to the <code>&lt;select&gt;</code> (selected, the label as its text, <code>detail</code> as <code>data-ks-detail</code>), so the form posts it, and <code>input</code> / <code>change</code> / <code>kselect:change</code> fire as for any pick — single or multiple. Rows that are not picked never touch the select.</td></tr>
+            <tr><td>Filtering</td><td>The server is the filter: a remote answer is shown whole and never re-filtered locally, so your endpoint may match on fields the label does not show. <code>noResultsText</code> appears only when the server answers with an empty array.</td></tr>
+            <tr><td>Stale answers</td><td>Each new search aborts the previous request through its <code>signal</code>, and an overtaken answer is discarded even if <code>load</code> ignores the signal.</td></tr>
+            <tr><td>Errors</td><td>A throw, a rejected promise or a non-array answer clears the loading state, keeps the current rows and logs a <code>console.warn</code>. Nothing is thrown into your page.</td></tr>
+            <tr><td>Loading state</td><td><code>.ks-loading</code> on the wrapper, the dropdown and the mobile sheet; <code>aria-busy="true"</code> on the listbox; the <code>loadingText</code> line. <code>.ks-remote</code> marks a list showing a remote answer — the select-all row is hidden then, since it would only tick the page the server chose to send.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p>Labels follow <code>allowHtml</code> like any option text; <code>detail</code> is always plain text. Remote search works with <a href="#mount"><code>dropdownParent</code></a> inside a Shadow DOM, and under a <code>style-src</code> without <code>'unsafe-inline'</code> — its states are classes. It is ignored with <code>nativeOnMobile</code> on touch devices and with <code>searchable: false</code>.</p>
+        </div>
+
+        <h3>A detail line on any option</h3>
+        <p><code>data-ks-detail</code> on an <code>&lt;option&gt;</code> renders a second, plain-text line under its label (<code>.ks-option-detail</code>; the row gets <code>.ks-option-has-detail</code>), with or without <code>load</code>. It takes the row's colour by default; set <code>--ks-color-option-detail</code> to soften it, and check its contrast on selected and hovered rows. Local search matches the label only.</p>
+      </section>
+
+
       <!-- ── Mobile ─────────────────────────────────────────────────────────── -->
       <!-- ── Mounting the dropdown elsewhere ───────────────────────────────── -->
       <section class="doc-section" id="mount">
@@ -840,6 +894,30 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><span class="type-pill">null | 'wrapper' | Element | string | function</span></td>
               <td><span class="default-val">null</span></td>
               <td>Where the dropdown and the mobile sheet are mounted. <code>null</code> = <code>&lt;body&gt;</code>, which escapes every overflow ancestor; <code>'wrapper'</code> = inside the widget's own <code>.ks-wrapper</code>; an element, a CSS selector (resolved in the select's own root, so it may name an element inside a Shadow DOM) or <code>function(select, wrapper)</code> returning one. A mounted dropdown is positioned absolutely against the control and can be clipped by an overflow ancestor between the two — see <a href="#mount">Mounting the dropdown elsewhere</a>.</td>
+            </tr>
+            <tr>
+              <td><code>load</code></td>
+              <td><span class="type-pill fn">function | null</span></td>
+              <td><span class="default-val">null</span></td>
+              <td>Remote source: <code>function(query, signal)</code> returning an array, or a promise of one, of <code>{ value, label, detail }</code>. Called (debounced) as the user types in either search box; its answer replaces the offered rows, and a picked row becomes a real <code>&lt;option&gt;</code>. See <a href="#remote-search">Remote search</a>.</td>
+            </tr>
+            <tr>
+              <td><code>loadDelay</code></td>
+              <td><span class="type-pill num">number</span></td>
+              <td><span class="default-val">250</span></td>
+              <td>Debounce, in ms, before <code>load()</code> is called. With <code>load</code>, the search boxes use it in place of their 100 ms filter delay.</td>
+            </tr>
+            <tr>
+              <td><code>loadMinChars</code></td>
+              <td><span class="type-pill num">number</span></td>
+              <td><span class="default-val">1</span></td>
+              <td>Queries shorter than this filter the select's own options locally instead of calling <code>load()</code>. An empty box always shows the select's own options.</td>
+            </tr>
+            <tr>
+              <td><code>loadingText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Searching…'</span></td>
+              <td>Shown in the dropdown and the mobile sheet while <code>load()</code> is pending.</td>
             </tr>
           </tbody>
         </table>
@@ -1190,6 +1268,8 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>);</pr
             <tr><td><code>Tab</code></td><td>Move to the next field</td><td>Close the dropdown</td></tr>
           </tbody>
         </table>
+
+        <p>In the mobile sheet the options area is a <code>role="listbox"</code> named by the sheet's title, and the sheet's search box carries <code>aria-controls</code> pointing at it and <code>aria-autocomplete="list"</code>, as the dropdown's search box does. With <a href="#remote-search"><code>load</code></a>, the listbox is <code>aria-busy</code> while a request is pending, and the result count is announced when the answer arrives.</p>
 
         <h3>What is mirrored from the &lt;select&gt;</h3>
         <p>The original <code>&lt;select&gt;</code> is hidden, so anything your form markup wires to it would otherwise be stranded on an element no assistive technology can reach. kselect copies it onto the visible <code>.ks-control</code>:</p>
