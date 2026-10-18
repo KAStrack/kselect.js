@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.9.0
+ * Version 1.10.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,7 +15,7 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.9.0';
+  const KSELECT_VERSION = '1.10.0';
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -57,6 +57,35 @@
   // input is a finger or stylus" — exactly the population for whom the iOS
   // and Android native pickers are a better experience than a custom widget
   // that has to fight the on-screen keyboard for screen real estate.
+  // The element the widget's dropdown and mobile sheet are appended to.
+  // null = <body>, which escapes every overflow ancestor (the default, and what
+  // every version before 1.10 did). Anything else keeps the dropdown inside the
+  // host's own tree — a Shadow DOM, a container carrying a scoped theme — at the
+  // cost of being clipped by an overflow ancestor between the control and the
+  // mount. A selector is resolved in the select's own root (a ShadowRoot or
+  // the document), so it can name an element inside the shadow tree.
+  function resolveMountParent(option, selectEl, wrapper) {
+    if (option === null || option === undefined || option === false || option === 'body') return null;
+    if (option === 'wrapper') return wrapper;
+    if (typeof option === 'function') option = option(selectEl, wrapper);
+    if (typeof option === 'string') {
+      const root = selectEl.getRootNode ? selectEl.getRootNode() : document;
+      option = (root && root.querySelector ? root : document).querySelector(option);
+    }
+    if (option && option.nodeType === 1) return option;
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('kselect: dropdownParent did not resolve to an element; mounting in <body>');
+    }
+    return null;
+  }
+
+  // The node whose querySelector / activeElement see the select: its ShadowRoot
+  // when it lives in one, else the document.
+  function rootOf(el) {
+    const root = el && el.getRootNode ? el.getRootNode() : document;
+    return root && root.querySelector ? root : document;
+  }
+
   function isCoarsePointerDevice() {
     return typeof window !== 'undefined'
       && typeof window.matchMedia === 'function'
@@ -139,6 +168,7 @@
       showEmptyOptGroups: true,   // when an <optgroup> has no <option> children, true keeps its header in the dropdown; false omits it entirely
       copyClassName: true,        // copy the source <select>'s class onto the wrapper <div>; set false when that class styles the native control (borders/padding) and would double up around .ks-control
       revealSelection: true,      // on open, start the list scrolled so the (first) selected option is visible and centred; false = always open at the top
+      dropdownParent: null,       // where the dropdown and the mobile sheet are mounted: null = <body> (escapes every overflow ancestor); 'wrapper' = inside .ks-wrapper; an Element, a CSS selector, or a function(select, wrapper) returning one — for a Shadow DOM or a scoped theme
     }, Kselect.defaults, dataOptions, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
@@ -302,7 +332,7 @@
     // Resolve accessible label: prefer the <label> that points at the original <select>
     let labelText = '';
     if (this.select.id) {
-      const labelEl = document.querySelector('label[for="' + this.select.id + '"]');
+      const labelEl = rootOf(this.select).querySelector('label[for="' + this.select.id + '"]');
       if (labelEl) {
         const labelId = labelEl.id || ('ks-label-' + this.id);
         labelEl.id = labelId;
@@ -435,9 +465,22 @@
     // Insert after the original select
     this.select.parentNode.insertBefore(wrapper, this.select.nextSibling);
 
-    // Attach dropdown to <body> so it is never clipped by an overflow ancestor.
-    // _positionDropdown sets its coordinates via fixed positioning each time it opens.
-    document.body.appendChild(dropdown);
+    // Attach the dropdown to <body> so it is never clipped by an overflow
+    // ancestor — _positionDropdown sets fixed coordinates each time it opens —
+    // unless dropdownParent names another mount. A mounted dropdown is
+    // positioned absolutely inside that parent instead (.ks-mounted), so the
+    // parent is made its containing block when it is not positioned already;
+    // destroy() puts that back.
+    this._mount = resolveMountParent(this.options.dropdownParent, this.select, wrapper);
+    this._mountPositioned = false;
+    if (this._mount) {
+      dropdown.classList.add('ks-mounted');
+      if (getComputedStyle(this._mount).position === 'static') {
+        this._mount.style.position = 'relative';
+        this._mountPositioned = true;
+      }
+    }
+    (this._mount || document.body).appendChild(dropdown);
 
     // ── Mobile modal overlay ──
     // A full-screen sheet used instead of the dropdown on small touch devices
@@ -532,7 +575,9 @@
 
     mobileOverlay.appendChild(mobileBackdrop);
     mobileOverlay.appendChild(mobileSheet);
-    document.body.appendChild(mobileOverlay);
+    // The sheet is a full-viewport fixed layer; it only moves into the mount so
+    // a Shadow DOM's stylesheet (and a scoped theme) reach it.
+    (this._mount || document.body).appendChild(mobileOverlay);
 
     // Store refs
     this._mobileOverlay    = mobileOverlay;
@@ -649,12 +694,18 @@
         self._wrapperPrevHeight = newHeight;
         self._wrapperPrevWidth = newWidth;
         if (heightDelta !== 0) {
-          const isDropup = self._wrapper.classList.contains('ks-dropup');
-          // Drop-down: wrapper bottom moved down (grew) or up (shrank).
-          //   Scroll down by delta keeps wrapper bottom at the same viewport Y.
-          // Drop-up: wrapper top moved up (grew) or down (shrank).
-          //   Scroll up by delta keeps wrapper top at the same viewport Y.
-          window.scrollBy(0, isDropup ? -heightDelta : heightDelta);
+          if (self._mount) {
+            // A mounted dropdown is positioned against the control, so it
+            // follows the wrapper by itself; scrolling the page would move both.
+            self._positionDropdown();
+          } else {
+            const isDropup = self._wrapper.classList.contains('ks-dropup');
+            // Drop-down: wrapper bottom moved down (grew) or up (shrank).
+            //   Scroll down by delta keeps wrapper bottom at the same viewport Y.
+            // Drop-up: wrapper top moved up (grew) or down (shrank).
+            //   Scroll up by delta keeps wrapper top at the same viewport Y.
+            window.scrollBy(0, isDropup ? -heightDelta : heightDelta);
+          }
         }
         // Width changes (e.g. selecting a tag pushes the wrapper wider in a
         // flex/grid layout) — the dropdown must follow so its left/right
@@ -1072,13 +1123,21 @@
     // Close on outside click. The dropdown lives in <body>, not inside the
     // wrapper, so we must check both — otherwise clicks in the dropdown's
     // empty space (padding, scrollbar, no-results area, live region) close it.
+    // Inside a Shadow DOM the document-level listener sees the event
+    // retargeted to the shadow host, so `contains(e.target)` is false for a
+    // click on the widget's own option; the composed path still holds it.
+    const within = function (e, el) {
+      if (!el) return false;
+      if (e.composedPath) return e.composedPath().indexOf(el) !== -1;
+      return el.contains(e.target);
+    };
     this._outsideClick = function (e) {
-      if (self._wrapper.contains(e.target)) return;
-      if (self._dropdown.contains(e.target)) return;
+      if (within(e, self._wrapper)) return;
+      if (within(e, self._dropdown)) return;
       // The mobile overlay (sheet + backdrop) lives in <body> outside the
       // wrapper and dropdown — taps inside it must not trigger an outside-close.
       // The backdrop's own click handler calls close() deliberately.
-      if (self._mobileOverlay && self._mobileOverlay.contains(e.target)) return;
+      if (within(e, self._mobileOverlay)) return;
       self.close();
     };
     document.addEventListener('click', this._outsideClick);
@@ -1812,8 +1871,10 @@
       // selecting with Enter closes the dropdown, and the user should be able
       // to keep arrowing through options on the closed control. Hand focus
       // back to the control before hiding.
-      if (document.activeElement === this._searchInput ||
-          this._dropdown.contains(document.activeElement)) {
+      // document.activeElement is the shadow host for a focus inside a
+      // Shadow DOM; the select's own root reports the element itself.
+      const active = rootOf(this.select).activeElement || document.activeElement;
+      if (active === this._searchInput || this._dropdown.contains(active)) {
         this._control.focus();
       }
       this._dropdown.style.display = 'none';
@@ -1897,7 +1958,8 @@
       // zoom), `bottom`-based positioning is fastest and avoids a reflow.
       // When it HAS been shifted, `bottom` would anchor to the layout-viewport
       // bottom — i.e. underneath the keyboard — so we measure and use top.
-      if (visTop === 0 && visLeft === 0) {
+      // A mounted dropdown always uses top: its `bottom` would be the mount's.
+      if (!this._mount && visTop === 0 && visLeft === 0) {
         dd.style.top    = '';
         dd.style.bottom = (window.innerHeight - rect.top + 1.5) + 'px';
       } else {
@@ -1919,6 +1981,17 @@
     const ddRight = rect.left + rect.width;
     if (ddRight > visRight) {
       dd.style.left = Math.max(visLeft, visRight - rect.width) + 'px';
+    }
+
+    // A mounted dropdown is absolutely positioned inside its parent: translate
+    // the viewport coordinates above into the parent's padding box, allowing
+    // for its border and its own scroll offset.
+    if (this._mount) {
+      const pRect = this._mount.getBoundingClientRect();
+      const ox = pRect.left + this._mount.clientLeft - this._mount.scrollLeft;
+      const oy = pRect.top + this._mount.clientTop - this._mount.scrollTop;
+      dd.style.left = (parseFloat(dd.style.left) - ox) + 'px';
+      dd.style.top = (parseFloat(dd.style.top) - oy) + 'px';
     }
   };
 
@@ -2485,6 +2558,11 @@
     if (this._mobileOverlay && this._mobileOverlay.parentNode) {
       this._mobileOverlay.parentNode.removeChild(this._mobileOverlay);
     }
+    if (this._mountPositioned && this._mount) {
+      this._mount.style.position = '';
+      this._mountPositioned = false;
+    }
+    this._mount = null;
     document.body.classList.remove('ks-body-modal-open');
     // If destroyed while the mobile sheet was open, un-pin the body too (see
     // _openMobileModal) so we don't leave the page stuck with position:fixed.

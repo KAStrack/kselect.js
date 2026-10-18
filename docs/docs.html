@@ -575,6 +575,26 @@ ks.<span class="t-fn">refresh</span>(); <span class="t-cm">// rebuild from new D
 
 
       <!-- ── Mobile ─────────────────────────────────────────────────────────── -->
+      <!-- ── Mounting the dropdown elsewhere ───────────────────────────────── -->
+      <section class="doc-section" id="mount">
+        <h2>Mounting the dropdown elsewhere (Shadow DOM)</h2>
+        <p>By default the dropdown is appended to <code>&lt;body&gt;</code> and positioned with <code>position: fixed</code>, so no <code>overflow: hidden</code> or <code>overflow: scroll</code> ancestor can clip it. Two situations want it somewhere else: a <strong>Shadow DOM</strong>, whose adopted stylesheet does not reach <code>&lt;body&gt;</code>, and a <strong>scoped theme</strong> set as custom properties on a container, which does not reach a dropdown outside it.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(shadowRoot.querySelector(<span class="t-str">'select'</span>), { <span class="t-key">dropdownParent</span>: <span class="t-str">'wrapper'</span> });
+Kselect.<span class="t-fn">init</span>(<span class="t-str">'#country'</span>, { <span class="t-key">dropdownParent</span>: <span class="t-str">'#form-root'</span> });
+Kselect.<span class="t-fn">init</span>(<span class="t-str">'#country'</span>, { <span class="t-key">dropdownParent</span>: (select, wrapper) =&gt; wrapper.closest(<span class="t-str">'form'</span>) });</pre>
+        </div>
+
+        <p>A mounted dropdown carries <code>.ks-mounted</code> and is positioned absolutely inside the mount, against the control; the mount is given <code>position: relative</code> if it had none, and <code>destroy()</code> puts it back. The mobile sheet moves with it. The trade-off is clipping by an overflow ancestor <em>between</em> the control and the mount, which is exactly what the <code>&lt;body&gt;</code> default avoids, so leave the default unless one of the two situations applies.</p>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p>Inside a shadow root kselect also resolves the <code>&lt;label for&gt;</code> and the focused element in the select's own root, judges outside clicks by the event's composed path (a click on an option is not "outside", even though the document sees only the shadow host), and declares its <code>--ks-*</code> defaults on <code>:host</code> as well as <code>:root</code>. Load <code>kselect.css</code> inside the shadow root — kselect never injects styles.</p>
+        </div>
+      </section>
+
       <section class="doc-section" id="mobile">
         <h2>Mobile</h2>
         <p>kselect works on phones and tablets with no configuration. Two behaviours are built in:</p>
@@ -814,6 +834,12 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><span class="type-pill bool">boolean</span></td>
               <td><span class="default-val">true</span></td>
               <td>Open the list already scrolled to the current selection (the first selected option in multi mode), centred in the dropdown when it would otherwise be off-screen. The scroll offset is applied before the dropdown is first painted, so the list <em>starts</em> at the selection rather than opening at the top and scrolling. An already-visible selection is left alone; nothing selected, or a selection inside a collapsed group, opens at the top (the group is not expanded). Applies to the mobile sheet too. <code>false</code> always opens at the top.</td>
+            </tr>
+            <tr>
+              <td><code>dropdownParent</code></td>
+              <td><span class="type-pill">null | 'wrapper' | Element | string | function</span></td>
+              <td><span class="default-val">null</span></td>
+              <td>Where the dropdown and the mobile sheet are mounted. <code>null</code> = <code>&lt;body&gt;</code>, which escapes every overflow ancestor; <code>'wrapper'</code> = inside the widget's own <code>.ks-wrapper</code>; an element, a CSS selector (resolved in the select's own root, so it may name an element inside a Shadow DOM) or <code>function(select, wrapper)</code> returning one. A mounted dropdown is positioned absolutely against the control and can be clipped by an overflow ancestor between the two — see <a href="#mount">Mounting the dropdown elsewhere</a>.</td>
             </tr>
           </tbody>
         </table>

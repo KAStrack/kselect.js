@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.10.0] — 2026-10-15
+
+A release for hosts that render kselect inside a Shadow DOM or under a theme scoped to one container. Nothing changes for a page that sets none of this: the dropdown still mounts in `<body>` with fixed positioning, and the stylesheet's `:root` tokens still win as before.
+
+### Added
+
+- **`dropdownParent` — mount the dropdown (and the mobile sheet) somewhere other than `<body>`.** `'wrapper'` puts it inside the widget's own `.ks-wrapper`; an element, a CSS selector (resolved in the select's own root, so it may name an element inside a shadow tree) or a `function(select, wrapper)` names any other parent. A mounted dropdown carries `.ks-mounted`, is positioned absolutely against the control inside the mount (the mount is given `position: relative` if it had none; `destroy()` restores it), and follows the control when the wrapper grows instead of scrolling the page. Why: a stylesheet adopted into a shadow root cannot style a dropdown that lives in `<body>`, and custom properties set on a container never reach one — so a form that themes its fields per container, or a web component, had a dropdown in the page's default look. The trade-off, clipping by an overflow ancestor between the control and the mount, is why `<body>` stays the default.
+
+### Fixed
+
+- **A click on the widget's own option inside a Shadow DOM closed the dropdown as an "outside" click.** The document-level listener sees an event from inside a shadow tree retargeted to the shadow host, so `wrapper.contains(target)` was false for every click on the widget. The handler now walks the event's composed path.
+- **Inside a Shadow DOM the `<label for>` was not found and the focused element was misread.** Both were looked up on `document`, where a shadow tree's elements are not visible and `activeElement` is the host. Both now use the select's own root.
+- **The stylesheet's `--ks-*` defaults did not apply inside a shadow root** — they were declared on `:root`, which a shadow tree has no match for. They are now declared on `:where(:root, :host)`, so a copy of `kselect.css` adopted into a shadow root carries its tokens; the zero specificity is unchanged, so host and theme overrides still win.
+
+---
+
 ## [1.9.0] — 2026-10-13
 
 An accessibility release for multilingual hosts. All three changes came out of a WCAG 2.2 audit (axe-core with the `wcag22aa` tags) of a page in English, Swedish and Chinese, and each was a defect in kselect itself, not in the host's markup.

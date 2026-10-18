@@ -121,6 +121,7 @@ Kselect.init('#my-select', {
   showEmptyOptGroups: true,
   copyClassName:     true,
   revealSelection:   true,
+  dropdownParent:    null,
 });
 ```
 
@@ -163,6 +164,7 @@ Precedence, highest first: per-instance options → `data-` attributes → [`Kse
 | `showEmptyOptGroups` | boolean | `true` | Whether empty `<optgroup>` headers (groups with no `<option>` children) appear in the dropdown. `true` always shows the header; `false` omits the optgroup entirely |
 | `copyClassName` | boolean | `true` | Copy the source `<select>`'s `class` onto the wrapper `<div>`. Set `false` when that class styles the *native* control. Also disables class *mirroring* on `refresh()` — see [Form-framework classes](#form-framework-classes-on-the-select) |
 | `revealSelection` | boolean | `true` | Open the list already scrolled to the current selection (the first selected option in multi mode), centred if it would otherwise be off-screen. Nothing selected, or a selection inside a collapsed group, opens at the top. `false` always opens at the top |
+| `dropdownParent` | `null`\|`'wrapper'`\|Element\|string\|function | `null` | Where the dropdown (and the mobile sheet) is mounted. `null` = `<body>`, which escapes every overflow ancestor; `'wrapper'` = inside the widget's own `.ks-wrapper`; an element, a CSS selector (resolved in the select's own root, so it may name an element inside a Shadow DOM) or `function(select, wrapper)` returning one. See [Mounting the dropdown elsewhere](#mounting-the-dropdown-elsewhere-shadow-dom) |
 
 ---
 
@@ -430,6 +432,25 @@ Set `allowHtml: true` to render markup. Escape your HTML as entities in the opti
 ```
 
 Only enable when the option text is trusted (authored by you, not derived from user input).
+
+---
+
+## Mounting the dropdown elsewhere (Shadow DOM)
+
+By default the dropdown is appended to `<body>` and positioned with `position: fixed`, so no `overflow: hidden` or `overflow: scroll` ancestor can clip it. Two situations want it somewhere else:
+
+- **A Shadow DOM.** A stylesheet adopted into a shadow root does not reach `<body>`, so a dropdown mounted there renders unstyled.
+- **A scoped theme.** A theme set as CSS custom properties on a container (`.my-form { --ks-color-accent: … }`) does not reach a dropdown outside that container.
+
+```js
+Kselect.init(shadowRoot.querySelector('select'), { dropdownParent: 'wrapper' });   // inside .ks-wrapper
+Kselect.init('#country', { dropdownParent: '#form-root' });                       // a selector, resolved in the select's own root
+Kselect.init('#country', { dropdownParent: (select, wrapper) => wrapper.closest('form') });
+```
+
+A mounted dropdown carries `.ks-mounted` and is positioned absolutely inside the mount, against the control (the mount is given `position: relative` if it had none; `destroy()` puts it back). The mobile sheet moves with it, so a shadow root's styles reach the sheet too. The trade-off: an overflow ancestor *between* the control and the mount can clip the list, which is exactly what the `<body>` default avoids — so leave the default unless one of the two situations above applies.
+
+Inside a shadow root kselect also resolves the `<label for>` and the focused element in the select's own root, closes on outside clicks by the event's composed path (a click on an option is not "outside" even though the document sees the shadow host), and the stylesheet's `--ks-*` defaults are declared on `:host` as well as `:root`. Load `kselect.css` inside the shadow root (a `<link>` or an adopted sheet); kselect never injects styles.
 
 ---
 

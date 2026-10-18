@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.9.0
+ * Version 1.10.0
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -8,7 +8,7 @@
    or theme declaration — including a plain `:root { --ks-color-bg: … }` —
    therefore wins regardless of stylesheet load order, which hosts often don't
    control. Requires :where() support (Chrome 88 / Safari 14 / Firefox 78). */
-:where(:root) {
+:where(:root, :host) {
   --ks-font-family: 'Inter', system-ui, -apple-system, sans-serif;
   --ks-font-size: 0.9rem;
   --ks-line-height: 1.4;
@@ -410,6 +410,13 @@
 }
 
 /* ─── Dropdown ───────────────────────────────────────────────────────────── */
+/* dropdownParent: the dropdown lives inside the chosen parent and is
+   positioned against the control within it (the JS positioner translates the
+   viewport coordinates), so an overflow ancestor between the two can clip it. */
+.ks-dropdown.ks-mounted {
+  position: absolute;
+}
+
 .ks-dropdown {
   /* Uses fixed positioning so it escapes overflow:hidden/scroll parents.
      top/left/width are set via inline styles by the JS positioner. */
