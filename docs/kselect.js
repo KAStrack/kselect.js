@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.11.0
+ * Version 1.11.1
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,7 +15,7 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.11.0';
+  const KSELECT_VERSION = '1.11.1';
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -328,8 +328,11 @@
     control.setAttribute('role', 'combobox');
     control.setAttribute('aria-haspopup', 'listbox');
     control.setAttribute('aria-expanded', 'false');
-    control.setAttribute('aria-controls', 'ks-dropdown-' + this.id);
-    control.setAttribute('aria-owns', 'ks-dropdown-' + this.id);
+    // The listbox is the options <ul> (ks-listbox-<id>), not the dropdown
+    // around it: the dropdown also holds the live region and the status
+    // notices, which a listbox may not contain.
+    control.setAttribute('aria-controls', 'ks-listbox-' + this.id);
+    control.setAttribute('aria-owns', 'ks-listbox-' + this.id);
     control.setAttribute('tabindex', this.isDisabled ? '-1' : '0');
     if (this.isDisabled) control.setAttribute('aria-disabled', 'true');
 
@@ -384,7 +387,7 @@
     searchInput.setAttribute('autocapitalize', 'off');
     searchInput.setAttribute('spellcheck', 'false');
     searchInput.setAttribute('aria-autocomplete', 'list');
-    searchInput.setAttribute('aria-controls', 'ks-dropdown-' + this.id);
+    searchInput.setAttribute('aria-controls', 'ks-listbox-' + this.id);
     searchWrap.appendChild(searchInput);
 
     // Placeholder
@@ -425,13 +428,21 @@
     dropdown.className = 'ks-dropdown' +
       (this.isMultiple ? ' ks-multiple' : ' ks-single') + noSearch;
     dropdown.setAttribute('id', 'ks-dropdown-' + this.id);
-    dropdown.setAttribute('role', 'listbox');
-    dropdown.setAttribute('aria-multiselectable', this.isMultiple ? 'true' : 'false');
     dropdown.style.maxHeight = this.options.maxHeight + 'px';
 
+    // The listbox itself: only options and groups of options inside it. It
+    // moves into the mobile sheet while that is open, and stays the listbox
+    // there. Named as the control is — by the same <label>, or the same text.
     const optionsList = document.createElement('ul');
     optionsList.className = 'ks-options';
-    optionsList.setAttribute('role', 'presentation');
+    optionsList.setAttribute('id', 'ks-listbox-' + this.id);
+    optionsList.setAttribute('role', 'listbox');
+    optionsList.setAttribute('aria-multiselectable', this.isMultiple ? 'true' : 'false');
+    if (control.getAttribute('aria-labelledby')) {
+      optionsList.setAttribute('aria-labelledby', control.getAttribute('aria-labelledby'));
+    } else if (control.getAttribute('aria-label')) {
+      optionsList.setAttribute('aria-label', control.getAttribute('aria-label'));
+    }
     dropdown.appendChild(optionsList);
 
     // Limit-reached notice banner — shown at the top of the dropdown when
@@ -545,15 +556,12 @@
 
     // The scrollable options area — grows to fill available space,
     // but anchors content to the bottom so sparse lists sit near the search bar.
-    // It is the listbox while the sheet is open (the options <ul> moves in
-    // here), so it carries the role the desktop dropdown has and gives the
-    // sheet's search box something to point aria-controls at.
+    // The options <ul> — the listbox — moves in here while the sheet is open;
+    // the wrap is only its scroller, beside the sheet's live region and
+    // no-results line, which a listbox may not contain.
     const mobileOptionsWrap = document.createElement('div');
     mobileOptionsWrap.className = 'ks-mobile-options-wrap';
     mobileOptionsWrap.setAttribute('id', 'ks-mobile-options-' + this.id);
-    mobileOptionsWrap.setAttribute('role', 'listbox');
-    mobileOptionsWrap.setAttribute('aria-multiselectable', this.isMultiple ? 'true' : 'false');
-    mobileOptionsWrap.setAttribute('aria-labelledby', 'ks-mobile-title-' + this.id);
 
     // Search bar (fixed at the very bottom of the sheet)
     const mobileSearchWrap = document.createElement('div');
@@ -571,7 +579,7 @@
     mobileSearchInput.setAttribute('spellcheck', 'false');
     mobileSearchInput.setAttribute('inputmode', 'search');
     mobileSearchInput.setAttribute('aria-autocomplete', 'list');
-    mobileSearchInput.setAttribute('aria-controls', 'ks-mobile-options-' + this.id);
+    mobileSearchInput.setAttribute('aria-controls', 'ks-listbox-' + this.id);
 
     const mobileSearchIcon = document.createElement('span');
     mobileSearchIcon.className = 'ks-mobile-search-icon';
@@ -760,7 +768,10 @@
       this._renderSelectAll(this._optionsList);
       // Move the search input inside the select-all li (left side)
       if (this.options.searchable && this._selectAllEl) {
-        this._selectAllEl.insertBefore(this._searchWrap, this._selectAllEl.firstChild);
+        // Its own row at the top of the dropdown, above the list (1.11.1): it
+        // sat inside the select-all option, and an option's content is not a
+        // control a screen reader can reach.
+        this._dropdown.insertBefore(this._searchWrap, this._dropdown.firstChild);
         this._wrapper.classList.add('ks-search-in-row');
         this._dropdown.classList.add('ks-search-in-row');
       }
@@ -867,6 +878,14 @@
     });
   };
 
+  // Open or close a group's options; remembered across rebuilds.
+  Kselect.prototype._setGroupCollapsed = function (groupLi, collapsed) {
+    const groupList = groupLi.querySelector('.ks-group-options');
+    groupLi.classList.toggle('ks-group-collapsed', collapsed);
+    if (groupList) groupList.style.display = collapsed ? 'none' : '';
+    this._collapsedGroups[groupLi.getAttribute('data-group-id')] = collapsed;
+  };
+
   Kselect.prototype._renderGroup = function (optgroup, container) {
     const self = this;
 
@@ -885,19 +904,30 @@
       ? this._collapsedGroups[groupId]
       : this.options.collapseGroups;
 
+    // A group of options in the listbox, named by its label.
     const li = document.createElement('li');
     li.className = 'ks-group' + (isCollapsed ? ' ks-group-collapsed' : '');
     this._carryAttrs(li, optgroup);
     li.setAttribute('data-group-id', groupId);
+    li.setAttribute('role', 'group');
+    li.setAttribute('aria-labelledby', 'ks-group-label-' + groupId);
 
-    // Use a <button> for the group header so it's natively keyboard-operable
-    // and correctly conveys expanded/collapsed state to screen readers.
-    const header = document.createElement('button');
-    header.type = 'button';
+    // The header row: the collapse button and, with selectAllGroups, the
+    // group's select-all button, side by side — a button may not contain
+    // another (it used to hold the select-all button).
+    const head = document.createElement('div');
+    head.className = 'ks-group-head';
+
+    // The group's name, which the pointer can click to collapse the group.
+    // Not a button: a listbox may hold only options and groups of options, so
+    // a control inside it is unreachable or misreported. Hidden from assistive
+    // technology, because it is already the group's accessible name (the
+    // group's aria-labelledby reads hidden text), and keyboard users reach a
+    // collapsed group's options with the arrow keys, which open it (1.11.1).
+    const header = document.createElement('div');
     header.className = 'ks-group-header';
     this._carryAttrs(header, optgroup);
-    header.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
-    header.setAttribute('aria-controls', 'ks-group-list-' + groupId);
+    header.setAttribute('aria-hidden', 'true');
 
     const toggle = document.createElement('span');
     toggle.className = 'ks-group-toggle';
@@ -906,19 +936,28 @@
 
     const label = document.createElement('span');
     label.className = 'ks-group-label';
+    label.setAttribute('id', 'ks-group-label-' + groupId);
     label.textContent = optgroup.label;
 
     header.appendChild(toggle);
     header.appendChild(label);
+    head.appendChild(header);
 
-    // Per-group select-all: a small checkbox button in the header (multi only)
+    // Per-group select-all: a small checkbox in the header row (multi only).
+    // An option of the group — "Select all in {group}" — drawn where the
+    // checkbox has always been; the arrow keys reach it and Enter toggles it,
+    // as for the global select-all row.
     if (this.isMultiple && this.options.selectAllGroups) {
-      const groupCheckBtn = document.createElement('button');
-      groupCheckBtn.type = 'button';
+      const groupCheckBtn = document.createElement('div');
       groupCheckBtn.className = 'ks-group-select-all';
+      groupCheckBtn.setAttribute('role', 'option');
+      groupCheckBtn.setAttribute('id', 'ks-group-all-' + groupId);
+      groupCheckBtn.setAttribute('aria-selected', 'false');
+      groupCheckBtn.setAttribute('data-select-all', 'group');
+      groupCheckBtn._ksOptgroup = optgroup;
       groupCheckBtn.setAttribute('aria-label',
         formatText(this.options.selectAllGroupLabel, 'group', optgroup.label));
-      this._markUiLang(groupCheckBtn, header);
+      this._markUiLang(groupCheckBtn, li);
       groupCheckBtn.innerHTML =
         '<span class="ks-checkbox">' +
           '<svg viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">' +
@@ -929,7 +968,7 @@
         e.stopPropagation();
         self._toggleSelectAllGroup(optgroup);
       });
-      header.appendChild(groupCheckBtn);
+      head.appendChild(groupCheckBtn);
       this._groupSelectAllMap[groupId] = groupCheckBtn;
     }
 
@@ -942,21 +981,10 @@
 
     header.addEventListener('click', function (e) {
       e.stopPropagation();
-      const collapsed = li.classList.contains('ks-group-collapsed');
-      if (collapsed) {
-        li.classList.remove('ks-group-collapsed');
-        groupList.style.display = '';
-        header.setAttribute('aria-expanded', 'true');
-        self._collapsedGroups[groupId] = false;
-      } else {
-        li.classList.add('ks-group-collapsed');
-        groupList.style.display = 'none';
-        header.setAttribute('aria-expanded', 'false');
-        self._collapsedGroups[groupId] = true;
-      }
+      self._setGroupCollapsed(li, !li.classList.contains('ks-group-collapsed'));
     });
 
-    li.appendChild(header);
+    li.appendChild(head);
     li.appendChild(groupList);
     container.appendChild(li);
 
@@ -1346,6 +1374,8 @@
       if (focused) {
         if (focused.classList.contains('ks-select-all')) {
           this._toggleSelectAll();
+        } else if (focused.classList.contains('ks-group-select-all')) {
+          this._toggleSelectAllGroup(focused._ksOptgroup);
         } else {
           const val = focused.getAttribute('data-value');
           if (val !== null) this._selectOption(val);
@@ -1418,14 +1448,18 @@
   };
 
   Kselect.prototype._moveFocus = function (dir) {
-    // An option is "navigable" if it is enabled, not filtered out by search,
-    // and not inside a collapsed group. Walking the DOM for offsetParent is
-    // the simplest correct check — it catches both "display:none on self" and
-    // "display:none on an ancestor (collapsed group)".
-    const all = this._dropdown.querySelectorAll('.ks-option:not(.ks-option-disabled)');
+    // An option is "navigable" if it is enabled and not filtered out by
+    // search. Walking the DOM for offsetParent is the simplest correct check
+    // for that — it catches "display:none on self" and on an ancestor. An
+    // option that is hidden only because its group is collapsed is navigable
+    // too (1.11.1): the group header is no longer a button a keyboard can
+    // reach, so the arrow keys open the group instead.
+    const all = this._dropdown.querySelectorAll('.ks-option:not(.ks-option-disabled), .ks-group-select-all');
     let items = [];
     for (let i = 0; i < all.length; i++) {
-      if (all[i].offsetParent !== null) items.push(all[i]);
+      if (all[i].offsetParent !== null) { items.push(all[i]); continue; }
+      const group = all[i].closest('.ks-group-collapsed');
+      if (group && group.offsetParent !== null && !all[i].classList.contains('ks-hidden')) items.push(all[i]);
     }
     if (!items.length) return;
     const focused = this._dropdown.querySelector('.ks-option-focused');
@@ -1439,6 +1473,8 @@
     } else {
       idx = Math.max(0, Math.min(items.length - 1, idx + dir));
     }
+    const closed = items[idx].closest('.ks-group-collapsed');
+    if (closed) this._setGroupCollapsed(closed, false);
     items[idx].classList.add('ks-option-focused');
     items[idx].scrollIntoView({ block: 'nearest' });
     // Update aria-activedescendant so screen readers announce the focused option
@@ -1580,7 +1616,7 @@
     // Start the sheet's list at the current selection. The options <ul> now
     // lives inside _mobileOptionsWrap, which is the sheet's scroller. No
     // keyboard focus is seeded here — the sheet has no arrow-key navigation.
-    this._revealSelection(this._mobileOptionsWrap);
+    this._revealSelection(this._optionsList);
 
     // Bind search
     if (!this._debouncedMobileFilter) {
@@ -1687,14 +1723,16 @@
     };
     this._mobilePreventChain = function (e) {
       const wrap = self._mobileOptionsWrap;
-      if (!wrap || !wrap.contains(e.target)) return; // not the scrollable list
+      if (!wrap || !wrap.contains(e.target)) return; // not the list's area
       if (!e.touches || e.touches.length !== 1) return; // ignore pinch-zoom
       const y = e.touches[0].clientY;
       const dy = y - self._lastTouchY;
       self._lastTouchY = y;
-      if (wrap.scrollHeight <= wrap.clientHeight) { e.preventDefault(); return; }
-      const atTop = wrap.scrollTop <= 0;
-      const atBottom = wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 1;
+      // The listbox is what scrolls (1.11.1), inside the wrap.
+      const list = self._optionsList;
+      if (list.scrollHeight <= list.clientHeight) { e.preventDefault(); return; }
+      const atTop = list.scrollTop <= 0;
+      const atBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 1;
       if ((atTop && dy > 0) || (atBottom && dy < 0)) e.preventDefault();
     };
     this._mobileSheet.addEventListener('touchstart', this._mobileRecordTouchY, { passive: true });
@@ -1890,7 +1928,9 @@
     if (this._isMobileModal()) {
       this._openMobileModal();
     } else {
-      this._dropdown.style.display = 'block';
+      // A column: the search row and notices at their height, the listbox
+      // filling the rest and scrolling (1.11.1; the dropdown itself scrolled).
+      this._dropdown.style.display = 'flex';
       // If search is in the select-all row it lives inside the dropdown (body),
       // so CSS .ks-open rules can't reach it — show/hide manually.
       if (this._wrapper.classList.contains('ks-search-in-row')) {
@@ -1901,7 +1941,7 @@
       // Start the list at the current selection. Must run after
       // _positionDropdown() (which applies the maxHeight that makes the
       // dropdown scrollable) and before anything can yield to the browser.
-      this._seedFocus(this._revealSelection(this._dropdown));
+      this._seedFocus(this._revealSelection(this._optionsList));
 
       // Start observing wrapper height changes so we can scroll-compensate
       // when tags wrap to a new line (or a line collapses). Snapshot the
@@ -2211,14 +2251,11 @@
   };
 
   Kselect.prototype._applySelectAllVisual = function (el, allChecked, someChecked) {
-    // el is either the global <li> or a group header <button>
+    // el is the global select-all row or a group's select-all; both are
+    // options (1.11.1: the group's was a button, with aria-pressed).
     el.classList.toggle('ks-option-selected', allChecked);
     el.classList.toggle('ks-select-all-indeterminate', someChecked);
-    if (el.tagName === 'LI') {
-      el.setAttribute('aria-selected', allChecked ? 'true' : 'false');
-    } else {
-      el.setAttribute('aria-pressed', allChecked ? 'true' : 'false');
-    }
+    el.setAttribute('aria-selected', allChecked ? 'true' : 'false');
   };
 
   // ─── Selection ───────────────────────────────────────────────────────────────
@@ -2312,7 +2349,12 @@
         const allOptionEls = this._optionsList.querySelectorAll('.ks-option:not(.ks-option-disabled):not(.ks-select-all)');
         Array.prototype.forEach.call(allOptionEls, function (li) {
           const isSelected = li.classList.contains('ks-option-selected');
-          li.classList.toggle('ks-option-at-limit', atLimit && !isSelected);
+          const blocked = atLimit && !isSelected;
+          li.classList.toggle('ks-option-at-limit', blocked);
+          // Unavailable is what it is, to a screen reader as to the eye — and
+          // a disabled option's greyed text is exempt from the contrast minimum.
+          if (blocked) li.setAttribute('aria-disabled', 'true');
+          else li.removeAttribute('aria-disabled');
         });
       }
       // Limit badge text: show "n / limit" always; swap style at limit
@@ -2467,16 +2509,14 @@
         const groupList = group.querySelector('.ks-group-options');
         if (groupList) groupList.style.display = '';
         group.classList.remove('ks-group-collapsed');
-        const header = group.querySelector('.ks-group-header');
-        if (header) header.setAttribute('aria-expanded', 'true');
       }
     });
 
-    // Global select-all: hide when no results, UNLESS it's also housing the
-    // search input — in that case always keep it visible.
+    // Global select-all: hide when no results. (Until 1.11.1 it housed the
+    // search input in search-in-row mode and had to stay; the search box has
+    // its own row now.)
     if (self._selectAllEl) {
-      const searchInRow = self._wrapper.classList.contains('ks-search-in-row');
-      self._selectAllEl.classList.toggle('ks-hidden', visibleCount === 0 && !searchInRow);
+      self._selectAllEl.classList.toggle('ks-hidden', visibleCount === 0);
     }
 
     this._noResults.style.display = visibleCount === 0 ? '' : 'none';
@@ -2568,8 +2608,7 @@
       // new answer reads from its first row, whatever the old list's scroll.
       self._control.removeAttribute('aria-activedescendant');
       self._searchInput.removeAttribute('aria-activedescendant');
-      self._dropdown.scrollTop = 0;
-      self._mobileOptionsWrap.scrollTop = 0;
+      self._optionsList.scrollTop = 0;
       self._filterOptions(self._searchQuery);
     }).catch(function (err) {
       if (seq !== self._loadSeq) return;
@@ -2602,10 +2641,10 @@
     [this._wrapper, this._dropdown, this._mobileOverlay].forEach(function (el) {
       el.classList.toggle('ks-loading', on);
     });
-    [this._dropdown, this._mobileOptionsWrap].forEach(function (el) {
-      if (on) el.setAttribute('aria-busy', 'true');
-      else el.removeAttribute('aria-busy');
-    });
+    // On the listbox, which is what is being filled — the same element on
+    // desktop and in the sheet.
+    if (on) this._optionsList.setAttribute('aria-busy', 'true');
+    else this._optionsList.removeAttribute('aria-busy');
     if (on) {
       self._noResults.style.display = 'none';
       self._mobileNoResults.style.display = 'none';

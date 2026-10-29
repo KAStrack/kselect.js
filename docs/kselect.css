@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.11.0
+ * Version 1.11.1
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -427,12 +427,27 @@
   border-top: none;
   border-radius: 0 0 var(--ks-radius-dropdown) var(--ks-radius-dropdown);
   box-shadow: var(--ks-shadow-dropdown);
+  /* A frame, not a scroller (1.11.1): the listbox inside it scrolls, so a
+     scrolling region is the combobox's own popup, as assistive technology
+     expects, rather than a box around it. open() shows it as a flex column. */
   overflow: hidden;
-  overflow-y: auto;
+  flex-direction: column;
   display: none;
   animation: ks-dropdown-in 0.15s ease;
+}
+
+/* The listbox fills what the dropdown's max-height leaves after the search
+   row and the notices, and scrolls. */
+.ks-dropdown > .ks-options {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+.ks-dropdown > :not(.ks-options) {
+  flex: none;
 }
 
 /* Dropup: class applied directly to the dropdown element (it lives in <body>,
@@ -608,28 +623,29 @@
   flex-shrink: 0;
 }
 
-/* ── Search-in-row mode ──
-   Search wrap takes all available left space; trigger stays on the right.
-   gap provides breathing room between the search input and the label. */
-.ks-dropdown.ks-search-in-row .ks-select-all {
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.ks-dropdown.ks-search-in-row .ks-select-all .ks-search-wrap {
-  flex: 1;
+/* ── Search-in-row mode (selectAll + searchable) ──
+   The search box has a row of its own at the top of the dropdown, above the
+   list, and stays there while the list scrolls (1.11.1: it shared the
+   select-all row, inside that option, where a screen reader could not reach
+   it as a control). */
+.ks-dropdown.ks-search-in-row > .ks-search-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   min-width: 0;
-  align-self: stretch;
+  background: var(--ks-color-bg);
+  border-bottom: 1px solid var(--ks-color-border);
   display: none; /* shown via JS when dropdown opens */
 }
 
-.ks-dropdown.ks-search-in-row .ks-select-all .ks-search-input {
+.ks-dropdown.ks-search-in-row > .ks-search-wrap .ks-search-input {
   width: 100%;
-  height: 100%;
-  padding: 8px 0 8px 8px;
+  padding: 8px 12px;
 }
 
-/* Per-group select-all: a checkbox button embedded in the group header */
+/* Per-group select-all: a checkbox in the group's header row — an option of
+   the group (1.11.1; it was a button). Focused by the arrow keys like any
+   option, so it shows the keyboard ring when it is the active one. */
 .ks-group-select-all {
   display: flex;
   align-items: center;
@@ -640,7 +656,12 @@
   /* Up to 2 px a side of the hit area is pulled into the header's padding so
      the header keeps its height; a larger target size grows the header. */
   margin: max(-2px, calc((20px - var(--ks-target-size)) / 2));
-  margin-left: auto;
+  /* Beside the header button now, not inside it: the header's padding (6px
+     top, 4px bottom, 12px right) is outside it, so the same insets are kept
+     here and the row is exactly as tall as before. */
+  margin-top: calc(6px + max(-2px, calc((20px - var(--ks-target-size)) / 2)));
+  margin-bottom: calc(4px + max(-2px, calc((20px - var(--ks-target-size)) / 2)));
+  margin-right: calc(12px + max(-2px, calc((20px - var(--ks-target-size)) / 2)));
   padding: 0;
   background: none;
   border: none;
@@ -655,6 +676,7 @@
   color: var(--ks-color-checkbox-checked);
 }
 
+.ks-group-select-all.ks-option-focused,
 .ks-group-select-all:focus-visible {
   outline: 2px solid var(--ks-color-border-focus);
   outline-offset: 2px;
@@ -733,31 +755,45 @@
   list-style: none;
 }
 
+/* The header row: the collapse button and, with selectAllGroups, the group's
+   select-all button beside it (1.11.1: it used to sit inside the collapse
+   button, and a button may not contain a button). The row carries the
+   header's ground and rule, so the two read as one header as before. */
+.ks-group-head {
+  display: flex;
+  align-items: center;
+  background: var(--ks-color-group-header);
+  border-top: 1px solid #f3f4f6;
+}
+
+.ks-group:first-child .ks-group-head {
+  border-top: none;
+}
+
+.ks-group-head:hover {
+  background: #f0f0ff;
+}
+
 /* Group header is a <button> — reset browser defaults then apply our style */
 .ks-group-header {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: 1;
+  /* The whole height of the row is the header's to click. */
+  align-self: stretch;
+  min-width: 0;
   width: 100%;
   padding: 6px 12px 4px;
-  background: var(--ks-color-group-header);
+  background: transparent;
   cursor: pointer;
   border: none;
-  border-top: 1px solid #f3f4f6;
   border-radius: 0;
   text-align: left;
   font-family: var(--ks-font-family);
   font-size: var(--ks-font-size);
   user-select: none;
   -webkit-user-select: none;
-}
-
-.ks-group:first-child .ks-group-header {
-  border-top: none;
-}
-
-.ks-group-header:hover {
-  background: #f0f0ff;
 }
 
 .ks-group-header:focus-visible {
@@ -882,11 +918,9 @@
 }
 
 /* Select-all would only tick the page the server chose to send, so it is
-   hidden while a remote answer is shown. In the search-in-row layout the row
-   also holds the search box, so only its trigger goes. */
-.ks-remote .ks-select-all-trigger,
-.ks-dropdown.ks-remote:not(.ks-search-in-row) .ks-select-all,
-.ks-mobile-overlay.ks-remote .ks-select-all {
+   hidden while a remote answer is shown. (The search box no longer shares its
+   row, so the whole row goes, in every layout.) */
+.ks-remote .ks-select-all {
   display: none;
 }
 
@@ -1191,11 +1225,11 @@ body.ks-body-modal-open {
 }
 
 /* ── Options wrap — grows and anchors content to the bottom ── */
+/* A frame for the listbox, which scrolls inside it (1.11.1). */
 .ks-mobile-options-wrap {
   flex: 1;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -1209,6 +1243,11 @@ body.ks-body-modal-open {
 .ks-mobile-options-wrap .ks-options {
   padding: 6px 0;
   margin-top: auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ks-mobile-options-wrap .ks-option {

@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.11.1] — 2026-10-29
+
+Accessibility of the open list. axe reported `aria-required-children` on every open dropdown, and `nested-interactive` with `selectAll` or `selectAllGroups`; all of it is fixed, verified in Chromium, Firefox and WebKit, desktop and the mobile sheet. Nothing about the options or events changes. Two things look different, both only with the options named: `selectAll` with search puts the search box on a row of its own, and a group header is no longer a Tab stop.
+
+### Fixed
+
+- **The listbox held things a listbox may not** (axe `aria-required-children`): the live region, the limit and no-results notices, and each group's header button were inside the `role="listbox"` dropdown. The listbox is now the options `<ul>` itself (`id="ks-listbox-<id>"`), holding only options and groups of options; the notices sit beside it in the dropdown. The control's and both search boxes' `aria-controls` / `aria-owns` point at it, it carries `aria-multiselectable` and `aria-busy`, and it moves into the mobile sheet with the options, so there is one listbox, desktop or sheet. The sheet's options area is a plain scroller again (1.11.0 made it the listbox).
+- **A long list scrolled a box around the listbox, not the listbox** (axe `scrollable-region-focusable`, once the listbox moved): a scrolling region has to be the combobox's own popup, or reachable by keyboard. The options `<ul>` now scrolls, inside the dropdown (a flex column, shown with `display: flex`) and inside the sheet's options area, which are frames. Revealing the selection on open, the arrow keys' scrolling, the reset after a remote answer and the sheet's touch scroll-chaining guard all follow the list. A short list still sits at the bottom of the sheet.
+- **The listbox had no accessible name.** It is now named as the control is: by the same `<label for>`, or the same `aria-label`.
+- **Groups were not groups.** Each optgroup is a `role="group"` named by its label. Its header is the group's name, and the pointer still collapses it with a click; it is no longer a `<button>` (a control inside a listbox is unreachable or misreported), so it is not a Tab stop. Instead, **the arrow keys reach every option, and moving into a collapsed group opens it** — keyboard users could not reach a collapsed group's options at all without Tabbing out of the search box to a header.
+- **`selectAllGroups` put a button inside a button** (axe `nested-interactive`): the group's select-all checkbox sat inside the header button. It is now an option of the group — "Select all in {group}" (`selectAllGroupLabel`) — drawn in the same place on the header row, reached by the arrow keys, toggled by Enter or a click, with `aria-selected` (it had `aria-pressed`). The header row is the new `.ks-group-head`; the header is a `div.ks-group-header`.
+- **With `selectAll` and search, the search box was inside the "Select all" option** (axe `nested-interactive`), where a screen reader cannot reach it as a control. It now has a row of its own at the top of the dropdown, above the list, and stays put while the list scrolls; "Select all" is the list's first row. With no matches, select-all is hidden like any row (it had to stay while it held the search box).
+- **Options greyed out at the `maxSelect` limit failed contrast** (2.7:1) because nothing said they were unavailable. They now carry `aria-disabled="true"` while the limit holds, which is also what they are.
+
+---
+
 ## [1.11.0] — 2026-10-17
 
 A release for pickers over lists too large to load whole — another table's records, thousands of rows — where the server has to do the searching. Nothing changes for a select without `load`, apart from three fixes to the mobile sheet.

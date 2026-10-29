@@ -419,7 +419,7 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'.enhanced'</span>); 
 
         <div class="callout callout-tip">
           <span class="callout-icon">💡</span>
-          <p>When <code>selectAll: true</code> is set, the search input moves from the control into the left side of the "Select all" row, forming a single compact bar. This keeps the dropdown header clean.</p>
+          <p>When <code>selectAll: true</code> is set, the search input moves from the control to a row of its own at the top of the dropdown, above the "Select all" row, and stays there while the list scrolls. (Until 1.11.1 it shared the "Select all" row, inside that option, where a screen reader could not reach it.)</p>
         </div>
 
         <h3>Per-group select all</h3>
@@ -1254,13 +1254,13 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>);</pr
       <section class="doc-section" id="accessibility">
         <h2>Accessibility</h2>
         <p>kselect is fully compliant with <strong>WCAG 2.1 AA</strong>, and meets WCAG 2.2's target-size minimum (SC 2.5.8): every small button has a hit area of at least 24 × 24 CSS px (<code>--ks-target-size</code>). Per-option <code>lang</code>/<code>dir</code> are carried onto the rendered labels (see <a href="#per-row-styling">Per-row styling</a>), and kselect's own accessible names are translatable (see <a href="#translating">Translating</a>).</p>
-        <p>It uses <code>role="combobox"</code>, <code>aria-expanded</code>, <code>aria-selected</code>, <code>aria-activedescendant</code>, <code>aria-live</code> announcements for search results, and native <code>&lt;button&gt;</code> elements for group headers.</p>
+        <p>It uses <code>role="combobox"</code>, <code>aria-expanded</code>, <code>aria-selected</code>, <code>aria-activedescendant</code> and <code>aria-live</code> announcements for search results. The list is a <code>role="listbox"</code> (the options <code>&lt;ul&gt;</code>), named as the control is, holding only options and <code>role="group"</code>s named by their optgroup's label; the live region and notices sit beside it. Group headers are names, not buttons: a click collapses the group, and the arrow keys open a collapsed group when they move into it. A group's select-all is an option of the group ("Select all in {group}"). Options blocked by <code>maxSelect</code> are <code>aria-disabled</code> while the limit holds.</p>
 
         <h3>Keyboard</h3>
         <table class="ref-table">
           <thead><tr><th>Key</th><th>Closed control</th><th>Open dropdown</th></tr></thead>
           <tbody>
-            <tr><td><code>↓</code> / <code>↑</code></td><td>Single mode: step the selection to the next/previous enabled option, as a closed native select does. Multi mode: open the dropdown.</td><td>Move the focused option. Focus starts on the current selection when the dropdown opens (see <code>revealSelection</code>), so the first press moves from there rather than from the top of the list.</td></tr>
+            <tr><td><code>↓</code> / <code>↑</code></td><td>Single mode: step the selection to the next/previous enabled option, as a closed native select does. Multi mode: open the dropdown.</td><td>Move the focused option. Focus starts on the current selection when the dropdown opens (see <code>revealSelection</code>), so the first press moves from there rather than from the top of the list. Moving into a collapsed group opens it; a group's select-all is a stop too.</td></tr>
             <tr><td><code>Alt</code> + <code>↓</code></td><td>Open the dropdown</td><td>—</td></tr>
             <tr><td><code>Enter</code> / <code>Space</code></td><td>Open the dropdown</td><td><code>Enter</code> selects the focused option</td></tr>
             <tr><td>A letter or digit</td><td>Single mode: jump to the first option starting with it. Repeating the same key cycles through the matches; typing several different characters matches the whole prefix.</td><td>Types into the search box</td></tr>
@@ -1269,7 +1269,7 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>);</pr
           </tbody>
         </table>
 
-        <p>In the mobile sheet the options area is a <code>role="listbox"</code> named by the sheet's title, and the sheet's search box carries <code>aria-controls</code> pointing at it and <code>aria-autocomplete="list"</code>, as the dropdown's search box does. With <a href="#remote-search"><code>load</code></a>, the listbox is <code>aria-busy</code> while a request is pending, and the result count is announced when the answer arrives.</p>
+        <p>In the mobile sheet the same listbox moves into the sheet's options area, and the sheet's search box carries <code>aria-controls</code> pointing at it and <code>aria-autocomplete="list"</code>, as the dropdown's search box does. With <a href="#remote-search"><code>load</code></a>, the listbox is <code>aria-busy</code> while a request is pending, and the result count is announced when the answer arrives.</p>
 
         <h3>What is mirrored from the &lt;select&gt;</h3>
         <p>The original <code>&lt;select&gt;</code> is hidden, so anything your form markup wires to it would otherwise be stranded on an element no assistive technology can reach. kselect copies it onto the visible <code>.ks-control</code>:</p>

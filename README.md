@@ -575,7 +575,7 @@ Every small button has a hit area of at least 24 × 24 CSS px (WCAG 2.2 SC 2.5.8
 
 When the dropdown opens it starts at the current selection (see `revealSelection`), and keyboard focus starts there too — the first `↓` / `↑` moves from the selected option, as in a native `<select>`, rather than from the top of the list.
 
-In the mobile sheet the options area is a named `role="listbox"` (labelled by the sheet's title), and the sheet's search box carries `aria-controls` pointing at it and `aria-autocomplete="list"`, as the dropdown's search box does.
+The list is a `role="listbox"` (the options `<ul>`, `ks-listbox-<id>`), named as the control is, holding only options and `role="group"`s named by their optgroup's label; the live region and the notices sit beside it. The control's and both search boxes' `aria-controls` point at it, on desktop and in the mobile sheet, where the same list moves. Group headers are names, not buttons: click one to collapse its group, and the arrow keys open a collapsed group when they move into it. A group's select-all (`selectAllGroups`) is an option of the group, "Select all in {group}", reached by the arrows and toggled by Enter. Options blocked by `maxSelect` are `aria-disabled` while the limit holds.
 
 ---
 
