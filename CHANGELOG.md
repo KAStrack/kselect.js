@@ -25,6 +25,7 @@ A release for pickers people add to as they go — tags, labels, categories — 
 
 ### Fixed
 
+- **`require('kselect.js')` failed for npm installs.** `package.json`'s `main` named `kselect.js` at the package root, which has not existed since the sources moved into `docs/`. It is now `docs/kselect.js`.
 - **Nothing kselect announced was heard in the phone sheet.** The live region (result counts, the `maxSelect` notice) stayed in the hidden desktop dropdown, outside the `aria-modal` sheet that screen readers confine themselves to. It now moves into the sheet with the list.
 
 ---

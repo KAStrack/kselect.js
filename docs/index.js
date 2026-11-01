@@ -1,3 +1,15 @@
+// ── Version in the header ──
+// Read from the loaded build, so it shows what actually ran (a stale cached
+// kselect.min.js would show its own, older number).
+(function () {
+  const el = document.getElementById('kselect-version');
+  if (el && window.Kselect && Kselect.version) {
+    el.textContent = 'v' + Kselect.version;
+    el.setAttribute('aria-label', 'kselect.js version ' + Kselect.version + ': what\'s new');
+    el.hidden = false;
+  }
+})();
+
 // ── Init all instances ──
 const ks1 = Kselect.init('#single-basic')[0];
 const ks2 = Kselect.init('#multi-basic')[0];
