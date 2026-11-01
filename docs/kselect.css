@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.11.1
+ * Version 1.12.0
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -62,6 +62,15 @@
   --ks-color-limit-reached-border: #fde68a;
 
   --ks-color-search-bg: #f9fafb;
+
+  /* A failed create() — the line under (or over) the list. */
+  --ks-color-error-bg: #fef2f2;
+  --ks-color-error-text: #b91c1c;      /* 5.9:1 on its ground */
+  --ks-color-error-border: #fecaca;
+  /* --ks-color-create-text is intentionally undeclared: the create row takes
+     the option text colour, which every theme already makes legible on both
+     the list's ground and its hover/focus ground. (The accent would not be:
+     some themes' accent is under 4.5:1 on their hover colour.) */
 
   --ks-radius-control: 8px;
   --ks-radius-dropdown: 10px;
@@ -917,11 +926,125 @@
   font-family: var(--ks-font-family);
 }
 
+/* A remote answer's group (a load() row's `group`): a heading only — it
+   neither collapses nor has a select-all — so no pointer or hover look. */
+.ks-group-static .ks-group-header {
+  cursor: default;
+}
+
+.ks-group-static .ks-group-head:hover {
+  background: var(--ks-color-group-header);
+}
+
 /* Select-all would only tick the page the server chose to send, so it is
    hidden while a remote answer is shown. (The search box no longer shares its
    row, so the whole row goes, in every layout.) */
 .ks-remote .ks-select-all {
   display: none;
+}
+
+/* ─── Create row (create option) ─────────────────────────────────────────── */
+/* An option of the list, so it has the option row's size (well over the
+   24 × 24 target), hover and keyboard-focus look. Set apart by its + icon,
+   in the checkbox's place in multi mode, a rule on its list side, and
+   weight. .ks-creating is on the wrapper, dropdown and sheet while create()
+   is pending; the row itself carries .ks-create-pending and aria-busy. */
+.ks-option.ks-create {
+  color: var(--ks-color-create-text, inherit);
+  font-weight: 500;
+  border-top: 1px solid var(--ks-color-disabled-border);
+}
+
+.ks-option.ks-create.ks-create-start {
+  border-top: none;
+  border-bottom: 1px solid var(--ks-color-disabled-border);
+}
+
+/* The rule only separates it from rows; alone in the list it needs none. */
+.ks-option.ks-create.ks-create-alone {
+  border: none;
+}
+
+.ks-option.ks-create:hover:not(.ks-option-selected),
+.ks-option.ks-create.ks-option-focused:not(.ks-option-selected) {
+  color: var(--ks-color-option-hover-text, var(--ks-color-create-text, inherit));
+}
+
+.ks-create-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.ks-create-icon svg {
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+
+/* Its detail line (maxSelectText at the limit) lines up with the label,
+   past the icon, in single mode too. */
+.ks-option.ks-create .ks-option-detail {
+  padding-left: 24px;
+  box-sizing: border-box;
+}
+
+/* The detail line is only filled at the maxSelect limit; empty, its 100%
+   basis would squeeze the label to nothing. */
+.ks-option.ks-create .ks-option-detail:empty {
+  display: none;
+}
+
+/* Pending: the + becomes a spinning ring (a still one with reduced motion).
+   The text keeps the row's colour, so it stays legible on the focus ground. */
+.ks-option.ks-create-pending {
+  cursor: progress;
+}
+
+.ks-create-pending .ks-create-icon svg {
+  display: none;
+}
+
+.ks-create-pending .ks-create-icon::before {
+  content: '';
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ks-spin 0.7s linear infinite;
+}
+
+@keyframes ks-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ks-create-pending .ks-create-icon::before {
+    animation: none;
+  }
+}
+
+/* Why create() failed, beside the list (it is not an option). */
+.ks-create-error {
+  flex: none;
+  padding: 8px 12px;
+  background: var(--ks-color-error-bg);
+  color: var(--ks-color-error-text);
+  border-top: 1px solid var(--ks-color-error-border);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.ks-mobile-options-wrap .ks-create-error {
+  padding: 12px 18px;
+  font-size: 0.9rem;
+  font-family: var(--ks-font-family);
 }
 
 /* ─── Selection limit (maxSelect option) ────────────────────────────────── */

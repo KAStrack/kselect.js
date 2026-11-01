@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.11.1
+ * Version 1.12.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,7 +15,11 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.11.1';
+  const KSELECT_VERSION = '1.12.0';
+
+  // The live region's count strings, by default. _resultsText compares
+  // against them to tell a translated resultsText from an untouched one.
+  const DEFAULT_TEXTS = { resultsText: '{n} results', resultText: '1 result' };
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -32,6 +36,60 @@
   // a string replacement would expand them.
   function formatText(template, key, value) {
     return String(template).replace('{' + key + '}', function () { return value; });
+  }
+
+  // Fills several placeholders in one pass: fillText('{results}, or create
+  // “{query}”', { results: '3 results', query: 'x' }). One pass, so a value
+  // that itself contains "{query}" (the user can type anything) is never
+  // filled a second time; unknown keys are left as written.
+  function fillText(template, values) {
+    return String(template).replace(/\{(\w+)\}/g, function (all, key) {
+      return Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : all;
+    });
+  }
+
+  // The fallback for createMatch's default when Intl.Collator is missing:
+  // case-folded, diacritics removed, whitespace runs collapsed. \p{M} is built
+  // at run time — as a literal it is a parse error in browsers without
+  // Unicode property escapes (Firefox < 78), which would take the whole file
+  // down; there the common combining blocks stand in for it.
+  let COMBINING_MARKS;
+  try {
+    COMBINING_MARKS = new RegExp('\\p{M}', 'gu');
+  } catch (e) {
+    COMBINING_MARKS = /[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]/g;
+  }
+  function foldText(str) {
+    let s = String(str);
+    if (s.normalize) s = s.normalize('NFD');
+    return s.replace(COMBINING_MARKS, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
+  // An <option> built from a { value, label, detail, className, color,
+  // disabled } record — a load() answer's row or create()'s result. Detail
+  // and colour go where a hand-written option carries them (data-ks-detail,
+  // data-ks-color), so _renderOption and _carryAttrs need nothing new.
+  function optionFromItem(item, value, fallbackLabel) {
+    const o = document.createElement('option');
+    o.value = value;
+    o.textContent = item.label === undefined || item.label === null ? fallbackLabel : String(item.label);
+    if (item.detail !== undefined && item.detail !== null && item.detail !== '') {
+      o.setAttribute('data-ks-detail', String(item.detail));
+    }
+    if (item.className) o.className = String(item.className);
+    if (item.color !== undefined && item.color !== null && item.color !== '') {
+      o.setAttribute('data-ks-color', String(item.color));
+    }
+    return o;
+  }
+
+  // A JavaScript or DOM error is a bug or a network failure, and its message
+  // ("Failed to fetch", "x is undefined") is not for the user's eyes. Only a
+  // message the host chose — a plain Error or a string — is shown.
+  function isRuntimeError(err) {
+    return err instanceof TypeError || err instanceof ReferenceError ||
+      err instanceof SyntaxError || err instanceof RangeError ||
+      (typeof DOMException !== 'undefined' && err instanceof DOMException);
   }
 
   function debounce(fn, delay) {
@@ -173,6 +231,16 @@
       loadDelay: 250,             // debounce before load() is called, ms
       loadMinChars: 1,            // shorter queries filter the select's own options locally instead of calling load()
       loadingText: 'Searching…',  // shown in the dropdown and the mobile sheet while load() is pending
+      create: null,               // function(query) returning a value, a { value, label, detail, className, color } record, or a promise of either: offers a "create" row for a query nothing matches
+      createText: 'Create “{query}”', // the create row; {query} = the trimmed query, always plain text
+      createMatch: null,          // function(query, label) → boolean: does this offered row already equal the query? null = equal ignoring case, whitespace and accents (by the page language's rules)
+      createPosition: 'end',      // 'end' or 'start' of the list
+      creatingText: 'Creating “{query}”…', // the create row while create() is pending
+      createErrorText: 'Couldn’t create “{query}”', // shown when create() fails without a message of its own
+      resultsText: DEFAULT_TEXTS.resultsText, // live-region count; a string with {n}, or function(n) returning one (for languages with other plural rules)
+      resultText: DEFAULT_TEXTS.resultText,   // the count when it is exactly 1 (unused when resultsText is a function)
+      resultsCreateText: '{results}, or create “{query}”', // announced with results and a create row
+      createOnlyText: 'No results; create “{query}”',      // announced with only the create row
     }, Kselect.defaults, dataOptions, userOptions || {});
 
     this.isMultiple = selectEl.multiple;
@@ -484,6 +552,41 @@
     noResults.textContent = this.options.noResultsText;
     noResults.style.display = 'none';
     dropdown.appendChild(noResults);
+
+    // ── Create row (create option) ──
+    // One element for the widget's life, placed into the listbox after each
+    // rebuild (_updateCreate) — an option among options, which the arrow keys,
+    // Enter, a click and a tap reach like any other. Its error line is not an
+    // option, so it sits beside the listbox (_showCreateError places it).
+    if (typeof this.options.create === 'function') {
+      const createEl = document.createElement('li');
+      createEl.className = 'ks-option ks-create ks-hidden';
+      createEl.setAttribute('role', 'option');
+      createEl.setAttribute('id', 'ks-create-' + this.id);
+      const createIcon = document.createElement('span');
+      createIcon.className = 'ks-create-icon';
+      createIcon.setAttribute('aria-hidden', 'true');
+      createIcon.innerHTML = '<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 1V9M1 5H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+      const createLabel = document.createElement('span');
+      createLabel.className = 'ks-option-text';
+      const createDetail = document.createElement('span');
+      createDetail.className = 'ks-option-detail';
+      createEl.appendChild(createIcon);
+      createEl.appendChild(createLabel);
+      createEl.appendChild(createDetail);
+      createEl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        self._activateCreate();
+      });
+      this._createEl = createEl;
+      this._createLabel = createLabel;
+      this._createDetail = createDetail;
+
+      const createError = document.createElement('div');
+      createError.className = 'ks-create-error';
+      createError.style.display = 'none';
+      this._createError = createError;
+    }
 
     wrapper.appendChild(control);
     wrapper.appendChild(dropdown);
@@ -799,6 +902,8 @@
     } else {
       this._renderChildren(children, this._optionsList, null);
     }
+    // The rebuild emptied the list, create row included.
+    this._updateCreate();
   };
 
   // The list while a remote answer is shown: picked options the answer lacks
@@ -809,6 +914,9 @@
   // only join the select when picked (_materialize). An empty-value option is
   // a single select's "nothing chosen" placeholder (selected by default), not
   // a pick, so it is not carried into the answer.
+  //
+  // Rows the server gave a `group` follow the ungrouped ones, under a header
+  // per group in the order the groups first appear in the answer (1.12.0).
   Kselect.prototype._renderRemote = function (container) {
     const self = this;
     const answered = {};
@@ -816,9 +924,58 @@
     Array.prototype.forEach.call(this.select.options, function (o) {
       if (o.selected && o.value !== '' && !answered[o.value]) self._renderOption(o, container, null);
     });
+    const groups = [];
+    const byName = {};
     this._remote.options.forEach(function (o) {
-      self._renderOption(self._nativeOption(o.value) || o, container, null);
+      const shown = self._nativeOption(o.value) || o;
+      if (o._ksGroup === null || o._ksGroup === undefined) {
+        self._renderOption(shown, container, null);
+        return;
+      }
+      if (!Object.prototype.hasOwnProperty.call(byName, o._ksGroup)) {
+        byName[o._ksGroup] = { name: o._ksGroup, rows: [] };
+        groups.push(byName[o._ksGroup]);
+      }
+      byName[o._ksGroup].rows.push(shown);
     });
+    groups.forEach(function (g) {
+      const list = self._renderStaticGroup(g.name, container);
+      g.rows.forEach(function (o) { self._renderOption(o, list, g.name); });
+    });
+  };
+
+  // A group of a remote answer: a named role="group" built like an optgroup's
+  // (so it looks and reads the same), but only a heading — it neither
+  // collapses nor has a select-all, since the server chose what is in it.
+  // Returns the list its rows go into.
+  Kselect.prototype._renderStaticGroup = function (name, container) {
+    this._staticGroupCount = (this._staticGroupCount || 0) + 1;
+    const labelId = 'ks-rgroup-' + this.id + '-' + this._staticGroupCount;
+    const li = document.createElement('li');
+    li.className = 'ks-group ks-group-static';
+    li.setAttribute('role', 'group');
+    li.setAttribute('aria-labelledby', labelId);
+
+    const head = document.createElement('div');
+    head.className = 'ks-group-head';
+    const header = document.createElement('div');
+    header.className = 'ks-group-header';
+    header.setAttribute('aria-hidden', 'true');
+    const label = document.createElement('span');
+    label.className = 'ks-group-label';
+    label.setAttribute('id', labelId);
+    label.textContent = name;
+    header.appendChild(label);
+    head.appendChild(header);
+
+    const list = document.createElement('ul');
+    list.className = 'ks-group-options';
+    list.setAttribute('role', 'presentation');
+
+    li.appendChild(head);
+    li.appendChild(list);
+    container.appendChild(li);
+    return list;
   };
 
   // The select's first <option> with this value, or null.
@@ -1246,6 +1403,16 @@
       // wrapper and dropdown — taps inside it must not trigger an outside-close.
       // The backdrop's own click handler calls close() deliberately.
       if (within(e, self._mobileOverlay)) return;
+      // While create() is pending, the host may have opened a dialog of its
+      // own over the list (to ask for the new option's colour, say). Clicks
+      // in it are part of creating, not a request to close; the dropdown
+      // stays open so the result has somewhere to land. A dialog that holds
+      // the widget itself (dropdownParent inside a modal) does not count.
+      // _createGuard covers the click that settles it: a host that resolves
+      // and closes its dialog in one click handler has done both before this
+      // listener sees the click bubble up (promise callbacks run between
+      // listeners), so neither "pending" nor "open" is still true by then.
+      if ((self._createPending || self._createGuard) && self._inForeignDialog(e)) return;
       self.close();
     };
     document.addEventListener('click', this._outsideClick);
@@ -1372,7 +1539,9 @@
       e.preventDefault();
       const focused = this._dropdown.querySelector('.ks-option-focused');
       if (focused) {
-        if (focused.classList.contains('ks-select-all')) {
+        if (focused.classList.contains('ks-create')) {
+          this._activateCreate();
+        } else if (focused.classList.contains('ks-select-all')) {
           this._toggleSelectAll();
         } else if (focused.classList.contains('ks-group-select-all')) {
           this._toggleSelectAllGroup(focused._ksOptgroup);
@@ -1574,6 +1743,10 @@
 
     // Move the options list into the mobile options wrap
     this._mobileOptionsWrap.insertBefore(this._optionsList, this._mobileNoResults);
+    // And the live region with it (1.12.0): the sheet is aria-modal, so a
+    // screen reader ignores the dropdown left behind — and the dropdown is
+    // display:none besides — so the counts it announces went unheard.
+    this._mobileOptionsWrap.appendChild(this._liveRegion);
 
     // Populate mobile selection display (multi mode only)
     this._updateMobileSelection();
@@ -1740,7 +1913,8 @@
   };
 
   Kselect.prototype._closeMobileModal = function () {
-    // Move options list back to the desktop dropdown
+    // Move options list back to the desktop dropdown, live region too
+    this._dropdown.insertBefore(this._liveRegion, this._noResults);
     this._dropdown.insertBefore(this._optionsList, this._liveRegion);
 
     this._mobileOverlay.classList.remove('ks-mobile-overlay-open');
@@ -2014,6 +2188,7 @@
     // Clear search
     this._searchInput.value = '';
     this._searchQuery = '';
+    this._hideCreateError();
     // Drop any remote answer (and a request still in flight): the next open
     // starts from the select's own options, picked rows included.
     this._endRemote();
@@ -2346,7 +2521,7 @@
       // so they appear greyed-out without being truly disabled (they must still
       // be clickable to deselect, but we block new selections in _selectOption).
       if (this._optionsList) {
-        const allOptionEls = this._optionsList.querySelectorAll('.ks-option:not(.ks-option-disabled):not(.ks-select-all)');
+        const allOptionEls = this._optionsList.querySelectorAll('.ks-option:not(.ks-option-disabled):not(.ks-select-all):not(.ks-create)');
         Array.prototype.forEach.call(allOptionEls, function (li) {
           const isSelected = li.classList.contains('ks-option-selected');
           const blocked = atLimit && !isSelected;
@@ -2373,6 +2548,8 @@
       if (this._wrapper) this._wrapper.classList.remove('ks-at-limit');
       if (this._dropdown) this._dropdown.classList.remove('ks-at-limit');
     }
+    // The create row is unavailable at the limit, and says why.
+    if (this.options.maxSelect != null) this._updateCreate();
 
     if (selected.length === 0) {
       this._placeholder.style.display = '';
@@ -2467,26 +2644,31 @@
     // doesn't show). No-results means the server answered with nothing.
     if (this._remote) {
       const count = this._remote.options.length;
-      this._noResults.style.display = count === 0 ? '' : 'none';
-      this._mobileNoResults.style.display = count === 0 ? '' : 'none';
+      const offerCreate = this._updateCreate();
+      this._setNoResults(count === 0 && !offerCreate);
       this._updateSelectAllState();
-      this._liveRegion.textContent = count === 0
-        ? this.options.noResultsText
-        : count + ' result' + (count === 1 ? '' : 's');
+      this._announceResults(count, offerCreate);
       return;
     }
 
     const q = query.toLowerCase().trim();
+    const rawQ = query.trim();
     const self = this;
+    // With create on, a row that already *is* the query (by createMatch —
+    // "Finances" for "finançes") is shown even when the substring filter
+    // would hide it: it is the answer, and hiding it would offer to create a
+    // duplicate of it.
+    const createOn = typeof this.options.create === 'function' && !!rawQ;
     let visibleCount = 0;
 
     // Show/hide regular options (skip select-all rows — they're handled separately).
     // We use a .ks-hidden class rather than inline style so the visibility
     // signal is a clean boolean and not subject to "display:none" string
     // matching against arbitrary inline styles.
-    Array.prototype.forEach.call(this._optionsList.querySelectorAll('.ks-option:not(.ks-select-all)'), function (li) {
-      const text = (li.querySelector('.ks-option-text') || li).textContent.toLowerCase();
-      const match = !q || text.indexOf(q) !== -1;
+    Array.prototype.forEach.call(this._optionsList.querySelectorAll('.ks-option:not(.ks-select-all):not(.ks-create)'), function (li) {
+      const label = (li.querySelector('.ks-option-text') || li).textContent;
+      const text = label.toLowerCase();
+      const match = !q || text.indexOf(q) !== -1 || (createOn && self._createMatches(rawQ, label));
       li.classList.toggle('ks-hidden', !match);
       if (match) visibleCount++;
     });
@@ -2495,7 +2677,7 @@
     // Empty optgroups (no .ks-option children at all) reach this loop only when
     // showEmptyOptGroups is true (_renderGroup skips them otherwise), so they
     // stay visible regardless of the search state.
-    Array.prototype.forEach.call(this._optionsList.querySelectorAll('.ks-group'), function (group) {
+    Array.prototype.forEach.call(this._optionsList.querySelectorAll('.ks-group:not(.ks-group-static)'), function (group) {
       const allChildren = group.querySelectorAll('.ks-option:not(.ks-select-all)');
       if (allChildren.length === 0) {
         group.classList.remove('ks-hidden');
@@ -2519,8 +2701,8 @@
       self._selectAllEl.classList.toggle('ks-hidden', visibleCount === 0);
     }
 
-    this._noResults.style.display = visibleCount === 0 ? '' : 'none';
-    this._mobileNoResults.style.display = visibleCount === 0 ? '' : 'none';
+    const offerCreate = this._updateCreate();
+    this._setNoResults(visibleCount === 0 && !offerCreate);
 
     // Select-all rows toggle against the visible scope while filtering, so
     // their checked/indeterminate visual needs to follow the filter too.
@@ -2528,20 +2710,374 @@
 
     // Announce result count / no-results to screen readers via the live region
     if (q) {
-      this._liveRegion.textContent = visibleCount === 0
-        ? this.options.noResultsText
-        : visibleCount + ' result' + (visibleCount === 1 ? '' : 's');
+      this._announceResults(visibleCount, offerCreate);
     } else {
       this._liveRegion.textContent = '';
     }
+  };
+
+  // Both "no results" lines, the dropdown's and the mobile sheet's.
+  Kselect.prototype._setNoResults = function (show) {
+    this._noResults.style.display = show ? '' : 'none';
+    this._mobileNoResults.style.display = show ? '' : 'none';
+  };
+
+  // "3 results" in the page's language: resultsText as a function(n) for a
+  // language with its own plural rules, else resultText for exactly one and
+  // resultsText for the rest. A host that translated resultsText but not
+  // resultText gets its own wording for one as well, not the English default.
+  Kselect.prototype._resultsText = function (n) {
+    const many = this.options.resultsText;
+    if (typeof many === 'function') return String(many.call(this, n));
+    const one = this.options.resultText;
+    const oneIsStale = one === DEFAULT_TEXTS.resultText && many !== DEFAULT_TEXTS.resultsText;
+    if (n === 1 && one !== null && one !== undefined && !oneIsStale) return formatText(one, 'n', n);
+    return formatText(many, 'n', n);
+  };
+
+  // The live region after a search: the count, the create row when it is
+  // offered ("3 results, or create “x”"), or no-results.
+  Kselect.prototype._announceResults = function (count, offerCreate) {
+    const query = (this._searchQuery || '').trim();
+    let msg;
+    if (offerCreate) {
+      msg = count === 0
+        ? fillText(this.options.createOnlyText, { query: query })
+        : fillText(this.options.resultsCreateText, { results: this._resultsText(count), query: query });
+    } else {
+      msg = count === 0 ? this.options.noResultsText : this._resultsText(count);
+    }
+    this._liveRegion.textContent = msg;
+  };
+
+  // ─── Creating an option (create option) ─────────────────────────────────────
+
+  // Does `label` already say what the user typed? The host's createMatch, or
+  // by default: equal at the collator's base strength in the page's language
+  // — case and accents ignored ("Finances", "finances", "finançes"), but not
+  // the letters a language counts as its own (Swedish keeps "Öst" apart from
+  // "ost"). Whitespace runs count as one space. Without Intl, a plain fold.
+  Kselect.prototype._createMatches = function (query, label) {
+    const fn = this.options.createMatch;
+    if (typeof fn === 'function') {
+      try {
+        return !!fn.call(this, query, label);
+      } catch (err) {
+        if (typeof console !== 'undefined' && console.warn) console.warn('kselect: createMatch threw', err);
+        return false;
+      }
+    }
+    if (this._collator === undefined) {
+      this._collator = null;
+      if (typeof Intl !== 'undefined' && Intl.Collator) {
+        const langEl = this.select.closest ? this.select.closest('[lang]') : null;
+        const lang = langEl ? langEl.getAttribute('lang') : '';
+        try {
+          this._collator = new Intl.Collator(lang || undefined, { sensitivity: 'base', usage: 'search' });
+        } catch (e) {
+          try { this._collator = new Intl.Collator(undefined, { sensitivity: 'base', usage: 'search' }); } catch (e2) { /* fold */ }
+        }
+      }
+    }
+    const tidy = function (s) { return String(s).replace(/\s+/g, ' ').trim(); };
+    if (this._collator) return this._collator.compare(tidy(query), tidy(label)) === 0;
+    return foldText(query) === foldText(label);
+  };
+
+  // Places, labels and shows or hides the create row, and returns whether it
+  // is offered (shown and pickable, for the announcement and no-results).
+  // Called after every rebuild and filter pass, when loading starts or ends,
+  // and when the selection count changes (maxSelect).
+  //
+  // It is shown while a create is pending, whatever the query (so the user
+  // sees it working); otherwise for a non-empty query that no offered row
+  // matches, and never while load() is pending — it would flicker in and out
+  // between keystrokes, and the answer may well contain the query.
+  Kselect.prototype._updateCreate = function () {
+    const row = this._createEl;
+    if (!row || !this._optionsList) return false;
+    const list = this._optionsList;
+    const pending = this._createPending;
+    const query = pending ? pending.query : (this._searchQuery || '').trim();
+
+    // Place it: last, or first (after the select-all row, which heads the list).
+    if (this.options.createPosition === 'start') {
+      const after = this._selectAllEl && this._selectAllEl.parentNode === list ? this._selectAllEl : null;
+      const ref = after ? after.nextSibling : list.firstChild;
+      if (ref !== row) list.insertBefore(row, ref);
+    } else if (list.lastChild !== row) {
+      list.appendChild(row);
+    }
+    row.classList.toggle('ks-create-start', this.options.createPosition === 'start');
+
+    const rows = list.querySelectorAll('.ks-option:not(.ks-select-all):not(.ks-create):not(.ks-hidden)');
+    let show = !!pending;
+    if (!pending && query && !this._loading) {
+      show = true;
+      for (let i = 0; i < rows.length; i++) {
+        if (!rows[i]._kselectOption) continue;
+        const text = rows[i].querySelector('.ks-option-text');
+        if (this._createMatches(query, text ? text.textContent : rows[i].textContent)) { show = false; break; }
+      }
+    }
+    // Alone in the list, it needs no rule separating it from rows.
+    row.classList.toggle('ks-create-alone', rows.length === 0);
+
+    const atLimit = !pending && this.isMultiple && this.options.maxSelect != null &&
+      Array.prototype.filter.call(this.select.options, function (o) { return o.selected; }).length >= this.options.maxSelect;
+
+    this._createLabel.textContent = formatText(pending ? this.options.creatingText : this.options.createText, 'query', query);
+    this._createDetail.textContent = atLimit ? formatText(this.options.maxSelectText, 'n', this.options.maxSelect) : '';
+    row.classList.toggle('ks-option-has-detail', atLimit);
+    row.classList.toggle('ks-option-at-limit', atLimit);
+    if (atLimit) row.setAttribute('aria-disabled', 'true');
+    else row.removeAttribute('aria-disabled');
+    row.classList.toggle('ks-create-pending', !!pending);
+    if (pending) row.setAttribute('aria-busy', 'true');
+    else row.removeAttribute('aria-busy');
+
+    const wasShown = !row.classList.contains('ks-hidden');
+    row.classList.toggle('ks-hidden', !show);
+    // A hidden row cannot stay the active descendant.
+    if (!show && wasShown && row.classList.contains('ks-option-focused')) {
+      row.classList.remove('ks-option-focused');
+      this._control.removeAttribute('aria-activedescendant');
+      this._searchInput.removeAttribute('aria-activedescendant');
+    }
+    return show && !pending && !atLimit;
+  };
+
+  // The create row was picked (Enter, click or tap). Fires kselect:create —
+  // cancelable, so a host can take over entirely — and otherwise calls
+  // create(query) and waits for it. One create at a time: picking the row
+  // again while one is pending does nothing.
+  Kselect.prototype._activateCreate = function () {
+    const row = this._createEl;
+    if (!row || this._createPending || row.classList.contains('ks-hidden')) return;
+    if (row.classList.contains('ks-option-at-limit')) return;
+    // The search box may be ahead of the list (its filter is debounced): act
+    // on what is typed, not on the query of a moment ago. With load() that
+    // means asking the server first; the row returns with the answer.
+    const input = this._isSheetOpen() ? this._mobileSearchInput : this._searchInput;
+    if (input && input.value !== (this._searchQuery || '')) {
+      if (this._debouncedFilter) this._debouncedFilter.cancel();
+      if (this._debouncedMobileFilter) this._debouncedMobileFilter.cancel();
+      this._wrapper.classList.toggle('ks-searching', input.value.length > 0);
+      this._applySearch(input.value);
+      if (row.classList.contains('ks-hidden') || this._loading) return;
+    }
+    const query = (this._searchQuery || '').trim();
+    if (!query) return;
+    this._hideCreateError();
+
+    const event = this._dispatch('kselect:create', { query: query }, true);
+    if (event.defaultPrevented) return;
+
+    const self = this;
+    this._createPending = { query: query };
+    [this._wrapper, this._dropdown, this._mobileOverlay].forEach(function (el) {
+      el.classList.add('ks-creating');
+    });
+    this._updateCreate();
+    this._liveRegion.textContent = formatText(this.options.creatingText, 'query', query);
+
+    let result;
+    try {
+      result = this.options.create.call(this, query);
+    } catch (err) {
+      result = Promise.reject(err);
+    }
+    Promise.resolve(result).then(function (item) {
+      self._createSettled(query, item, null, false);
+    }, function (err) {
+      self._createSettled(query, null, err, true);
+    });
+  };
+
+  // create() answered. A value or a record becomes a selected <option> — or,
+  // when the select already has one with that value (the server answered an
+  // existing tag), that option is selected and nothing is added. null or
+  // undefined means the host chose not to create (its dialog was dismissed):
+  // everything stays as it was, quietly. A rejection, a throw or an answer
+  // without a value keeps the query and shows why, in the list and the live
+  // region. Afterwards, focus that was lost (or left in the widget) comes
+  // back to the search box, or to the control if the list has closed.
+  Kselect.prototype._createSettled = function (query, item, err, failed) {
+    if (this._destroyed) return;
+    const self = this;
+    this._createPending = null;
+    this._createGuard = true;
+    [this._wrapper, this._dropdown, this._mobileOverlay].forEach(function (el) {
+      el.classList.remove('ks-creating');
+    });
+
+    if (!failed && item !== null && item !== undefined && item !== false) {
+      const record = typeof item === 'object' ? item : { value: item };
+      if (record.value === undefined || record.value === null || record.value === '') {
+        failed = true;
+        err = new TypeError('create() must answer a value or { value, label }');
+      } else {
+        const outcome = this._commitCreated(query, record);
+        if (outcome) { failed = true; err = outcome; }
+      }
+    } else if (!failed) {
+      this._liveRegion.textContent = '';
+    }
+
+    if (failed) {
+      let message = '';
+      if (typeof err === 'string') message = err;
+      else if (err && !isRuntimeError(err) && typeof err.message === 'string') message = err.message;
+      if (!message) {
+        if (err && typeof console !== 'undefined' && console.warn) {
+          console.warn('kselect: create() failed; nothing was added', err);
+        }
+        message = formatText(this.options.createErrorText, 'query', query);
+      }
+      this._updateCreate();
+      // A list the user has closed shows nothing; the next open starts afresh.
+      if (this._open) this._showCreateError(message);
+    } else {
+      this._updateCreate();
+    }
+    this._restoreFocusAfterCreate();
+  };
+
+  // Adds (or finds) the created option and selects it, then tidies the list.
+  // Returns an Error to report instead, or null.
+  Kselect.prototype._commitCreated = function (query, record) {
+    const value = String(record.value);
+    let option = this._nativeOption(value);
+    if (!option) {
+      if (this.isMultiple && this.options.maxSelect != null &&
+          Array.prototype.filter.call(this.select.options, function (o) { return o.selected; }).length >= this.options.maxSelect) {
+        return new Error(formatText(this.options.maxSelectText, 'n', this.options.maxSelect));
+      }
+      // The label falls back to what the user typed. Under allowHtml an
+      // option's text is markup, so the typed text is escaped into it.
+      option = optionFromItem(record, value, this.options.allowHtml ? escapeHtml(query) : query);
+      this.select.appendChild(option);
+      // Our own mutation: drop the observer's record of it (see _materialize).
+      if (this._selectObserver) this._selectObserver.takeRecords();
+    }
+
+    const sameQuery = (this._searchQuery || '').trim() === query;
+    if (!option.selected) {
+      if (option.disabled) return new Error(formatText(this.options.createErrorText, 'query', query));
+      this._selectOption(value);
+    } else if (!this.isMultiple && this.options.closeOnSelect) {
+      // Already the value: nothing changed, so no events — but the pick is done.
+      this.close();
+    }
+
+    if (!this._open) return null;
+    if (sameQuery) {
+      // The query is answered: clear it, as the next thing the user types is
+      // usually the next tag, and show the select's own options again.
+      if (this._debouncedFilter) this._debouncedFilter.cancel();
+      if (this._debouncedMobileFilter) this._debouncedMobileFilter.cancel();
+      this._searchInput.value = '';
+      if (this._mobileSearchInput) this._mobileSearchInput.value = '';
+      this._wrapper.classList.remove('ks-searching');
+      this._applySearch('');
+    } else {
+      // A newer query is on screen: keep its rows and do not search again —
+      // only re-render, so the new option shows its state if it is listed.
+      this._buildOptionsList();
+      this._syncFromSelect();
+      this._filterOptions(this._searchQuery || '');
+    }
+    // Keyboard focus on the new option, so a screen reader hears it, selected.
+    const lis = this._itemMap && this._itemMap[value];
+    const li = lis && lis.filter(function (l) { return l.offsetParent !== null; })[0];
+    if (li && !this._isSheetOpen()) {
+      this._seedFocus(li);
+      li.scrollIntoView({ block: 'nearest' });
+    }
+    return null;
+  };
+
+  Kselect.prototype._isSheetOpen = function () {
+    return !!(this._mobileOverlay && this._mobileOverlay.classList.contains('ks-mobile-overlay-open'));
+  };
+
+  // A failure line beside the listbox (not in it: it is not an option), on
+  // the side the create row is on. The live region announces it once; the
+  // line itself is not a second live region.
+  Kselect.prototype._showCreateError = function (message) {
+    const el = this._createError;
+    if (!el) return;
+    const list = this._optionsList;
+    if (list.parentNode) {
+      list.parentNode.insertBefore(el, this.options.createPosition === 'start' ? list : list.nextSibling);
+    }
+    el.textContent = message;
+    el.style.display = '';
+    this._liveRegion.textContent = message;
+  };
+
+  Kselect.prototype._hideCreateError = function () {
+    if (this._createError && this._createError.style.display !== 'none') {
+      this._createError.style.display = 'none';
+      this._createError.textContent = '';
+    }
+  };
+
+  // Is the event inside an open dialog other than one holding this widget?
+  // (Native <dialog> and ARIA modals alike.)
+  Kselect.prototype._inForeignDialog = function (e) {
+    const path = e.composedPath ? e.composedPath() : [];
+    for (let i = 0; i < path.length; i++) {
+      const el = path[i];
+      if (!el || el.nodeType !== 1) continue;
+      // A <dialog> counts closed as well: the click that closed it is still
+      // on its way up.
+      const isDialog = el.tagName === 'DIALOG' ||
+        el.getAttribute('aria-modal') === 'true' || el.getAttribute('role') === 'dialog' ||
+        el.getAttribute('role') === 'alertdialog';
+      if (isDialog && !el.contains(this._wrapper) && el !== this._mobileOverlay) return true;
+    }
+    return false;
+  };
+
+  // After create() settles. A host dialog may have taken focus and, on
+  // closing, dropped it on <body> (or handed it back to the search box): in
+  // either case it goes to the search box while the list is open, else to the
+  // control. Focus somewhere else on the page — the user moved on, or the
+  // host's dialog is still open — is left alone. Deferred a task, so a dialog
+  // the host closes right after resolving has closed (and stopped making the
+  // page inert) first. In the phone sheet nothing is focused: a tap left no
+  // focus behind, and focusing its search box would raise the keyboard.
+  Kselect.prototype._restoreFocusAfterCreate = function () {
+    const self = this;
+    setTimeout(function () {
+      self._createGuard = false;
+      if (self._destroyed) return;
+      const active = rootOf(self.select).activeElement || document.activeElement;
+      const lost = !active || active === document.body || active === document.documentElement;
+      const inWidget = !!active && (self._wrapper.contains(active) || self._dropdown.contains(active) ||
+        (self._mobileOverlay && self._mobileOverlay.contains(active)));
+      if (!lost && !inWidget) return;
+      if (self._open) {
+        if (self._isSheetOpen()) return;
+        const target = self.options.searchable ? self._searchInput : self._control;
+        if (active !== target) target.focus();
+      } else if (active !== self._control) {
+        self._control.focus();
+      }
+    }, 0);
   };
 
   // ─── Remote source (load option) ─────────────────────────────────────────────
 
   // Turns a load() answer into detached <option>s: value as a string, label
   // falling back to the value, detail carried as data-ks-detail (rendered as
-  // plain text by _renderOption). Rows without a value, and repeats of a value
-  // already seen, are dropped — one row per value keeps _materialize exact.
+  // plain text by _renderOption), className as the option's class and color
+  // as data-ks-color (both carried to its row and tag by _carryAttrs, as a
+  // hand-written option's are), disabled as disabled. `group` is kept on the
+  // option for _renderRemote and never reaches the select. Rows without a
+  // value, and repeats of a value already seen, are dropped — one row per
+  // value keeps _materialize exact.
   function remoteOptions(items) {
     const out = [];
     const seen = {};
@@ -2550,12 +3086,9 @@
       const value = String(item.value);
       if (seen[value]) return;
       seen[value] = true;
-      const o = document.createElement('option');
-      o.value = value;
-      o.textContent = item.label === undefined || item.label === null ? value : String(item.label);
-      if (item.detail !== undefined && item.detail !== null && item.detail !== '') {
-        o.setAttribute('data-ks-detail', String(item.detail));
-      }
+      const o = optionFromItem(item, value, value);
+      if (item.disabled) o.disabled = true;
+      o._ksGroup = item.group === undefined || item.group === null || item.group === '' ? null : String(item.group);
       out.push(o);
     });
     return out;
@@ -2567,6 +3100,8 @@
   // options locally, as kselect always has.
   Kselect.prototype._applySearch = function (value) {
     this._searchQuery = value;
+    // A failed create's message belongs to the query it was for.
+    this._hideCreateError();
     const q = value.trim();
     if (typeof this.options.load === 'function' && q && q.length >= this.options.loadMinChars) {
       this._startLoad(q);
@@ -2645,10 +3180,9 @@
     // desktop and in the sheet.
     if (on) this._optionsList.setAttribute('aria-busy', 'true');
     else this._optionsList.removeAttribute('aria-busy');
-    if (on) {
-      self._noResults.style.display = 'none';
-      self._mobileNoResults.style.display = 'none';
-    }
+    if (on) self._setNoResults(false);
+    // No create row while the answer is pending; it comes back with it.
+    this._updateCreate();
   };
 
   // Back to the select's own options: cancels a pending request and, if a
@@ -2841,6 +3375,8 @@
       this._labelClick = null;
     }
     if (this._typeTimer) { clearTimeout(this._typeTimer); this._typeTimer = null; }
+    // A create() that settles after this finds nothing to update.
+    this._destroyed = true;
     // A pending search must not call load() — or render its answer — after
     // the widget is gone.
     if (this._debouncedFilter) this._debouncedFilter.cancel();
@@ -2883,7 +3419,7 @@
   const KS_WRAPPER_OWNED = [
     'ks-wrapper', 'ks-single', 'ks-multiple',
     'ks-disabled', 'ks-open', 'ks-dropup', 'ks-at-limit', 'ks-no-search',
-    'ks-loading', 'ks-remote',
+    'ks-loading', 'ks-remote', 'ks-creating',
   ];
 
   function classTokens(str) {
@@ -2959,13 +3495,18 @@
 
   // ─── Internal helpers ────────────────────────────────────────────────────────
 
-  Kselect.prototype._dispatch = function (eventName) {
+  // Returns the event, so a caller can read defaultPrevented. `detail` makes
+  // it a CustomEvent (kselect:create); `cancelable` lets preventDefault() work.
+  Kselect.prototype._dispatch = function (eventName, detail, cancelable) {
     let event;
     try {
-      event = new Event(eventName, { bubbles: true });
+      event = detail !== undefined
+        ? new CustomEvent(eventName, { bubbles: true, cancelable: !!cancelable, detail: detail })
+        : new Event(eventName, { bubbles: true, cancelable: !!cancelable });
     } catch (e) {
-      event = document.createEvent('Event');
-      event.initEvent(eventName, true, true);
+      event = document.createEvent(detail !== undefined ? 'CustomEvent' : 'Event');
+      if (detail !== undefined) event.initCustomEvent(eventName, true, !!cancelable, detail);
+      else event.initEvent(eventName, true, true);
     }
     // Tag the event so listeners can distinguish kselect-originated changes
     // from external mutations (e.g. host code editing the <select> and firing
@@ -2973,6 +3514,7 @@
     // `e.originalEvent.kselect` from jQuery.
     event.kselect = true;
     this.select.dispatchEvent(event);
+    return event;
   };
 
   return Kselect;

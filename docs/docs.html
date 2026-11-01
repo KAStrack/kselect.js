@@ -41,6 +41,7 @@
     <a class="nav-link" href="#disabled-states">Disabled states</a>
     <a class="nav-link" href="#dynamic-options">Dynamic options</a>
     <a class="nav-link" href="#remote-search">Remote search</a>
+    <a class="nav-link" href="#creating">Creating options</a>
     <a class="nav-link" href="#mount">Mounting (Shadow DOM)</a>
     <a class="nav-link" href="#mobile">Mobile</a>
 
@@ -475,12 +476,22 @@ Object.<span class="t-fn">assign</span>(Kselect.defaults, {
   <span class="t-key">removeTagText</span>:         <span class="t-str">'Ta bort {label}'</span>,
   <span class="t-key">clearText</span>:             <span class="t-str">'Rensa val'</span>,
   <span class="t-key">closeText</span>:             <span class="t-str">'Stäng'</span>,
+  <span class="t-key">loadingText</span>:           <span class="t-str">'Söker…'</span>,
+  <span class="t-key">resultsText</span>:           <span class="t-str">'{n} träffar'</span>,
+  <span class="t-key">resultText</span>:            <span class="t-str">'1 träff'</span>,
+  <span class="t-key">createText</span>:            <span class="t-str">'Skapa ”{query}”'</span>,
+  <span class="t-key">creatingText</span>:          <span class="t-str">'Skapar ”{query}”…'</span>,
+  <span class="t-key">createErrorText</span>:       <span class="t-str">'Det gick inte att skapa ”{query}”'</span>,
+  <span class="t-key">resultsCreateText</span>:     <span class="t-str">'{results}, eller skapa ”{query}”'</span>,
+  <span class="t-key">createOnlyText</span>:        <span class="t-str">'Inga träffar; skapa ”{query}”'</span>,
 });
 
 Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>);</pre>
         </div>
 
-        <p><code>{label}</code>, <code>{group}</code> and <code>{n}</code> can sit anywhere in a template, for languages that order words differently (<code>'{label} 移除'</code>). <code>{label}</code> is always the option's plain text, never HTML, even with <code>allowHtml</code>.</p>
+        <p><code>{label}</code>, <code>{group}</code>, <code>{n}</code>, <code>{query}</code> and <code>{results}</code> can sit anywhere in a template, for languages that order words differently (<code>'{label} 移除'</code>, <code>'创建“{query}”'</code>). <code>{label}</code> and <code>{query}</code> are always plain text, never HTML, even with <code>allowHtml</code>.</p>
+
+        <p>The result count is the one string with a plural. <code>resultText</code> covers exactly one and <code>resultsText</code> the rest, which suits English, Swedish and Chinese (<code>'{n} 个结果'</code> for both). For a language with more plural forms, make <code>resultsText</code> a function of <code>n</code>. A translated <code>resultsText</code> with <code>resultText</code> left at its English default is used for one result too.</p>
 
         <div class="callout callout-tip">
           <span class="callout-icon">💡</span>
@@ -604,13 +615,24 @@ ks.<span class="t-fn">refresh</span>(); <span class="t-cm">// rebuild from new D
         </div>
 
         <h3>The <code>load</code> contract</h3>
-        <p><code>load(query, signal)</code> is called with the trimmed query and an <code>AbortSignal</code>, with <code>this</code> set to the kselect instance — handy when one function in <a href="#api-defaults"><code>Kselect.defaults</code></a> serves several selects. It returns an array, or a promise of one, of <code>{ value, label, detail }</code>: <code>value</code> is required (coerced to a string; rows without one, and repeats, are dropped), <code>label</code> falls back to the value, and <code>detail</code> is optional.</p>
+        <p><code>load(query, signal)</code> is called with the trimmed query and an <code>AbortSignal</code>, with <code>this</code> set to the kselect instance — handy when one function in <a href="#api-defaults"><code>Kselect.defaults</code></a> serves several selects. It returns an array, or a promise of one, of <code>{ value, label, detail, className, color, group, disabled }</code>: <code>value</code> is required (coerced to a string; rows without one, and repeats, are dropped), <code>label</code> falls back to the value, and the rest are optional.</p>
+
+        <table class="ref-table">
+          <thead><tr><th>Field</th><th>Becomes</th></tr></thead>
+          <tbody>
+            <tr><td><code>detail</code></td><td>A plain-text second line under the label (<code>data-ks-detail</code>).</td></tr>
+            <tr><td><code>className</code></td><td>The option's <code>class</code>, carried to its row and its tag as a hand-written option's class is.</td></tr>
+            <tr><td><code>color</code></td><td><code>data-ks-color</code> — the CSP-safe colour route, read in your CSS as <code>var(--chip-color)</code> on the row and the tag.</td></tr>
+            <tr><td><code>group</code></td><td>A heading the row is listed under. Groups appear in the order the answer first names them, after the rows without a group. A plain heading — a named <code>role="group"</code>, like an optgroup's — with no collapsing and no select-all (<code>.ks-group-static</code>).</td></tr>
+            <tr><td><code>disabled</code></td><td><code>true</code> shows the row, but it cannot be picked (an archived record, say).</td></tr>
+          </tbody>
+        </table>
 
         <table class="ref-table">
           <thead><tr><th>Behaviour</th><th>What happens</th></tr></thead>
           <tbody>
             <tr><td>Selected options</td><td>The answer replaces the <em>offered</em> rows, not the selected ones. A picked option the answer lacks stays picked and is listed first, so it can still be unticked. The select's own options return when the box is emptied, drops below <code>loadMinChars</code>, or the list closes.</td></tr>
-            <tr><td>Picking a row</td><td>Adds a real <code>&lt;option&gt;</code> to the <code>&lt;select&gt;</code> (selected, the label as its text, <code>detail</code> as <code>data-ks-detail</code>), so the form posts it, and <code>input</code> / <code>change</code> / <code>kselect:change</code> fire as for any pick — single or multiple. Rows that are not picked never touch the select.</td></tr>
+            <tr><td>Picking a row</td><td>Adds a real <code>&lt;option&gt;</code> to the <code>&lt;select&gt;</code> (selected, the label as its text, <code>detail</code> as <code>data-ks-detail</code>, <code>className</code> as its class, <code>color</code> as <code>data-ks-color</code>), so the form posts it, and <code>input</code> / <code>change</code> / <code>kselect:change</code> fire as for any pick — single or multiple. Rows that are not picked never touch the select.</td></tr>
             <tr><td>Filtering</td><td>The server is the filter: a remote answer is shown whole and never re-filtered locally, so your endpoint may match on fields the label does not show. <code>noResultsText</code> appears only when the server answers with an empty array.</td></tr>
             <tr><td>Stale answers</td><td>Each new search aborts the previous request through its <code>signal</code>, and an overtaken answer is discarded even if <code>load</code> ignores the signal.</td></tr>
             <tr><td>Errors</td><td>A throw, a rejected promise or a non-array answer clears the loading state, keeps the current rows and logs a <code>console.warn</code>. Nothing is thrown into your page.</td></tr>
@@ -625,6 +647,73 @@ ks.<span class="t-fn">refresh</span>(); <span class="t-cm">// rebuild from new D
 
         <h3>A detail line on any option</h3>
         <p><code>data-ks-detail</code> on an <code>&lt;option&gt;</code> renders a second, plain-text line under its label (<code>.ks-option-detail</code>; the row gets <code>.ks-option-has-detail</code>), with or without <code>load</code>. It takes the row's colour by default; set <code>--ks-color-option-detail</code> to soften it, and check its contrast on selected and hovered rows. Local search matches the label only.</p>
+      </section>
+
+
+      <!-- ── Creating options ───────────────────────────────────────────────── -->
+      <section class="doc-section" id="creating">
+        <h2>Creating options</h2>
+        <p>For a list people add to as they go — tags, labels, categories — give kselect a <code>create</code> function. When the search finds nothing that <em>is</em> the query, the list offers a row to create it: <strong>+ Create “finnish”</strong>. It works with and without <code>load</code>.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-kw">const</span> [ks] = Kselect.<span class="t-fn">init</span>(<span class="t-str">'#tags'</span>, {
+  <span class="t-key">load</span>: (query, signal) =&gt;
+    <span class="t-fn">fetch</span>(<span class="t-str">'/api/tags?q='</span> + <span class="t-fn">encodeURIComponent</span>(query), { signal })
+      .<span class="t-fn">then</span>(r =&gt; r.<span class="t-fn">json</span>())
+      .<span class="t-fn">then</span>(tags =&gt; tags.<span class="t-fn">map</span>(t =&gt; ({
+        <span class="t-key">value</span>: t.id, <span class="t-key">label</span>: t.name, <span class="t-key">color</span>: t.colour,
+        <span class="t-key">group</span>: t.similar ? <span class="t-str">'Similar tags'</span> : <span class="t-str">'Other tags'</span>,
+      }))),
+
+  <span class="t-key">create</span>: (query) =&gt;
+    <span class="t-fn">fetch</span>(<span class="t-str">'/api/tags'</span>, { <span class="t-key">method</span>: <span class="t-str">'POST'</span>, <span class="t-key">body</span>: JSON.<span class="t-fn">stringify</span>({ <span class="t-key">name</span>: query }) })
+      .<span class="t-fn">then</span>(<span class="t-kw">async</span> r =&gt; {
+        <span class="t-kw">const</span> body = <span class="t-kw">await</span> r.<span class="t-fn">json</span>();
+        <span class="t-kw">if</span> (!r.ok) <span class="t-kw">throw new</span> <span class="t-fn">Error</span>(body.message);   <span class="t-cm">// shown to the user as it is</span>
+        <span class="t-kw">return</span> { <span class="t-key">value</span>: body.id, <span class="t-key">label</span>: body.name, <span class="t-key">color</span>: body.colour };
+      }),
+});</pre>
+        </div>
+
+        <h3>When the row appears</h3>
+        <p>For a non-empty query that no offered row equals — the select's own options after filtering, or the remote answer. When nothing matches at all it replaces <code>noResultsText</code>. It is never shown while <code>load()</code> is pending, so it does not flicker between keystrokes, and comes back with the answer. "Equals" is <code>createMatch(query, label)</code>: by default case, accents and extra spaces are ignored using the page language's own rules, so "Finances", "finances" and "finançes" are one tag in English, while in Swedish "Öst" and "ost" stay two words. A row that equals the query is listed even where the ordinary search would hide it.</p>
+        <p>It is an option of the list (<code>li.ks-option.ks-create</code>): the arrow keys reach it, and Enter, a click or a tap picks it, in the dropdown and the mobile sheet. Screen readers hear it with the count — "3 results, or create “finnish”". <code>createPosition: 'start'</code> puts it first.</p>
+
+        <h3>What <code>create(query)</code> may return</h3>
+        <table class="ref-table">
+          <thead><tr><th>Answer</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>A value, or <code>{ value, label, detail, className, color }</code>, or a promise of one</td><td>A real <code>&lt;option&gt;</code> is added and selected, as a picked remote row is: <code>input</code> / <code>change</code> / <code>kselect:change</code> fire and <code>maxSelect</code> is respected. <code>label</code> falls back to the query.</td></tr>
+            <tr><td>A value the <code>&lt;select&gt;</code> already has</td><td>That option is selected; no second option with the same value is added.</td></tr>
+            <tr><td><code>null</code> / <code>undefined</code></td><td>Nothing is created or reported — for a dialog the user dismissed. The query stays.</td></tr>
+            <tr><td>A rejection or a throw</td><td>Nothing changes; the query and the list stay, and the reason is shown under the list (<code>.ks-create-error</code>) and announced. A message you chose is shown as it is; a JavaScript or network error shows <code>createErrorText</code> and is logged.</td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>While pending</strong> the row reads <code>creatingText</code> with a spinner and <code>aria-busy="true"</code>; picking it again does nothing. If a newer query is typed meanwhile, the answer is still added and selected, without searching the old query again. <strong>Afterwards</strong>, multi mode keeps the list open, clears the query and focuses the new option; single mode closes as <code>closeOnSelect</code> says. Focus lost to a dialog of yours comes back to the search box (or the control, once the list has closed). At the <code>maxSelect</code> limit the row is listed but unavailable, with <code>maxSelectText</code> under it.</p>
+
+        <h3>A dialog of your own</h3>
+        <p><code>create</code> may open a dialog first — to choose a colour — and resolve when the user saves. Clicks inside it do not close the list.</p>
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="t-key">create</span>: (query) =&gt; <span class="t-kw">new</span> <span class="t-fn">Promise</span>((resolve) =&gt; {
+  dialog.<span class="t-fn">showModal</span>();
+  dialog.onclose = () =&gt; dialog.returnValue === <span class="t-str">'save'</span>
+    ? <span class="t-fn">resolve</span>(<span class="t-fn">saveTag</span>(query, colourInput.value))   <span class="t-cm">// a promise of { value, label, color }</span>
+    : <span class="t-fn">resolve</span>(<span class="t-kw">null</span>);                              <span class="t-cm">// dismissed: nothing happens</span>
+}),</pre>
+        </div>
+
+        <div class="callout callout-tip">
+          <span class="callout-icon">💡</span>
+          <p><strong>Taking over:</strong> <code>kselect:create</code> fires on the <code>&lt;select&gt;</code> before <code>create</code> is called, with <code>event.detail.query</code>. <code>preventDefault()</code> stops kselect there; add what you make with <code>select.add(new Option(name, id))</code> and <code>ks.setValue([...ks.getValue(), id])</code>. Returning a promise from <code>create</code> keeps the pending row, focus handling and error line, so prefer it when a dialog is all you need.</p>
+        </div>
+
+        <div class="callout callout-note">
+          <span class="callout-icon">ℹ</span>
+          <p>Hooks: <code>.ks-create</code> (with <code>.ks-create-start</code>, <code>.ks-create-pending</code>, <code>.ks-option-at-limit</code>), <code>.ks-creating</code> on the wrapper, dropdown and sheet while pending, <code>.ks-create-error</code>. The row takes the option text colour; <code>--ks-color-create-text</code> sets an accent (check it on the hover colour too), and <code>--ks-color-error-bg</code> / <code>-text</code> / <code>-border</code> colour the failure line.</p>
+        </div>
       </section>
 
 
@@ -709,6 +798,10 @@ ks.<span class="t-fn">disable</span>();       <span class="t-cm">// disables the
           <div class="event-card">
             <div class="event-name">kselect:close</div>
             <p>Fires when the dropdown closes.</p>
+          </div>
+          <div class="event-card">
+            <div class="event-name">kselect:create</div>
+            <p>Fires when the create row is picked, before <code>create()</code> is called. <code>event.detail.query</code> is the query. Cancelable: <code>preventDefault()</code> stops kselect there, so you can take over. See <a href="#creating">Creating options</a>.</p>
           </div>
         </div>
 
@@ -899,7 +992,7 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><code>load</code></td>
               <td><span class="type-pill fn">function | null</span></td>
               <td><span class="default-val">null</span></td>
-              <td>Remote source: <code>function(query, signal)</code> returning an array, or a promise of one, of <code>{ value, label, detail }</code>. Called (debounced) as the user types in either search box; its answer replaces the offered rows, and a picked row becomes a real <code>&lt;option&gt;</code>. See <a href="#remote-search">Remote search</a>.</td>
+              <td>Remote source: <code>function(query, signal)</code> returning an array, or a promise of one, of <code>{ value, label, detail, className, color, group, disabled }</code>. Called (debounced) as the user types in either search box; its answer replaces the offered rows, and a picked row becomes a real <code>&lt;option&gt;</code>. See <a href="#remote-search">Remote search</a>.</td>
             </tr>
             <tr>
               <td><code>loadDelay</code></td>
@@ -918,6 +1011,66 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><span class="type-pill">string</span></td>
               <td><span class="default-val">'Searching…'</span></td>
               <td>Shown in the dropdown and the mobile sheet while <code>load()</code> is pending.</td>
+            </tr>
+            <tr>
+              <td><code>create</code></td>
+              <td><span class="type-pill fn">function | null</span></td>
+              <td><span class="default-val">null</span></td>
+              <td>Offer the typed query as a new option: <code>function(query)</code> returning a value, a <code>{ value, label, detail, className, color }</code> record, or a promise of either. See <a href="#creating">Creating options</a>.</td>
+            </tr>
+            <tr>
+              <td><code>createText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Create “{query}”'</span></td>
+              <td>The create row. <code>{query}</code> is the trimmed query, always plain text — never HTML, even with <code>allowHtml</code>.</td>
+            </tr>
+            <tr>
+              <td><code>createMatch</code></td>
+              <td><span class="type-pill fn">function | null</span></td>
+              <td><span class="default-val">null</span></td>
+              <td><code>function(query, label)</code> → <code>true</code> when an offered row already equals the query, so no create row is offered. Default: equal ignoring case, accents and extra spaces, by the page language's rules (<code>Intl.Collator</code>, base strength).</td>
+            </tr>
+            <tr>
+              <td><code>createPosition</code></td>
+              <td><span class="type-pill">'end' | 'start'</span></td>
+              <td><span class="default-val">'end'</span></td>
+              <td>Where the create row goes in the list.</td>
+            </tr>
+            <tr>
+              <td><code>creatingText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Creating “{query}”…'</span></td>
+              <td>The create row while <code>create()</code> is pending.</td>
+            </tr>
+            <tr>
+              <td><code>createErrorText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'Couldn’t create “{query}”'</span></td>
+              <td>Shown when <code>create()</code> fails without a message of its own, or with a JavaScript or network error.</td>
+            </tr>
+            <tr>
+              <td><code>resultsText</code></td>
+              <td><span class="type-pill">string | function</span></td>
+              <td><span class="default-val">'{n} results'</span></td>
+              <td>The result count screen readers hear after a search: a string with <code>{n}</code>, or <code>function(n)</code> returning one, for languages with other plural rules.</td>
+            </tr>
+            <tr>
+              <td><code>resultText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'1 result'</span></td>
+              <td>The count when it is exactly 1. Unused when <code>resultsText</code> is a function; a translated <code>resultsText</code> with this left at its default is used for one too.</td>
+            </tr>
+            <tr>
+              <td><code>resultsCreateText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'{results}, or create “{query}”'</span></td>
+              <td>Announced with results and a create row; <code>{results}</code> is the count above.</td>
+            </tr>
+            <tr>
+              <td><code>createOnlyText</code></td>
+              <td><span class="type-pill">string</span></td>
+              <td><span class="default-val">'No results; create “{query}”'</span></td>
+              <td>Announced when the create row is all there is.</td>
             </tr>
           </tbody>
         </table>
@@ -1128,6 +1281,10 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>);</pr
             <tr><td><code>--ks-color-disabled-text</code></td><td><span class="default-val">#9ca3af</span></td><td>Text color when disabled</td></tr>
             <tr><td><code>--ks-color-disabled-border</code></td><td><span class="default-val">#e5e7eb</span></td><td>Border color when disabled</td></tr>
             <tr><td><code>--ks-color-search-bg</code></td><td><span class="default-val">#f9fafb</span></td><td>Search input background</td></tr>
+            <tr><td><code>--ks-color-error-bg</code></td><td><span class="default-val">#fef2f2</span></td><td>Background of the line that says why <code>create()</code> failed</td></tr>
+            <tr><td><code>--ks-color-error-text</code></td><td><span class="default-val">#b91c1c</span></td><td>Its text (5.9:1 on the default background)</td></tr>
+            <tr><td><code>--ks-color-error-border</code></td><td><span class="default-val">#fecaca</span></td><td>Its top rule</td></tr>
+            <tr><td><code>--ks-color-create-text</code></td><td><span class="default-val">(unset)</span></td><td>Text colour of the create row; unset, it is the option text colour. Check an accent against <code>--ks-color-option-hover</code> as well as the background</td></tr>
           </tbody>
         </table>
 
@@ -1262,7 +1419,7 @@ Kselect.<span class="t-fn">init</span>(<span class="t-str">'select'</span>);</pr
           <tbody>
             <tr><td><code>↓</code> / <code>↑</code></td><td>Single mode: step the selection to the next/previous enabled option, as a closed native select does. Multi mode: open the dropdown.</td><td>Move the focused option. Focus starts on the current selection when the dropdown opens (see <code>revealSelection</code>), so the first press moves from there rather than from the top of the list. Moving into a collapsed group opens it; a group's select-all is a stop too.</td></tr>
             <tr><td><code>Alt</code> + <code>↓</code></td><td>Open the dropdown</td><td>—</td></tr>
-            <tr><td><code>Enter</code> / <code>Space</code></td><td>Open the dropdown</td><td><code>Enter</code> selects the focused option</td></tr>
+            <tr><td><code>Enter</code> / <code>Space</code></td><td>Open the dropdown</td><td><code>Enter</code> selects the focused option, or picks the create row</td></tr>
             <tr><td>A letter or digit</td><td>Single mode: jump to the first option starting with it. Repeating the same key cycles through the matches; typing several different characters matches the whole prefix.</td><td>Types into the search box</td></tr>
             <tr><td><code>Esc</code></td><td>—</td><td>Close and return focus to the control</td></tr>
             <tr><td><code>Tab</code></td><td>Move to the next field</td><td>Close the dropdown</td></tr>

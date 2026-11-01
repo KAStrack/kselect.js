@@ -1060,6 +1060,86 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
       </div>
     </div>
 
+    <!-- ── DEMO: Tags — create from the search box ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">🏷️</div>
+        <div>
+          <div class="demo-card-title">Tags — create from the search box with <code>create</code></div>
+          <div class="demo-card-desc">Tags are searched on a (fake) server with <code>load</code>, whose rows carry a <code>color</code>, a <code>className</code> and a <code>group</code>. Type a tag that doesn't exist yet and the list offers to create it; the server answers after 500&nbsp;ms. Try <strong>error</strong> to see a refusal, <strong>FINANCES</strong> to see that an existing tag in other capitals is not offered again, or a short tag like <strong>ux</strong>: queries under three letters only search the tags on the page, so the row is offered — and the server answers its existing <em>UX</em> tag instead of making a second one.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="section-label"><label for="tags-demo">Tags</label></div>
+        <select id="tags-demo" name="tags" multiple data-placeholder="Add tags…">
+          <option value="t1" data-ks-color="#0f766e" class="tag-chip" selected>Finances</option>
+          <option value="t4" data-ks-color="#b45309" class="tag-chip">Design</option>
+          <option value="t9" data-ks-color="#7c3aed" class="tag-chip">HR</option>
+        </select>
+
+        <label class="tags-demo-ask">
+          <input type="checkbox" id="tags-demo-ask"> Ask for a colour first (a dialog of the host's own)
+        </label>
+
+        <dialog id="tags-demo-dialog" class="tags-demo-dialog" aria-labelledby="tags-demo-dialog-title">
+          <form method="dialog">
+            <h3 id="tags-demo-dialog-title">New tag “<span id="tags-demo-dialog-name"></span>”</h3>
+            <fieldset>
+              <legend>Colour</legend>
+              <div class="tags-demo-swatches" id="tags-demo-swatches"></div>
+            </fieldset>
+            <div class="btn-row">
+              <button class="btn btn-primary" value="save">Create tag</button>
+              <button class="btn btn-secondary" value="cancel" formnovalidate>Cancel</button>
+            </div>
+          </form>
+        </dialog>
+
+        <div class="output-row">
+          <span class="output-label">Selected:</span>
+          <span class="output-value" id="tags-demo-output">t1</span>
+        </div>
+        <div class="output-row">
+          <span class="output-label">Events:</span>
+          <span class="output-value" id="tags-demo-events">—</span>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="kw">const</span> ks = <span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#tags'</span>, {
+  <span class="cm">// Search the shared tag list on the server…</span>
+  <span class="key">load</span>: (query, signal) =&gt;
+    <span class="fn">fetch</span>(<span class="str">'/api/tags?q='</span> + <span class="fn">encodeURIComponent</span>(query), { signal })
+      .<span class="fn">then</span>(r =&gt; r.<span class="fn">json</span>())
+      .<span class="fn">then</span>(tags =&gt; tags.<span class="fn">map</span>(t =&gt; ({
+        <span class="key">value</span>: t.id, <span class="key">label</span>: t.name, <span class="key">color</span>: t.colour, <span class="key">className</span>: <span class="str">'tag-chip'</span>,
+        <span class="key">detail</span>: t.archived ? <span class="str">'archived'</span> : t.uses + <span class="str">' uses'</span>, <span class="key">disabled</span>: t.archived,
+        <span class="key">group</span>: t.similar ? <span class="str">'Similar tags'</span> : <span class="str">'Other tags'</span>,
+      }))),
+  <span class="key">loadMinChars</span>: <span class="num">3</span>,
+
+  <span class="cm">// …and create one when nothing matches.</span>
+  <span class="key">create</span>: (query) =&gt;
+    <span class="fn">fetch</span>(<span class="str">'/api/tags'</span>, { <span class="key">method</span>: <span class="str">'POST'</span>, <span class="key">body</span>: JSON.<span class="fn">stringify</span>({ <span class="key">name</span>: query }) })
+      .<span class="fn">then</span>(<span class="kw">async</span> r =&gt; {
+        <span class="kw">const</span> tag = <span class="kw">await</span> r.<span class="fn">json</span>();
+        <span class="kw">if</span> (!r.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(tag.message);  <span class="cm">// shown under the list</span>
+        <span class="cm">// A duplicate name answers the existing tag; kselect selects it.</span>
+        <span class="kw">return</span> { <span class="key">value</span>: tag.id, <span class="key">label</span>: tag.name, <span class="key">color</span>: tag.colour, <span class="key">className</span>: <span class="str">'tag-chip'</span> };
+      }),
+})[<span class="num">0</span>];
+
+<span class="cm">/* Your CSS reads the colour kselect carries as --chip-color. */</span>
+<span class="key">.ks-tag.tag-chip</span> { <span class="key">background</span>: <span class="fn">color-mix</span>(<span class="kw">in srgb</span>, <span class="fn">var</span>(--chip-color) <span class="num">14%</span>, <span class="kw">white</span>); }
+<span class="key">.ks-option.tag-chip .ks-option-text::before</span> { <span class="key">background</span>: <span class="fn">var</span>(--chip-color); <span class="cm">/* a dot */</span> }</pre>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /demo-grid -->
 
   <div class="sponsored-by-kastrack">

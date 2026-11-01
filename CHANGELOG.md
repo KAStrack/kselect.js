@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.12.0] — 2026-11-01
+
+A release for pickers people add to as they go — tags, labels, categories — where the thing you want may not exist yet. Everything new is opt-in: a select without `create`, and a `load` answer without the new fields, behave as in 1.11.1, apart from the count now being translatable and announced in the phone sheet.
+
+### Added
+
+- **`create` — offer the typed query as a new option.** When no offered row equals the query, the list shows a "Create “…”" row (`createText`), last or first (`createPosition`), and instead of `noResultsText` when nothing matches. Picking it — arrow keys and Enter, a click, a tap; dropdown or sheet; single or multiple — calls `create(query)`, which returns a value, a `{ value, label, detail, className, color }` record, or a promise of either. The answer becomes a real `<option>`, selected exactly as a picked remote row is (`input` / `change` / `kselect:change`, `maxSelect` respected); an answer with a value the select already has selects that option instead of adding a second. Why: a tag picker over a server-searched list could find tags but not make one, so creating a tag meant leaving the form.
+  - **When it is offered:** for a non-empty query that no offered row matches by `createMatch(query, label)` — the select's own options after filtering, or the remote answer. The default compares at the collator's base strength in the page's language: case, accents and extra spaces are ignored ("Finances", "finances", "finançes" are one), but a language's own letters are not (Swedish keeps "Öst" and "ost" apart). A row that equals the query is listed even where the substring filter would hide it. Never offered while `load()` is pending; it returns with the answer.
+  - **While pending:** the row reads `creatingText` with a spinner (still under `prefers-reduced-motion`), carries `aria-busy` and `.ks-create-pending`, and `.ks-creating` marks the wrapper, dropdown and sheet. Picking it again does nothing. Typing on is fine: an answer that arrives under a newer query is still added and selected, without searching the old query again.
+  - **Afterwards:** multi mode keeps the list open, clears the query and puts keyboard focus on the new option; single mode closes as `closeOnSelect` says. Focus lost meanwhile (a host dialog dropped it on `<body>`) returns to the search box, or to the control once the list has closed; focus the user moved elsewhere is left alone.
+  - **Failure:** a rejection, a throw, or an answer without a value changes nothing, keeps the query and the list, and shows why under the list (`.ks-create-error`) and in the live region. A message the host chose is shown as it is; a JavaScript or network error shows `createErrorText` instead (and is logged), so "Failed to fetch" never reaches the user. Resolving `null` cancels quietly — for a dialog the user dismissed.
+  - **Host dialogs:** clicks inside a dialog (`<dialog>`, `role="dialog"`, `aria-modal`) that `create()` opened over the list no longer count as outside clicks, so the list is still open when the answer lands — including the click that resolves and closes the dialog in one go.
+  - **`kselect:create`** fires on the `<select>` before `create` is called, with `detail.query`, and is cancelable: `preventDefault()` hands the rest to the host.
+  - At the `maxSelect` limit the row is listed but unavailable (`aria-disabled`), with `maxSelectText` under it.
+- **Remote rows can carry `className`, `color`, `group` and `disabled`.** `className` becomes the option's class and `color` its `data-ks-color`, so both reach the row and, once picked, the tag, as on a hand-written option. `group` lists the row under a heading — groups in the order the answer first names them, after the ungrouped rows — built like an optgroup's (a named `role="group"`), without collapsing or select-all. `disabled: true` shows a row that cannot be picked.
+- **The result count is translatable**: `resultsText` (`'{n} results'`, or a `function(n)` for languages with more plural forms) and `resultText` (`'1 result'`). It was the last English literal in kselect. A translated `resultsText` with `resultText` left at its default is used for one result too. With `create`, `resultsCreateText` (`'{results}, or create “{query}”'`) and `createOnlyText` (`'No results; create “{query}”'`) announce the row.
+
+### Fixed
+
+- **Nothing kselect announced was heard in the phone sheet.** The live region (result counts, the `maxSelect` notice) stayed in the hidden desktop dropdown, outside the `aria-modal` sheet that screen readers confine themselves to. It now moves into the sheet with the list.
+
+---
+
 ## [1.11.1] — 2026-10-29
 
 Accessibility of the open list. axe reported `aria-required-children` on every open dropdown, and `nested-interactive` with `selectAll` or `selectAllGroups`; all of it is fixed, verified in Chromium, Firefox and WebKit, desktop and the mobile sheet. Nothing about the options or events changes. Two things look different, both only with the options named: `selectAll` with search puts the search box on a row of its own, and a group header is no longer a Tab stop.

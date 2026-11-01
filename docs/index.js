@@ -129,3 +129,98 @@ const ksSwedish = Kselect.init('#swedish-demo', {
   summarizeSelectedText: '{n} valda',
 })[0];
 bindOutput('swedish-demo', 'swedish-demo-output', ksSwedish);
+
+// ── Tags demo: create from the search box ──
+// A fake tag server: search (load) and create, each answering after a delay.
+(function () {
+  const COLOURS = [
+    ['Teal', '#0f766e'], ['Amber', '#b45309'], ['Violet', '#7c3aed'], ['Rose', '#be123c'],
+    ['Blue', '#1d4ed8'], ['Green', '#15803d'], ['Slate', '#475569'], ['Pink', '#be185d'],
+  ];
+  let nextId = 100;
+  const server = [
+    ['t1', 'Finances', 0, 41], ['t2', 'Fintech', 4, 12], ['t3', 'Finance (old)', 6, 3, true],
+    ['t4', 'Design', 1, 30], ['t5', 'Design systems', 2, 9], ['t6', 'Marketing', 3, 22],
+    ['t7', 'Market research', 4, 7], ['t8', 'Legal', 6, 15], ['t9', 'HR', 2, 18],
+    ['t10', 'UX', 5, 25], ['t11', 'QA', 0, 11], ['t12', 'Research', 1, 14],
+    ['t13', 'Reporting', 3, 19], ['t14', 'Recruiting', 7, 8], ['t15', 'Roadmap', 4, 16],
+  ].map(function (t) { return { id: t[0], name: t[1], colour: COLOURS[t[2]][1], uses: t[3], archived: !!t[4] }; });
+
+  const later = function (ms, fn) { return new Promise(function (resolve, reject) { setTimeout(function () { try { resolve(fn()); } catch (e) { reject(e); } }, ms); }); };
+  const row = function (t, similar) {
+    return {
+      value: t.id, label: t.name, color: t.colour, className: 'tag-chip',
+      detail: t.archived ? 'archived' : t.uses + ' uses', disabled: t.archived,
+      group: similar ? 'Similar tags' : 'Other tags',
+    };
+  };
+
+  // Search: names starting with the query are "similar", names containing it
+  // anywhere are "other"; most-used first within each.
+  function load(query) {
+    return later(300, function () {
+      const q = query.toLowerCase();
+      const hits = server.filter(function (t) { return t.name.toLowerCase().indexOf(q) !== -1; })
+        .sort(function (a, b) { return b.uses - a.uses; });
+      return hits.filter(function (t) { return t.name.toLowerCase().indexOf(q) === 0; }).map(function (t) { return row(t, true); })
+        .concat(hits.filter(function (t) { return t.name.toLowerCase().indexOf(q) !== 0; }).map(function (t) { return row(t, false); }));
+    });
+  }
+
+  // Create: refuses "error"; a name that exists in other capitals answers
+  // the existing tag; anything else becomes a new tag.
+  function createOnServer(name, colour) {
+    return later(500, function () {
+      if (name.toLowerCase() === 'error') throw new Error('“error” is a reserved word — try another name');
+      const existing = server.find(function (t) { return t.name.toLowerCase() === name.toLowerCase(); });
+      const tag = existing || { id: 't' + (nextId++), name: name, colour: colour || COLOURS[nextId % COLOURS.length][1], uses: 0 };
+      if (!existing) server.push(tag);
+      return { value: tag.id, label: tag.name, color: tag.colour, className: 'tag-chip', detail: existing ? tag.uses + ' uses' : 'new' };
+    });
+  }
+
+  // With the box ticked, a dialog of the host's own asks for the colour
+  // first; create() resolves when it is saved, or with null when cancelled.
+  const dialog = document.getElementById('tags-demo-dialog');
+  const swatches = document.getElementById('tags-demo-swatches');
+  COLOURS.forEach(function (c, i) {
+    const label = document.createElement('label');
+    label.style.setProperty('--swatch', c[1]);
+    const input = document.createElement('input');
+    input.type = 'radio'; input.name = 'colour'; input.value = c[1];
+    input.setAttribute('aria-label', c[0]);
+    if (i === 0) input.checked = true;
+    label.appendChild(input);
+    swatches.appendChild(label);
+  });
+  function askForColour(name) {
+    return new Promise(function (resolve) {
+      document.getElementById('tags-demo-dialog-name').textContent = name;
+      dialog.returnValue = '';
+      dialog.showModal();
+      dialog.addEventListener('close', function onClose() {
+        dialog.removeEventListener('close', onClose);
+        if (dialog.returnValue !== 'save') return resolve(null);
+        resolve(createOnServer(name, dialog.querySelector('input[name=colour]:checked').value));
+      });
+    });
+  }
+
+  window.ksTags = Kselect.init('#tags-demo', {
+    load: load,
+    loadMinChars: 3,
+    create: function (query) {
+      return document.getElementById('tags-demo-ask').checked ? askForColour(query) : createOnServer(query);
+    },
+  })[0];
+  bindOutput('tags-demo', 'tags-demo-output', window.ksTags);
+
+  const events = [];
+  const eventsEl = document.getElementById('tags-demo-events');
+  ['kselect:create', 'change'].forEach(function (name) {
+    document.getElementById('tags-demo').addEventListener(name, function (e) {
+      events.unshift(name === 'kselect:create' ? 'kselect:create “' + e.detail.query + '”' : 'change');
+      eventsEl.textContent = events.slice(0, 3).join(' · ');
+    });
+  });
+})();

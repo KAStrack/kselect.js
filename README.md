@@ -11,7 +11,8 @@ kselect.js progressively enhances native `<select>` elements with live search, m
 ## Features
 
 - **Searchable** - live filtering as you type; optgroups auto-expand on match
-- **Remote search** - with `load`, search a list too large to load on the server as the user types; picked results become real `<option>`s
+- **Remote search** - with `load`, search a list too large to load on the server as the user types; picked results become real `<option>`s, with the server's colours and groups
+- **Create from the search box** - with `create`, a query nothing matches is offered as a new option (tags, labels), created on your server and selected
 - **Single & multi select** - both modes supported, auto-detected from the `<select>` element
 - **Tag-style multi select** - selected values appear as removable inline pills
 - **Checkbox list** - dropdown items show checkboxes in multi-select mode
@@ -23,7 +24,7 @@ kselect.js progressively enhances native `<select>` elements with live search, m
 - **Native picker fallback** - optionally use the OS picker on touch devices with `nativeOnMobile`
 - **Syncs the native `<select>`** - all selections are reflected back to the real element
 - **Native `change` event** - fires on the original `<select>` so existing listeners and frameworks work without changes
-- **Custom events** - `kselect:change`, `kselect:open`, `kselect:close`
+- **Custom events** - `kselect:change`, `kselect:open`, `kselect:close`, `kselect:create`
 - **Keyboard accessible** - Arrow keys, Enter, Escape, and Tab navigation fully supported, plus native-style arrow stepping and first-letter type-ahead on a closed single select
 - **Screen reader friendly** - WCAG 2.1 AA compliant with full ARIA attributes
 - **Themeable** - ~40 CSS custom properties; 20 ready-made themes included
@@ -174,6 +175,16 @@ Precedence, highest first: per-instance options → `data-` attributes → [`Kse
 | `loadDelay` | number | `250` | Debounce, in ms, before `load()` is called (with `load`, the search boxes use this instead of their 100 ms filter delay) |
 | `loadMinChars` | number | `1` | Queries shorter than this filter the select's own options locally instead of calling `load()`. An empty box always shows the select's own options |
 | `loadingText` | string | `'Searching…'` | Shown in the dropdown and the mobile sheet while `load()` is pending |
+| `create` | function\|null | `null` | Offer the typed query as a new option: `function(query)` returning a value, a `{ value, label, detail, className, color }` record, or a promise of either. See [Creating options](#creating-options-create) |
+| `createText` | string | `'Create “{query}”'` | The create row; `{query}` = the trimmed query, always plain text (never HTML, even with `allowHtml`) |
+| `createMatch` | function\|null | `null` | `function(query, label)` → `true` when an offered row already equals the query (no create row then). Default: equal ignoring case, accents and extra spaces, by the page language's rules |
+| `createPosition` | `'end'`\|`'start'` | `'end'` | Where the create row goes in the list |
+| `creatingText` | string | `'Creating “{query}”…'` | The create row while `create()` is pending |
+| `createErrorText` | string | `'Couldn’t create “{query}”'` | Shown when `create()` fails without a message of its own |
+| `resultsText` | string\|function | `'{n} results'` | The result count screen readers hear after a search. A string with `{n}`, or `function(n)` returning one, for languages with other plural rules |
+| `resultText` | string | `'1 result'` | The count when it is exactly 1 (unused when `resultsText` is a function) |
+| `resultsCreateText` | string | `'{results}, or create “{query}”'` | Announced when there are results and a create row; `{results}` = the count above |
+| `createOnlyText` | string | `'No results; create “{query}”'` | Announced when the create row is all there is |
 
 ---
 
@@ -223,6 +234,7 @@ kselect fires events on the original `<select>` element.
 | `kselect:change` | A selection changes (custom event) |
 | `kselect:open` | The dropdown opens |
 | `kselect:close` | The dropdown closes |
+| `kselect:create` | The create row was picked, before `create()` is called. `event.detail.query` is the query; `preventDefault()` stops kselect there, so you can take over (see [Creating options](#creating-options-create)) |
 | `kselect:sync` | **Dispatch this** to force kselect to re-read the `<select>` DOM |
 
 ```js
@@ -369,12 +381,22 @@ Object.assign(Kselect.defaults, {
   removeTagText:         'Ta bort {label}',
   clearText:             'Rensa val',
   closeText:             'Stäng',
+  loadingText:           'Söker…',
+  resultsText:           '{n} träffar',
+  resultText:            '1 träff',
+  createText:            'Skapa ”{query}”',
+  creatingText:          'Skapar ”{query}”…',
+  createErrorText:       'Det gick inte att skapa ”{query}”',
+  resultsCreateText:     '{results}, eller skapa ”{query}”',
+  createOnlyText:        'Inga träffar; skapa ”{query}”',
 });
 
 Kselect.init('select');
 ```
 
-`{label}`, `{group}` and `{n}` can sit anywhere in the template, for languages that order words differently (`'{label} 移除'`). Per-instance options and `data-placeholder` / `data-search-placeholder` still win over `Kselect.defaults`.
+`{label}`, `{group}`, `{n}`, `{query}` and `{results}` can sit anywhere in the template, for languages that order words differently (`'{label} 移除'`, `'创建“{query}”'`).
+
+The result count is the one string with a plural. `resultText` covers exactly one and `resultsText` the rest, which suits English, Swedish and Chinese (`'{n} 个结果'` for both). For a language with more plural forms, make `resultsText` a function: `resultsText: n => n + ' ' + plural(n, 'результат', 'результата', 'результатов')`. If you translate `resultsText` but leave `resultText` at its English default, your `resultsText` is used for one result too. Per-instance options and `data-placeholder` / `data-search-placeholder` still win over `Kselect.defaults`.
 
 ---
 
@@ -469,10 +491,18 @@ Kselect.init('#assignee', {
 </select>
 ```
 
-**The contract.** `load(query, signal)` is called with the trimmed query and an `AbortSignal`, with `this` set to the kselect instance (handy when one function in `Kselect.defaults` serves several selects). Return an array — or a promise of one — of `{ value, label, detail }`: `value` is required (coerced to a string; rows without one, and repeats, are dropped), `label` falls back to the value, and `detail` is optional.
+**The contract.** `load(query, signal)` is called with the trimmed query and an `AbortSignal`, with `this` set to the kselect instance (handy when one function in `Kselect.defaults` serves several selects). Return an array — or a promise of one — of `{ value, label, detail, className, color, group, disabled }`: `value` is required (coerced to a string; rows without one, and repeats, are dropped), `label` falls back to the value, and the rest are optional:
+
+| Field | Becomes |
+|---|---|
+| `detail` | A plain-text second line under the label (`data-ks-detail`) |
+| `className` | The option's `class`, carried to its row and its tag as a hand-written option's class is |
+| `color` | `data-ks-color` — the [CSP-safe colour route](#per-row-colours-under-a-strict-content-security-policy), read in your CSS as `var(--chip-color)` on the row and the tag |
+| `group` | A heading the row is listed under. Groups appear in the order the answer first mentions them, after the rows without a group. A plain heading (a named `role="group"`, like an optgroup's), with no collapsing and no select-all |
+| `disabled` | `true` shows the row but it cannot be picked (an archived record, say) |
 
 - **The answer replaces the offered rows, not the selected ones.** A picked option the answer lacks stays picked and is listed first, so it can still be unticked. The select's own options come back when the box is emptied, dropped below `loadMinChars`, or the list closes.
-- **Picking a row adds a real `<option>`** (`selected`, with the label as its text and `detail` as `data-ks-detail`) to the `<select>`, so the form posts it, and `input` / `change` / `kselect:change` fire as for any pick, single or multiple. Unpicked rows never touch the select.
+- **Picking a row adds a real `<option>`** (`selected`, with the label as its text, `detail` as `data-ks-detail`, `className` as its class and `color` as `data-ks-color`) to the `<select>`, so the form posts it, and `input` / `change` / `kselect:change` fire as for any pick, single or multiple. Unpicked rows never touch the select.
 - **The server is the filter.** A remote answer is shown whole and never re-filtered locally by the query, so your endpoint may match on fields the label doesn't show. `noResultsText` appears only when the server answers with an empty array.
 - **Stale answers lose.** Each new search aborts the previous request through its `signal`, and an overtaken answer is discarded even if your `load` ignores the signal.
 - **Errors leave the list as it was.** A throw, a rejected promise or a non-array answer clears the loading state, keeps the current rows and logs a `console.warn`; nothing is thrown into your page.
@@ -483,6 +513,107 @@ Kselect.init('#assignee', {
 ### A detail line on any option
 
 `data-ks-detail` on an `<option>` renders a second, plain-text line under its label (`.ks-option-detail`), with or without `load`. It takes the row's colour by default; set `--ks-color-option-detail` to soften it, and check its contrast on selected and hovered rows. Local search matches the label only.
+
+---
+
+## Creating options (`create`)
+
+For a list people add to as they go — tags, labels, categories — give kselect a `create` function. When the search finds nothing that *is* the query, the list offers a row to create it:
+
+```
+  Finances          ← already exists: no create row for "finances"
+  Fintech
++ Create “finnish”  ← for a query nothing equals
+```
+
+```js
+const [ks] = Kselect.init('#tags', {
+  // Search the shared tag list on the server…
+  load: (query, signal) =>
+    fetch('/api/tags?q=' + encodeURIComponent(query), { signal })
+      .then(r => r.json())
+      .then(tags => tags.map(t => ({
+        value: t.id, label: t.name, color: t.colour,
+        detail: t.uses + ' uses',
+        group: t.similar ? 'Similar tags' : 'Other tags',
+      }))),
+
+  // …and create one when nothing matches.
+  create: (query) =>
+    fetch('/api/tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: query }),
+    }).then(async r => {
+      const body = await r.json();
+      // A message of your own is shown to the user as it is.
+      if (!r.ok) throw new Error(body.message || 'That tag could not be saved');
+      // An existing tag (a duplicate name) is fine: kselect selects it.
+      return { value: body.id, label: body.name, color: body.colour };
+    }),
+});
+```
+
+```html
+<select id="tags" name="tags" multiple>
+  <option value="12" data-ks-color="#0a7a55" selected>Finances</option>
+</select>
+```
+
+**When the row appears.** For a non-empty query that no offered row equals — the select's own options after filtering, or the remote answer. When nothing matches at all it replaces `noResultsText`. It is never shown while `load()` is pending (it would flicker between keystrokes) and comes back with the answer. "Equals" is `createMatch(query, label)`; by default that ignores case, accents and extra spaces using the page language's own rules, so "Finances", "finances" and "finançes" are one tag in English — while in Swedish "Öst" and "ost" stay two words, because å, ä and ö are letters of their own there. A row that equals the query is shown even if the ordinary search would have hidden it ("finançes" lists "Finances"). Pass your own `createMatch` if your server compares names differently.
+
+**A real row.** It is an option of the list (`li.ks-option.ks-create`, `role="option"`): the arrow keys reach it, Enter, a click or a tap picks it, in the dropdown and the mobile sheet, single and multiple. `createPosition: 'start'` puts it first instead of last. Screen readers hear it with the count: "3 results, or create “finnish”" (`resultsCreateText`), or "No results; create “finnish”" (`createOnlyText`).
+
+**What `create(query)` may return** (`this` is the instance):
+
+| Answer | What happens |
+|---|---|
+| A value, or `{ value, label, detail, className, color }` (or a promise of one) | A real `<option>` is added to the `<select>` and selected, exactly as picking a remote row does: `input` / `change` / `kselect:change` fire, `maxSelect` is respected. `label` falls back to the query |
+| A value the `<select>` already has | That option is selected; no second option with the same value is added |
+| `null` / `undefined` | Nothing is created and nothing is reported — for a dialog the user dismissed. The query stays |
+| A rejection or a throw | Nothing changes, the query and the list stay, and the reason is shown under the list (`.ks-create-error`) and announced. A message you chose (`new Error('That name is reserved')`, or a rejected string) is shown as it is; a JavaScript or network error (`TypeError: Failed to fetch`) shows `createErrorText` instead and is logged with `console.warn`. Nothing reaches your page as an uncaught error |
+
+**While it is pending** the row reads `creatingText` with a spinner, carries `aria-busy="true"` and `.ks-create-pending` (and `.ks-creating` is on the wrapper, the dropdown and the sheet). Picking it again does nothing; one create runs at a time. You can keep typing: if a newer query is on screen when the answer arrives, the new option is still added and selected, but the old query is not searched again.
+
+**Afterwards.** In multi mode the list stays open, the query is cleared and keyboard focus rests on the new option, ready for the next tag. In single mode the list closes as `closeOnSelect` says. If focus was lost meanwhile — your own dialog took it and dropped it on `<body>` — it comes back to the search box while the list is open, or to the control once it has closed; focus the user moved elsewhere is left alone.
+
+At the `maxSelect` limit the row is still listed, unavailable (`aria-disabled`), with `maxSelectText` under it.
+
+### Asking for more in a dialog
+
+`create` can return any promise, so it can open your own dialog first — to choose the new tag's colour, say — and resolve when the user saves. kselect shows the pending row the whole time, and clicks inside your dialog do not close the list (they would, otherwise, count as clicks outside it):
+
+```js
+create: (query) => new Promise((resolve) => {
+  const dialog = document.getElementById('new-tag-dialog');
+  dialog.querySelector('[name=name]').value = query;
+  dialog.showModal();
+  dialog.onclose = () => {
+    if (dialog.returnValue !== 'save') return resolve(null);   // dismissed: nothing happens
+    resolve(saveTag(new FormData(dialog.querySelector('form'))));  // a promise of { value, label, color }
+  };
+}),
+```
+
+### Taking over with `kselect:create`
+
+`kselect:create` fires on the `<select>` when the row is picked, before `create` is called, with the query in `event.detail.query`. Call `preventDefault()` and kselect stops there — no pending state, no `create()` call — and the rest is yours. To add what you made, put it in the `<select>` and select it:
+
+```js
+select.addEventListener('kselect:create', (event) => {
+  event.preventDefault();
+  ks.close();
+  openTagEditor(event.detail.query).then((tag) => {     // your own flow
+    if (!tag) return;
+    select.add(new Option(tag.name, tag.id));            // autoSync picks it up
+    ks.setValue([...ks.getValue(), String(tag.id)]);     // selects it; fires change
+  });
+});
+```
+
+Prefer returning a promise from `create` when all you need is a dialog: kselect then keeps the pending row, the focus handling and the error line for you.
+
+Works with and without `load`, with optgroups, through `refresh()` and `autoSync`, inside a modal `<dialog>` (mount the dropdown in it with `dropdownParent`), and under a strict `style-src`. Ignored with `nativeOnMobile` on touch devices and with `searchable: false`.
 
 ---
 
@@ -544,7 +675,9 @@ The small targets — tag remove, clear, optgroup select-all, the search input i
 
 `.ks-no-search` is set on the wrapper, the dropdown and the mobile sheet when `searchable: false`, and hides every search box.
 
-With [`load`](#remote-search-load), `.ks-loading` is on the same three elements while a request is pending, and `.ks-remote` while a remote answer is shown. Option rows with a `data-ks-detail` line carry `.ks-option-has-detail`.
+With [`load`](#remote-search-load), `.ks-loading` is on the same three elements while a request is pending, and `.ks-remote` while a remote answer is shown; a remote answer's group headings are `.ks-group.ks-group-static`. Option rows with a `data-ks-detail` line carry `.ks-option-has-detail`.
+
+With [`create`](#creating-options-create), the create row is `.ks-option.ks-create` (plus `.ks-create-start` when first, `.ks-create-pending` while `create()` runs, `.ks-option-at-limit` at `maxSelect`), `.ks-creating` is on the wrapper, the dropdown and the sheet while it runs, and a failure line is `.ks-create-error`. The row takes the option text colour; set `--ks-color-create-text` to give it an accent of your own (check it against `--ks-color-option-hover` too). The failure line uses `--ks-color-error-bg`, `--ks-color-error-text` and `--ks-color-error-border`.
 
 ---
 
