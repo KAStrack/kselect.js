@@ -236,3 +236,7 @@ bindOutput('swedish-demo', 'swedish-demo-output', ksSwedish);
     });
   });
 })();
+
+// ── dropdownWidth: the same narrow select, list as wide as its box vs as its options ──
+Kselect.init('#width-control-demo');
+Kselect.init('#width-content-demo', { dropdownWidth: 'content' });

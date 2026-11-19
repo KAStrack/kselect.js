@@ -7,8 +7,8 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="kselect.min.css?v=1.12.0">
-  <link rel="stylesheet" href="index.css?v=1.12.0">
+  <link rel="stylesheet" href="kselect.min.css?v=1.13.0">
+  <link rel="stylesheet" href="index.css?v=1.13.0">
 </head>
 <body>
 
@@ -1141,6 +1141,57 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
       </div>
     </div>
 
+    <!-- ── DEMO: dropdownWidth ── -->
+    <div class="demo-card">
+      <div class="demo-card-header">
+        <div class="demo-icon">↔️</div>
+        <div>
+          <div class="demo-card-title">Narrow boxes — <code>dropdownWidth: 'content'</code></div>
+          <div class="demo-card-desc">Filters in a toolbar are often narrower than their options. By default the open list is as wide as its box, so long options are cut off; with <code>dropdownWidth: 'content'</code> it grows to fit its widest option, never past the edge of the screen, and keeps that width while you search.</div>
+        </div>
+      </div>
+      <div class="demo-card-body">
+        <div class="split">
+          <div>
+            <div class="section-label"><label for="width-control-demo">Topic — default</label></div>
+            <div class="width-demo-box">
+              <select id="width-control-demo">
+                <option value="">Any</option>
+                <option value="gq">General questions</option>
+                <option value="na">I might not be able to come</option>
+                <option value="sr">Specific requests</option>
+                <option value="cd">From the camp director</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <div class="section-label"><label for="width-content-demo">Topic — <code>'content'</code></label></div>
+            <div class="width-demo-box">
+              <select id="width-content-demo">
+                <option value="">Any</option>
+                <option value="gq">General questions</option>
+                <option value="na">I might not be able to come</option>
+                <option value="sr">Specific requests</option>
+                <option value="cd">From the camp director</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-card-footer">
+        <button class="view-source-btn" onclick="toggleSource(this)">
+          <svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View source
+        </button>
+        <div class="source-block">
+          <pre><span class="fn">Kselect</span>.<span class="fn">init</span>(<span class="str">'#topic'</span>, { <span class="key">dropdownWidth</span>: <span class="str">'content'</span> });
+
+<span class="cm">// or every select on the page, before the first init:</span>
+<span class="fn">Kselect</span>.defaults.<span class="key">dropdownWidth</span> = <span class="str">'content'</span>;</pre>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /demo-grid -->
 
   <div class="sponsored-by-kastrack">
@@ -1154,8 +1205,8 @@ ks.<span class="fn">setValue</span>([<span class="str">'cheese'</span>, <span cl
 
 </div><!-- /container -->
 
-<script src="kselect.min.js?v=1.12.0"></script>
-<script src="example.js?v=1.12.0"></script>
-<script src="index.js?v=1.12.0"></script>
+<script src="kselect.min.js?v=1.13.0"></script>
+<script src="example.js?v=1.13.0"></script>
+<script src="index.js?v=1.13.0"></script>
 </body>
 </html>

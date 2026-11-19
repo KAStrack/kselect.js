@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.13.0] — 2026-11-18
+
+For selects in narrow boxes — filter bars, table cells, sidebars — whose open list was exactly as wide as the box, so long options were cut off with an ellipsis ("General qu…") and people could not read what they were choosing. Opt-in: without the new option every list opens exactly as in 1.12.0.
+
+### Added
+
+- **`dropdownWidth: 'content'` — the open list grows to fit its options.** The default, `'control'`, keeps the list as wide as the control. `'content'` makes it at least that wide and wide enough for its widest row, so nothing is cut while there is room. Set it for a whole site with `Kselect.defaults.dropdownWidth = 'content'`.
+  - **What counts:** every option, including those in collapsed groups (opening a group never needs more room), group headings, `data-ks-detail` lines, the select-all row, the search placeholder when the search box sits in the list (`selectAll`), and the limit, loading and no-results notices. Not the create row: it repeats the query, and would widen the list on every key, so a long query ellipsises there.
+  - **Never past the screen:** at most the visual viewport's width less 8px a side. A list that would run off the right edge moves left, by its real width, until its right edge is 8px inside the viewport; in a right-to-left page it grows leftwards from the control's right edge. Past that width, rows ellipsis or wrap as before.
+  - **Inside a dialog:** a dropdown mounted with `dropdownParent` is also kept inside each box that would clip it — its mount and the mount's ancestors with `overflow` other than `visible` (or paint containment), up to and including a modal `<dialog>` — with the result translated into the mount's coordinates as before. Works for a mount inside a Shadow DOM.
+  - **Steady while searching:** measured once each time the list opens, over every option, so the width does not change as the search filters. Rows that arrive while it is open (a `load` answer, an option added by `autoSync` or `refresh()`, a created option) can widen it; it never narrows while open.
+  - **Looks:** where the list reaches past the control it carries `.ks-overhang-left` / `.ks-overhang-right`, which give that edge a border and rounded corner, so the control reads as a tab on the list. A `'content'` dropdown is `.ks-width-content` (`box-sizing: border-box`), so a list no wider than its rows lines up with the control exactly, and opening upwards it overlaps the control's top border instead of stopping 1.5px short of it.
+  - The phone sheet is unchanged.
+
+### Fixed
+
+- **A created option did not appear in the open list without `load`.** With `create` and the select's own options (no `load`, or a query under `loadMinChars`), the new option was added and selected, but the list was not rebuilt, so it showed only when the list was next opened, and keyboard focus could not move to it as 1.12.0 described. It is now listed, selected and focused straight away.
+
+---
+
 ## [1.12.0] — 2026-11-01
 
 A release for pickers people add to as they go — tags, labels, categories — where the thing you want may not exist yet. Everything new is opt-in: a select without `create`, and a `load` answer without the new fields, behave as in 1.11.1, apart from the count now being translatable and announced in the phone sheet.

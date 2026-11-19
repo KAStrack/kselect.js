@@ -19,6 +19,7 @@ kselect.js progressively enhances native `<select>` elements with live search, m
 - **Collapsible optgroups** - click a group header to collapse or expand it
 - **Select all** - global and per-group "select all" controls in multi-select mode
 - **Selection limit** - cap how many items can be selected with `maxSelect`
+- **Lists wider than their box** - with `dropdownWidth: 'content'`, a select in a narrow box opens a list wide enough to read every option
 - **HTML option labels** - opt in with `allowHtml: true` to render rich markup inside option labels
 - **Mobile bottom-sheet** - on phones, opens a full-screen bottom-sheet modal instead of a dropdown
 - **Native picker fallback** - optionally use the OS picker on touch devices with `nativeOnMobile`
@@ -123,6 +124,7 @@ Kselect.init('#my-select', {
   showEmptyOptGroups: true,
   copyClassName:     true,
   revealSelection:   true,
+  dropdownWidth:     'control',
   dropdownParent:    null,
   load:              null,
   loadDelay:         250,
@@ -170,6 +172,7 @@ Precedence, highest first: per-instance options → `data-` attributes → [`Kse
 | `showEmptyOptGroups` | boolean | `true` | Whether empty `<optgroup>` headers (groups with no `<option>` children) appear in the dropdown. `true` always shows the header; `false` omits the optgroup entirely |
 | `copyClassName` | boolean | `true` | Copy the source `<select>`'s `class` onto the wrapper `<div>`. Set `false` when that class styles the *native* control. Also disables class *mirroring* on `refresh()` — see [Form-framework classes](#form-framework-classes-on-the-select) |
 | `revealSelection` | boolean | `true` | Open the list already scrolled to the current selection (the first selected option in multi mode), centred if it would otherwise be off-screen. Nothing selected, or a selection inside a collapsed group, opens at the top. `false` always opens at the top |
+| `dropdownWidth` | `'control'`\|`'content'` | `'control'` | How wide the open list is. `'control'` = exactly as wide as the control. `'content'` = at least that wide, and wider to fit its widest option, group heading, detail line, notice or search placeholder, up to the visible width less 8px a side; past that, rows ellipsis as before. Measured once each time the list opens, so it does not change as the search filters. The phone sheet is unaffected. See [Lists wider than their box](#lists-wider-than-their-box-dropdownwidth) |
 | `dropdownParent` | `null`\|`'wrapper'`\|Element\|string\|function | `null` | Where the dropdown (and the mobile sheet) is mounted. `null` = `<body>`, which escapes every overflow ancestor; `'wrapper'` = inside the widget's own `.ks-wrapper`; an element, a CSS selector (resolved in the select's own root, so it may name an element inside a Shadow DOM) or `function(select, wrapper)` returning one. See [Mounting the dropdown elsewhere](#mounting-the-dropdown-elsewhere-shadow-dom) |
 | `load` | function\|null | `null` | Remote source: `function(query, signal)` returning an array, or a promise of one, of `{ value, label, detail }`. Called (debounced) as the user types in either search box; its answer replaces the offered rows. See [Remote search](#remote-search-load) |
 | `loadDelay` | number | `250` | Debounce, in ms, before `load()` is called (with `load`, the search boxes use this instead of their 100 ms filter delay) |
@@ -617,6 +620,27 @@ Works with and without `load`, with optgroups, through `refresh()` and `autoSync
 
 ---
 
+## Lists wider than their box (`dropdownWidth`)
+
+A select in a narrow box — a filter bar, a table cell, a sidebar — opens a list exactly as wide as the box, so long options are cut off with an ellipsis ("General qu…") and people cannot read what they are choosing. `dropdownWidth: 'content'` lets the open list grow to fit:
+
+```js
+Kselect.init('#topic', { dropdownWidth: 'content' });
+
+// or for every select on the page, before the first init:
+Kselect.defaults.dropdownWidth = 'content';
+```
+
+- **How wide.** At least as wide as the control, and wide enough for its widest option. Everything in the list counts: options inside collapsed groups (so opening one never needs more room), group headings, `data-ks-detail` lines, the select-all row, the search placeholder when the search box sits in the list (`selectAll`), and the limit, loading and no-results notices. The create row does not count: it repeats the query, and the list would widen on every key, so a long query ellipsises there.
+- **Never past the screen.** The list is at most the width of the visible area (the visual viewport, so pinch-zoom is allowed for) less 8px on each side. A list that would run past the right edge moves left until its right edge is 8px inside the viewport; in a right-to-left page it grows leftwards from the control's right edge instead. Past that width, rows ellipsis as they do today.
+- **Inside a dialog.** A [mounted](#mounting-the-dropdown-elsewhere-shadow-dom) dropdown is also kept inside every box that would clip it — the mount and its ancestors with `overflow` other than `visible`, up to and including a modal `<dialog>` — so a list mounted in a dialog stays inside the dialog.
+- **Steady while you search.** The width is measured once each time the list opens, over every option, so filtering does not make it jump. Rows that arrive while it is open — a [`load`](#remote-search-load) answer, an option added through `autoSync` or `refresh()`, a created option — can widen it, but it never narrows while open.
+- **Phone sheet:** unchanged; it is already the width of the screen.
+
+Where the list reaches past the control it carries `.ks-overhang-left` / `.ks-overhang-right`, which give the overhanging edge a border and rounded corner of its own, so the control reads as a tab on the list. A `'content'` dropdown also carries `.ks-width-content`, which makes it `box-sizing: border-box`, so a list no wider than its rows lines up with the control exactly.
+
+---
+
 ## Mounting the dropdown elsewhere (Shadow DOM)
 
 By default the dropdown is appended to `<body>` and positioned with `position: fixed`, so no `overflow: hidden` or `overflow: scroll` ancestor can clip it. Two situations want it somewhere else:
@@ -674,6 +698,8 @@ The small targets — tag remove, clear, optgroup select-all, the search input i
 ### State hooks
 
 `.ks-no-search` is set on the wrapper, the dropdown and the mobile sheet when `searchable: false`, and hides every search box.
+
+With [`dropdownWidth: 'content'`](#lists-wider-than-their-box-dropdownwidth), the dropdown carries `.ks-width-content`, and `.ks-overhang-left` / `.ks-overhang-right` while it reaches past the control on that side.
 
 With [`load`](#remote-search-load), `.ks-loading` is on the same three elements while a request is pending, and `.ks-remote` while a remote answer is shown; a remote answer's group headings are `.ks-group.ks-group-static`. Option rows with a `data-ks-detail` line carry `.ks-option-has-detail`.
 

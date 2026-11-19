@@ -21,7 +21,7 @@
       <a href="#top">
         <span class="logo-re">k</span><span class="logo-select">select</span><span class="logo-js">.js</span>
       </a>
-      <div class="sidebar-version">v1.12.0 — MIT License</div>
+      <div class="sidebar-version">v1.13.0 — MIT License</div>
     </div>
 
     <div class="nav-section-label">Getting started</div>
@@ -42,6 +42,7 @@
     <a class="nav-link" href="#dynamic-options">Dynamic options</a>
     <a class="nav-link" href="#remote-search">Remote search</a>
     <a class="nav-link" href="#creating">Creating options</a>
+    <a class="nav-link" href="#dropdown-width">List width</a>
     <a class="nav-link" href="#mount">Mounting (Shadow DOM)</a>
     <a class="nav-link" href="#mobile">Mobile</a>
 
@@ -718,6 +719,33 @@ ks.<span class="t-fn">refresh</span>(); <span class="t-cm">// rebuild from new D
 
 
       <!-- ── Mobile ─────────────────────────────────────────────────────────── -->
+      <!-- ── List width ─────────────────────────────────────────────────────── -->
+      <section class="doc-section" id="dropdown-width">
+        <h2>Lists wider than their box</h2>
+        <p>A select in a narrow box — a filter bar, a table cell, a sidebar — opens a list exactly as wide as the box, so long options are cut off with an ellipsis (“General qu…”) and people cannot read what they are choosing. <code>dropdownWidth: 'content'</code> lets the open list grow to fit.</p>
+
+        <div class="code-block">
+          <div class="code-block-header"><span class="code-lang">js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>Kselect.<span class="t-fn">init</span>(<span class="t-str">'#topic'</span>, { <span class="t-key">dropdownWidth</span>: <span class="t-str">'content'</span> });
+
+<span class="t-cm">// or for every select on the page, before the first init:</span>
+Kselect.defaults.dropdownWidth = <span class="t-str">'content'</span>;</pre>
+        </div>
+
+        <ul>
+          <li><strong>How wide.</strong> At least as wide as the control, and wide enough for its widest option. Everything in the list counts: options inside collapsed groups (so opening one never needs more room), group headings, <code>data-ks-detail</code> lines, the select-all row, the search placeholder when the search box sits in the list (<code>selectAll</code>), and the limit, loading and no-results notices. The create row does not: it repeats the query and would widen the list on every key, so a long query ellipsises there.</li>
+          <li><strong>Never past the screen.</strong> At most the width of the visible area (the visual viewport, so pinch-zoom is allowed for) less 8px on each side. A list that would run past the right edge moves left until its right edge is 8px inside the viewport; in a right-to-left page it grows leftwards from the control's right edge instead. Past that width, rows ellipsis as they do today.</li>
+          <li><strong>Inside a dialog.</strong> A <a href="#mount">mounted</a> dropdown is also kept inside every box that would clip it — the mount and its ancestors with <code>overflow</code> other than <code>visible</code>, up to and including a modal <code>&lt;dialog&gt;</code> — so a list mounted in a dialog stays inside the dialog.</li>
+          <li><strong>Steady while you search.</strong> The width is measured once each time the list opens, over every option, so filtering does not make it jump. Rows that arrive while it is open — a <a href="#remote-search"><code>load</code></a> answer, an option added through <code>autoSync</code> or <code>refresh()</code>, a created option — can widen it, but it never narrows while open.</li>
+          <li><strong>Phone sheet:</strong> unchanged; it is already the width of the screen.</li>
+        </ul>
+
+        <div class="callout callout-note">
+          <span class="callout-icon">ℹ</span>
+          <p>Hooks: where the list reaches past the control it carries <code>.ks-overhang-left</code> / <code>.ks-overhang-right</code>, which give the overhanging edge a border and rounded corner of its own, so the control reads as a tab on the list. A <code>'content'</code> dropdown also carries <code>.ks-width-content</code>, which makes it <code>box-sizing: border-box</code>, so a list no wider than its rows lines up with the control exactly.</p>
+        </div>
+      </section>
+
       <!-- ── Mounting the dropdown elsewhere ───────────────────────────────── -->
       <section class="doc-section" id="mount">
         <h2>Mounting the dropdown elsewhere (Shadow DOM)</h2>
@@ -981,6 +1009,12 @@ el.<span class="t-fn">dispatchEvent</span>(<span class="t-kw">new</span> <span c
               <td><span class="type-pill bool">boolean</span></td>
               <td><span class="default-val">true</span></td>
               <td>Open the list already scrolled to the current selection (the first selected option in multi mode), centred in the dropdown when it would otherwise be off-screen. The scroll offset is applied before the dropdown is first painted, so the list <em>starts</em> at the selection rather than opening at the top and scrolling. An already-visible selection is left alone; nothing selected, or a selection inside a collapsed group, opens at the top (the group is not expanded). Applies to the mobile sheet too. <code>false</code> always opens at the top.</td>
+            </tr>
+            <tr>
+              <td><code>dropdownWidth</code></td>
+              <td><span class="type-pill">'control' | 'content'</span></td>
+              <td><span class="default-val">'control'</span></td>
+              <td>How wide the open list is. <code>'control'</code> = exactly as wide as the control. <code>'content'</code> = at least that wide, and wider to fit its widest option, group heading, detail line, notice or search placeholder, up to the visible width less 8px a side (and inside a dialog it is mounted in); past that, rows ellipsis as before. Measured once each time the list opens, so it does not change as the search filters. The phone sheet is unaffected. See <a href="#dropdown-width">Lists wider than their box</a>.</td>
             </tr>
             <tr>
               <td><code>dropdownParent</code></td>

@@ -278,6 +278,11 @@ body {
 .code-block .fn  { color: #89b4fa; }
 .code-block .cm  { color: #6c7086; }
 
+/* ── dropdownWidth card: a toolbar-sized box ── */
+.width-demo-box {
+  width: 130px;
+}
+
 /* ── Split row ── */
 .split {
   display: grid;

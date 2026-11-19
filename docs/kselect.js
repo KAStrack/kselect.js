@@ -1,6 +1,6 @@
 /*!
  * kselect.js - A modern, accessible select replacement
- * Version 1.12.0
+ * Version 1.13.0
  * Vanilla JavaScript, no dependencies
  */
 (function (root, factory) {
@@ -15,11 +15,15 @@
   // Keep in sync with the banner comment above and docs/kselect.css. Exposed as
   // Kselect.version and embedded as an HTML comment in the mobile sheet so a
   // cached build is easy to spot via "Inspect Element".
-  const KSELECT_VERSION = '1.12.0';
+  const KSELECT_VERSION = '1.13.0';
 
   // The live region's count strings, by default. _resultsText compares
   // against them to tell a translated resultsText from an untouched one.
   const DEFAULT_TEXTS = { resultsText: '{n} results', resultText: '1 result' };
+
+  // dropdownWidth: 'content' — the least gap kept between a widened list and
+  // the edge of the visible area (or of a box that clips a mounted list).
+  const KS_EDGE = 8;
 
   // ─── Utility helpers ────────────────────────────────────────────────────────
 
@@ -226,6 +230,7 @@
       showEmptyOptGroups: true,   // when an <optgroup> has no <option> children, true keeps its header in the dropdown; false omits it entirely
       copyClassName: true,        // copy the source <select>'s class onto the wrapper <div>; set false when that class styles the native control (borders/padding) and would double up around .ks-control
       revealSelection: true,      // on open, start the list scrolled so the (first) selected option is visible and centred; false = always open at the top
+      dropdownWidth: 'control',   // 'control' = the open list is exactly as wide as the control; 'content' = at least that wide, growing to fit its widest row (measured once per open, all options), within the visible area less 8px a side
       dropdownParent: null,       // where the dropdown and the mobile sheet are mounted: null = <body> (escapes every overflow ancestor); 'wrapper' = inside .ks-wrapper; an Element, a CSS selector, or a function(select, wrapper) returning one — for a Shadow DOM or a scoped theme
       load: null,                 // remote source: function(query, signal) returning (a promise of) [{ value, label, detail }]; called as the user types in either search box, and its answer replaces the offered rows
       loadDelay: 250,             // debounce before load() is called, ms
@@ -493,8 +498,11 @@
 
     // ── Dropdown ──
     const dropdown = document.createElement('div');
+    // .ks-width-content (dropdownWidth: 'content') makes the dropdown
+    // border-box, so the width the positioner writes is its outer width.
     dropdown.className = 'ks-dropdown' +
-      (this.isMultiple ? ' ks-multiple' : ' ks-single') + noSearch;
+      (this.isMultiple ? ' ks-multiple' : ' ks-single') + noSearch +
+      (this.options.dropdownWidth === 'content' ? ' ks-width-content' : '');
     dropdown.setAttribute('id', 'ks-dropdown-' + this.id);
     dropdown.style.maxHeight = this.options.maxHeight + 'px';
 
@@ -904,6 +912,14 @@
     }
     // The rebuild emptied the list, create row included.
     this._updateCreate();
+
+    // dropdownWidth: 'content' — rows replaced while the list is open (a
+    // remote answer, refresh(), autoSync, a created option): measure again,
+    // but only ever grow, so the list does not narrow under the pointer.
+    if (this._open && this._contentWidth != null && this._dropdown.style.display !== 'none') {
+      this._contentStale = true;
+      this._positionDropdown();
+    }
   };
 
   // The list while a remote answer is shown: picked options the answer lacks
@@ -2110,6 +2126,9 @@
       if (this._wrapper.classList.contains('ks-search-in-row')) {
         this._searchWrap.style.display = 'block';
       }
+      // dropdownWidth: 'content' measures every option once per open (the
+      // list is unfiltered here), so the width never follows the keystrokes.
+      this._contentWidth = null;
       this._positionDropdown();
 
       // Start the list at the current selection. Must run after
@@ -2241,39 +2260,51 @@
     // viewport — so we use rect coordinates (which are also layout-relative)
     // directly, and only clamp `maxHeight` against the visible area.
     const dd = this._dropdown;
-    dd.style.width = rect.width + 'px';
-    dd.style.left  = rect.left + 'px';
+    // Before the width: a 'content' measurement has to see whether the list
+    // will scroll (its scrollbar takes width from the rows).
+    dd.style.maxHeight = (dropup
+      ? Math.max(40, Math.min(maxH, spaceAbove - 8))
+      : Math.max(40, Math.min(maxH, spaceBelow - 8))) + 'px';
+    const wide = this.options.dropdownWidth === 'content';
+    if (wide) {
+      this._placeContentWidth(rect, visLeft, visLeft + visWidth);
+    } else {
+      dd.style.width = rect.width + 'px';
+      dd.style.left  = rect.left + 'px';
+    }
 
     if (dropup) {
-      const clampedMaxH = Math.max(40, Math.min(maxH, spaceAbove - 8));
-      dd.style.maxHeight = clampedMaxH + 'px';
-
       // When the visual viewport hasn't been shifted (no keyboard, no pinch
       // zoom), `bottom`-based positioning is fastest and avoids a reflow.
       // When it HAS been shifted, `bottom` would anchor to the layout-viewport
       // bottom — i.e. underneath the keyboard — so we measure and use top.
       // A mounted dropdown always uses top: its `bottom` would be the mount's.
+      // The list stops 1.5px short of the control (as it always has). A
+      // 'content' list overlaps it by 1.5px instead, as a drop-down list
+      // does: its overhanging edge has a border of its own, which must lie
+      // over the control's top border rather than draw a second line.
+      const join = wide ? -1.5 : 1.5;
       if (!this._mount && visTop === 0 && visLeft === 0) {
         dd.style.top    = '';
-        dd.style.bottom = (window.innerHeight - rect.top + 1.5) + 'px';
+        dd.style.bottom = (window.innerHeight - rect.top + join) + 'px';
       } else {
         dd.style.bottom = '';
         // First put it somewhere harmless to measure, then move into place.
         dd.style.top = '0px';
         const actualHeight = dd.offsetHeight;
-        dd.style.top = (rect.top - actualHeight - 1.5) + 'px';
+        dd.style.top = (rect.top - actualHeight - join) + 'px';
       }
     } else {
       dd.style.top       = (rect.bottom - 1.5) + 'px';
       dd.style.bottom    = '';
-      dd.style.maxHeight = Math.max(40, Math.min(maxH, spaceBelow - 8)) + 'px';
     }
 
     // Avoid horizontal overflow when the visual viewport is narrower than the
     // layout viewport (e.g. iOS pinch-zoom, or right-side keyboard accessory).
+    // (A 'content' width was placed inside the visible area already.)
     const visRight = visLeft + visWidth;
     const ddRight = rect.left + rect.width;
-    if (ddRight > visRight) {
+    if (!wide && ddRight > visRight) {
       dd.style.left = Math.max(visLeft, visRight - rect.width) + 'px';
     }
 
@@ -2287,6 +2318,122 @@
       dd.style.left = (parseFloat(dd.style.left) - ox) + 'px';
       dd.style.top = (parseFloat(dd.style.top) - oy) + 'px';
     }
+  };
+
+  // ─── dropdownWidth: 'content' ─────────────────────────────────────────────────
+
+  // Sets the dropdown's width and left (viewport coordinates; _positionDropdown
+  // translates them for a mounted dropdown). The width is the list's natural
+  // width (_measureContentWidth, kept for the open), at least the control's,
+  // and at most what fits between the edges of the visible area — and, for a
+  // mounted dropdown, of every box that clips it, such as a modal <dialog> —
+  // less KS_EDGE on each side (never inside the control's own edge on that
+  // side). A list that would run past the right edge moves left; in a
+  // right-to-left page it grows leftwards and moves right. Past the cap the
+  // rows ellipsis or wrap, as they do at the control's width.
+  Kselect.prototype._placeContentWidth = function (rect, visLeft, visRight) {
+    const dd = this._dropdown;
+    if ((this._contentWidth == null || this._contentStale) && dd.getClientRects().length) {
+      const natural = this._measureContentWidth(rect.width);
+      this._contentWidth = this._contentStale ? Math.max(this._contentWidth || 0, natural) : natural;
+      this._contentStale = false;
+    }
+    let lo = visLeft, hi = visRight;
+    const clips = this._clipBoxes || [];
+    for (let i = 0; i < clips.length; i++) {
+      const el = clips[i];
+      if (!el.isConnected) continue;
+      const l = el.getBoundingClientRect().left + el.clientLeft;
+      lo = Math.max(lo, l);
+      hi = Math.min(hi, l + el.clientWidth);
+    }
+    const minLeft = Math.max(lo, Math.min(rect.left, lo + KS_EDGE));
+    const maxRight = Math.min(hi, Math.max(rect.right, hi - KS_EDGE));
+    const width = Math.max(rect.width, Math.min(this._contentWidth || 0, maxRight - minLeft));
+    let left;
+    if (this._rtl) {
+      left = rect.right - width;
+      if (left < minLeft) left = Math.min(minLeft, Math.max(lo, maxRight - width));
+    } else {
+      left = rect.left;
+      if (left + width > maxRight) left = Math.max(lo, maxRight - width);
+    }
+    dd.style.width = width + 'px';
+    dd.style.left = left + 'px';
+    // Where the list reaches past the control, its edge facing the control
+    // needs a border and a rounded corner of its own (see the stylesheet).
+    dd.classList.toggle('ks-overhang-left', left < rect.left - 0.5);
+    dd.classList.toggle('ks-overhang-right', left + width > rect.right + 0.5);
+  };
+
+  // The width the open list needs so nothing in it is cut: every option
+  // (those in collapsed groups too), group headings, the select-all row,
+  // detail lines, the notices beside the list (limit, loading, no results)
+  // and the search row's placeholder. Not the create row or its error line:
+  // they repeat the query, and would widen the list on every key.
+  // All synchronous — the browser never paints the states in between.
+  Kselect.prototype._measureContentWidth = function (controlWidth) {
+    const dd = this._dropdown, list = this._optionsList;
+    const scrollTop = list.scrollTop;
+    this._rtl = getComputedStyle(this._wrapper).direction === 'rtl';
+
+    // 1. The intrinsic width with every row on one line: detail lines (which
+    //    wrap under their label) out of the flow, the search box empty, and
+    //    the listbox not scrolling, so its scrollbar is not in the figure.
+    dd.classList.add('ks-measuring', 'ks-measuring-intrinsic');
+    dd.style.width = 'max-content';
+    let width = Math.ceil(dd.getBoundingClientRect().width);
+
+    // 2. At that width, the listbox's own scrollbar, if it will have one
+    //    (none with overlay scrollbars).
+    dd.classList.remove('ks-measuring-intrinsic');
+    dd.style.width = Math.max(width, controlWidth) + 'px';
+    width += list.offsetWidth - list.clientWidth;
+
+    // 3. At that width, whatever is still cut: detail lines, any row an
+    //    engine's intrinsic sizing came up short on, the placeholder.
+    const at = Math.max(width, controlWidth);
+    dd.style.width = at + 'px';
+    let deficit = 0;
+    const texts = list.querySelectorAll('.ks-option:not(.ks-create) .ks-option-text, .ks-option:not(.ks-create) .ks-option-detail');
+    for (let i = 0; i < texts.length; i++) {
+      const d = texts[i].scrollWidth - texts[i].clientWidth;
+      if (d > deficit) deficit = d;
+    }
+    const input = this._searchInput;
+    if (this.options.searchable && input.placeholder && dd.contains(input)) {
+      const cs = getComputedStyle(input);
+      const probe = document.createElement('span');
+      probe.textContent = input.placeholder;
+      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;left:0;top:0';
+      probe.style.fontFamily = cs.fontFamily;
+      probe.style.fontSize = cs.fontSize;
+      probe.style.fontWeight = cs.fontWeight;
+      probe.style.fontStyle = cs.fontStyle;
+      probe.style.letterSpacing = cs.letterSpacing;
+      input.parentNode.appendChild(probe);
+      const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const d = Math.ceil(probe.getBoundingClientRect().width - room);
+      input.parentNode.removeChild(probe);
+      if (d > deficit) deficit = d;
+    }
+    if (deficit > 0) width = Math.max(width, at + deficit + 1);
+
+    dd.classList.remove('ks-measuring');
+    list.scrollTop = scrollTop;
+
+    // The boxes that clip a mounted dropdown: the mount and its ancestors
+    // with overflow other than visible (or paint containment), up to the
+    // first fixed one — a modal <dialog> is position: fixed — past which
+    // ancestors no longer clip it.
+    this._clipBoxes = [];
+    for (let el = this._mount; el && el !== document.body && el !== document.documentElement;
+      el = el.parentElement || (el.parentNode && el.parentNode.host) || null) {
+      const cs = getComputedStyle(el);
+      if (cs.overflowX !== 'visible' || /paint|strict|content/.test(cs.contain || '')) this._clipBoxes.push(el);
+      if (cs.position === 'fixed') break;
+    }
+    return width;
   };
 
   // ─── Select-all helpers ───────────────────────────────────────────────────────
@@ -2948,6 +3095,7 @@
   Kselect.prototype._commitCreated = function (query, record) {
     const value = String(record.value);
     let option = this._nativeOption(value);
+    const added = !option;
     if (!option) {
       if (this.isMultiple && this.options.maxSelect != null &&
           Array.prototype.filter.call(this.select.options, function (o) { return o.selected; }).length >= this.options.maxSelect) {
@@ -2979,6 +3127,13 @@
       this._searchInput.value = '';
       if (this._mobileSearchInput) this._mobileSearchInput.value = '';
       this._wrapper.classList.remove('ks-searching');
+      // The list must gain the new option's row. Ending a remote answer
+      // rebuilds it (in _applySearch); the select's own options do not, as
+      // the observer's record of our append was dropped — so rebuild here.
+      if (added && !this._remote) {
+        this._buildOptionsList();
+        this._syncFromSelect();
+      }
       this._applySearch('');
     } else {
       // A newer query is on screen: keep its rows and do not search again —

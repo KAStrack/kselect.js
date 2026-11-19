@@ -1,6 +1,6 @@
 /*!
  * kselect.css — styles for kselect.js
- * Version 1.12.0
+ * Version 1.13.0
  */
 
 /* ─── CSS custom properties (easily overridable) ─────────────────────────── */
@@ -465,6 +465,68 @@
   border-top: 1.5px solid var(--ks-color-border-focus);
   border-bottom: none;
   border-radius: var(--ks-radius-dropdown) var(--ks-radius-dropdown) 0 0;
+}
+
+/* dropdownWidth: 'content' — the width the JS writes is the list's outer
+   width, so a list as wide as the control lines up with it exactly. */
+.ks-dropdown.ks-width-content {
+  box-sizing: border-box;
+}
+
+/* dropdownWidth: 'content' — a list wider than the control reaches past it
+   on one side (or both), where its edge facing the control is open: give it
+   that border and a rounded corner. Under the control the border lies over
+   the control's own (same colour, same place), so it reads as one outline,
+   the control a tab on the list. */
+.ks-dropdown.ks-overhang-left,
+.ks-dropdown.ks-overhang-right {
+  border-top: 1.5px solid var(--ks-color-border-focus);
+}
+.ks-dropdown.ks-overhang-left {
+  border-top-left-radius: var(--ks-radius-dropdown);
+}
+.ks-dropdown.ks-overhang-right {
+  border-top-right-radius: var(--ks-radius-dropdown);
+}
+.ks-dropdown.ks-dropup.ks-overhang-left,
+.ks-dropdown.ks-dropup.ks-overhang-right {
+  border-bottom: 1.5px solid var(--ks-color-border-focus);
+}
+.ks-dropdown.ks-dropup.ks-overhang-left {
+  border-bottom-left-radius: var(--ks-radius-dropdown);
+}
+.ks-dropdown.ks-dropup.ks-overhang-right {
+  border-bottom-right-radius: var(--ks-radius-dropdown);
+}
+
+/* dropdownWidth: 'content' — states the JS measures the list in, for a
+   moment, synchronously; never painted. Collapsed groups count (the user can
+   open one), the create row and its error line do not (they repeat the
+   query). The intrinsic pass also counts the notices beside the list, keeps
+   detail lines and the empty search box out of the figure (they are fitted
+   afterwards), and stops the listbox scrolling so its scrollbar is not in it. */
+.ks-dropdown.ks-measuring .ks-group-options {
+  display: block !important;
+}
+.ks-dropdown.ks-measuring .ks-create,
+.ks-dropdown.ks-measuring .ks-create-error {
+  display: none !important;
+}
+.ks-dropdown.ks-measuring-intrinsic .ks-limit-notice {
+  display: flex !important;
+}
+.ks-dropdown.ks-measuring-intrinsic .ks-no-results,
+.ks-dropdown.ks-measuring-intrinsic .ks-loading-text {
+  display: block !important;
+}
+.ks-dropdown.ks-measuring-intrinsic .ks-option-detail {
+  display: none !important;
+}
+.ks-dropdown.ks-measuring-intrinsic .ks-search-input {
+  width: 0 !important;
+}
+.ks-dropdown.ks-measuring-intrinsic > .ks-options {
+  overflow-y: hidden !important;
 }
 
 @keyframes ks-dropdown-in {
